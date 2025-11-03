@@ -1,0 +1,226 @@
+// InValid Select
+.dashcode-app {
+  .react-select.is-invalid {
+    .select__control {
+      border-color: none !important;
+    }
+  }
+}
+
+// Select Control(Input)
+.dashcode-app {
+  .select__control {
+    @apply border-slate-200;
+  }
+
+  .has-error {
+    .select__control {
+      @apply border-danger-500;
+    }
+  }
+
+  .select__control,
+  .react-select__control {
+    .select__input {
+      @apply text-slate-500;
+    }
+
+    &.select__control--is-disabled {
+      @apply cursor-not-allowed;
+      .select__indicator-separator {
+        @apply bg-slate-50 text-slate-800 placeholder:text-opacity-60;
+      }
+    }
+
+    &.select__control--is-focused,
+    &.react-select__control--is-focused {
+      box-shadow: none;
+      @apply border-slate-600;
+    }
+
+    .select__indicator svg {
+      cursor: pointer;
+      @apply text-slate-600;
+    }
+
+    .select__indicator-separator {
+      display: none;
+    }
+
+    // ✅ Force white text for selected single value
+    .select__single-value,
+    .react-select__single-value {
+      color: #fff !important;
+    }
+
+    .select__placeholder {
+      @apply text-slate-400;
+    }
+  }
+
+  .has-error {
+    .select__control,
+    .react-select__control {
+      .select__indicator svg {
+        @apply text-danger-500;
+      }
+    }
+  }
+}
+
+// Select Menu
+.dashcode-app {
+  .select__menu,
+  .react-select__menu {
+    .select__menu-list,
+    .react-select__menu-list {
+      .select__option,
+      .react-select__option {
+        cursor: pointer;
+
+        &.select__option--is-focused {
+          @apply bg-blue-100 text-blue-900;
+        }
+
+        &.select__option--is-selected {
+          @apply bg-secondary-900 text-slate-200;
+        }
+      }
+    }
+
+    .select__menu-list,
+    .react-select__menu-list {
+      .select__group {
+        .select__group-heading {
+          margin-bottom: 0.5rem;
+          @apply text-slate-900 capitalize;
+          font-weight: bolder;
+          font-size: inherit;
+        }
+      }
+    }
+  }
+}
+
+.dashcode-app {
+  .select__multi-value,
+  .react-select__multi-value {
+    @apply text-white bg-blue-700; // 🔵 blue background
+    border-radius: 6px;
+    margin: 0 0.5rem 0.4rem 0;
+
+    // ✅ Force white label text for tags
+    .select__multi-value__label,
+    .react-select__multi-value__label {
+      color: #fff !important;
+      font-size: 0.85rem;
+      border-radius: 6px;
+      padding: 0.25rem 0.6rem;
+    }
+
+    .select__multi-value__remove,
+    .react-select__multi-value__remove {
+      color: #fff !important;
+      padding-left: 0;
+      padding-right: 0.5rem;
+
+      &:hover {
+        @apply bg-blue-700 text-white;
+      }
+
+      svg {
+        height: 0.85rem;
+        width: 0.85rem;
+        &:hover {
+          cursor: pointer;
+        }
+      }
+    }
+  }
+  .select__value-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+    }
+  }
+
+// Select Borderless
+.select-borderless {
+  .select__control {
+    border: 0;
+    .select__indicators {
+      display: none;
+    }
+  }
+}
+
+.dark {
+  .select__control {
+    @apply bg-slate-900 border-slate-700;
+
+    .select__indicator svg {
+      @apply fill-slate-500;
+    }
+
+    .select__input {
+      color: #cbd5e1 !important;
+    }
+
+    .select__indicator span,
+    .select__single-value,
+    .react-select__single-value {
+      color: #cbd5e1 !important;
+    }
+
+    .select__multi-value {
+      @apply bg-slate-700;
+
+      .select__multi-value__label,
+      .react-select__multi-value__label {
+        @apply text-slate-300;
+      }
+    }
+
+    .select__multi-value__remove {
+      svg {
+        fill: #cbd5e1;
+      }
+      &:hover {
+        background-color: transparent !important;
+      }
+    }
+
+    .select__placeholder {
+      @apply text-slate-400;
+    }
+  }
+
+  .select__menu {
+    @apply bg-slate-800;
+  }
+
+  .select__menu,
+  .react-select__menu {
+    .select__menu-list,
+    .react-select__menu-list {
+      .select__option,
+      .react-select__option {
+        &.select__option--is-focused {
+          @apply bg-blue-100 text-blue-900;
+        }
+
+        &.select__option--is-selected {
+          @apply bg-blue-700 text-white;
+        }
+      }
+    }
+  }
+}
+
+html[dir="rtl"] {
+  .select__control {
+    .select__loading-indicator {
+      flex-direction: row-reverse;
+    }
+  }
+}

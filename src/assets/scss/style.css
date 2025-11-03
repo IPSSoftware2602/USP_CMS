@@ -1,0 +1,74 @@
+/* .ql-editor {
+    background-color: white;
+    padding: 1rem;
+    min-height: 250px;
+    font-size: 0.875rem; */
+/* text-sm */
+/* } */
+/* 
+.ql-container.ql-snow {
+    border: 1px solid #d1d5db; */
+/* gray-300 */
+/* border-radius: 1.5rem;
+} */
+
+/* Match input styles */
+.ql-editor {
+    background-color: white;
+    padding: 0.75rem 1rem;
+    /* py-3 px-4 */
+    min-height: 250px;
+    font-size: 0.875rem;
+    /* text-sm */
+    border-radius: 0.5rem;
+    /* rounded-lg */
+    outline: none;
+    resize: none;
+}
+
+/* Match border and focus ring */
+.ql-container.ql-snow {
+    border: 1px solid #d1d5db;
+    /* border-gray-300 */
+    border-radius: 0.5rem;
+    /* rounded-lg */
+    transition: box-shadow 0.2s;
+}
+
+.ql-container.ql-snow:focus-within {
+    border-color: transparent;
+    box-shadow: 0 0 0 2px #3b82f6;
+    /* Tailwind blue-500 ring */
+}
+
+/* .p-multiselect .p-multiselect-token { */
+/* background-color: #3b82f6 !important; */
+/* color: white !important; */
+/* } */
+
+.p-multiselect.p-focus {
+    border-color: #3b82f6 !important;
+    box-shadow: 0 0 0 2px #3b82f6 !important;
+}
+
+.p-multiselect-item.p-highlight {
+    background-color: #e0e0e0 !important;
+    color: black !important;
+}
+
+.p-checkbox-box {
+    border: 2px solid #ced4da;
+    background: #ffffff;
+}
+
+/* When checkbox is checked */
+.p-checkbox-box.p-highlight {
+    background-color: #3b82f6 !important;
+    border-color: #3b82f6 !important;
+}
+
+/* Check icon inside the box */
+.p-checkbox-icon {
+    color: black !important;
+    font-size: 0.75rem;
+}

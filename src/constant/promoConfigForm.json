@@ -1,0 +1,972 @@
+{
+  "sectionOptions": {
+    "totalOrder": [
+      {
+        "id": "totalOrder1",
+        "label": "$ or % off total order",
+        "promoType": "discount",
+        "formConfig": {
+          "descriptionPlaceholder": "$ or % off total order",
+          "specificFields": [
+            {
+              "type": "discountAmount",
+              "id": "discountGroup",
+              "label": "Get $5 or 10% off",
+              "required": false,
+              "currencyOptions": [
+                { "value": "fixed", "label": "MYR" },
+                { "value": "percentage", "label": "%" }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "id": "totalOrder2",
+        "label": "$ or % off total order with minimum spend",
+        "promoType": "discount",
+        "formConfig": {
+          "descriptionPlaceholder": "$ or % off total order with minimum spend",
+          "specificFields": [
+            {
+              "type": "discountAmount",
+              "id": "discountGroup",
+              "label": "Get $5 or 10% off",
+              "required": false,
+              "currencyOptions": [
+                { "value": "fixed", "label": "MYR" },
+                { "value": "percentage", "label": "%" }
+              ]
+            },
+            {
+              "id": "minimumSpend",
+              "label": "Minimum Spend (MYR)",
+              "type": "number",
+              "placeholder": "e.g. 50",
+              "required": true
+            }
+          ]
+        }
+      },
+      {
+        "id": "totalOrder3",
+        "label": "$ or % off total order with minimum spend of item / category",
+        "promoType": "discount",
+        "formConfig": {
+          "descriptionPlaceholder": "$ or % off total order with mininum spend on item/category",
+          "specificFields": [
+            {
+              "type": "discountAmount",
+              "id": "discountGroup",
+              "label": "Get $5 or 10% off",
+              "required": false,
+              "currencyOptions": [
+                { "value": "fixed", "label": "MYR" },
+                { "value": "percentage", "label": "%" }
+  
+              ]
+            },
+            {
+              "id": "minimumSpend",
+              "label": "Minimum Spend (MYR)",
+              "type": "number",
+              "placeholder": "e.g. 50",
+              "required": true
+            },
+            {
+              "id": "itemCategory1",
+              "label": "Apply to Item/Category (minimum spend)",
+              "type": "select",
+              "options": [
+                { "value": "", "label": "Select Item/Category" },
+                { "value": "item", "label": "Item" },
+                { "value": "category", "label": "Category" }
+              ],
+              "required": true
+            }
+          ]
+        }
+      },
+      {
+        "id": "totalOrder4",
+        "label": "$ or % off total order with minimum quantity of item / category",
+        "promoType": "discount",
+        "formConfig": {
+          "descriptionPlaceholder": "$ or % off total order with mininum quantity",
+          "specificFields": [
+            {
+              "type": "discountAmount",
+              "id": "discountGroup",
+              "label": "Get $5 or 10% off",
+              "required": false,
+              "currencyOptions": [
+                { "value": "fixed", "label": "MYR" },
+                { "value": "percentage", "label": "%" }
+              ]
+            },
+            {
+              "id": "minimumQuantity",
+              "label": "Minimum Quantity",
+              "type": "number",
+              "placeholder": "e.g. 3",
+              "required": true
+            },
+            {
+              "id": "itemCategory1",
+              "label": "Apply to Item/Category (minimum quantity)",
+              "type": "select",
+              "options": [
+                { "value": "", "label": "Select Item/Category" },
+                { "value": "item", "label": "Item" },
+                { "value": "category", "label": "Category" }
+              ],
+              "required": true
+            }
+          ]
+        }
+      }
+    ],
+    "selectedItems": [
+      {
+        "id": "selectedItems1",
+        "label": "$ or % off selected item / category",
+        "promoType": "discount",
+        "formConfig": {
+          "descriptionPlaceholder": "$ or % off selected item/category",
+          "specificFields": [
+            {
+              "type": "discountAmount",
+              "id": "discountGroup",
+              "label": "Get $5 or 10% off",
+              "required": false,
+              "currencyOptions": [
+                { "value": "fixed", "label": "MYR" },
+                { "value": "percentage", "label": "%" }
+              ]
+            },
+            {
+              "id": "itemCategory2",
+              "label": "Select Item/Category (discount)",
+              "type": "select",
+              "options": [
+                { "value": "", "label": "Select Item/Category" },
+                { "value": "item", "label": "Item" },
+                { "value": "category", "label": "Category" }
+              ],
+              "required": true
+            }
+          ]
+        }
+      },
+      {
+        "id": "selectedItems2",
+        "label": "$ or % off selected item / category with minimum spend of item / category",
+        "promoType": "discount",
+        "formConfig": {
+          "descriptionPlaceholder": "$ or % off selected item / category with minimum spend of item / category",
+          "specificFields": [
+            {
+              "type": "discountAmount",
+              "id": "discountGroup",
+              "label": "Get $5 or 10% off",
+              "required": false,
+              "currencyOptions": [
+                { "value": "fixed", "label": "MYR" },
+                { "value": "percentage", "label": "%" }
+              ]
+            },
+            {
+              "id": "itemCategory2",
+              "label": "Apply to Item/Category (discount)",
+              "type": "select",
+              "options": [
+                { "value": "", "label": "Select Item/Category" },
+                { "value": "item", "label": "Item" },
+                { "value": "category", "label": "Category" }
+              ],
+              "required": true
+            },
+            {
+              "id": "minimumSpend",
+              "label": "Minimum Spend (MYR)",
+              "type": "number",
+              "placeholder": "e.g. 30",
+              "required": true
+            },
+            {
+              "id": "itemCategory1",
+              "label": "Apply to Item/Category (minimum spend)",
+              "type": "select",
+              "options": [
+                { "value": "", "label": "Select Item/Category" },
+                { "value": "item", "label": "Item" },
+                { "value": "category", "label": "Category" }
+              ],
+              "required": true
+            }
+          ]
+        }
+      },
+      {
+        "id": "selectedItems3",
+        "label": "$ or % off selected item / category with minimum quantity of item / category",
+        "promoType": "discount",
+        "formConfig": {
+          "descriptionPlaceholder": "$ or % off selected item/category with minimum quantity of item / category",
+          "specificFields": [
+            {
+              "type": "discountAmount",
+              "id": "discountGroup",
+              "label": "Get $5 or 10% off",
+              "required": false,
+              "currencyOptions": [
+                { "value": "fixed", "label": "MYR" },
+                { "value": "percentage", "label": "%" }
+              ]
+            },
+            {
+              "id": "itemCategory2",
+              "label": "Apply to Item/Category (discount)",
+              "type": "select",
+              "options": [
+                { "value": "", "label": "Select Item/Category" },
+                { "value": "item", "label": "Item" },
+                { "value": "category", "label": "Category" }
+              ],
+              "required": true
+            },
+            {
+              "id": "minimumQuantity",
+              "label": "Minimum Quantity",
+              "type": "number",
+              "placeholder": "e.g. 2",
+              "required": true
+            },
+            {
+              "id": "itemCategory1",
+              "label": "Apply to Item/Category (minimum quantity)",
+              "type": "select",
+              "options": [
+                { "value": "", "label": "Select Item/Category" },
+                { "value": "item", "label": "Item" },
+                { "value": "category", "label": "Category" }
+              ],
+              "required": true
+            }
+          ]
+        }
+      },
+      {
+        "id": "selectedItems4",
+        "label": "$ off selected item / category with every quantity of item / category",
+        "promoType": "discount",
+        "formConfig": {
+          "descriptionPlaceholder": "$ off selected item/category with every quantity of item / category",
+          "specificFields": [
+            {
+              "type": "discountAmount",
+              "id": "discountGroup",
+              "label": "Get $5 or 10% off",
+              "required": false,
+              "currencyOptions": [
+                { "value": "fixed", "label": "MYR" },
+                { "value": "percentage", "label": "%" }
+              ]
+            },
+            {
+              "id": "itemCategory2",
+              "label": "Apply to Item/Category (discount)",
+              "type": "select",
+              "options": [
+                { "value": "", "label": "Select Item/Category" },
+                { "value": "item", "label": "Item" },
+                { "value": "category", "label": "Category" }
+              ],
+              "required": true
+            },
+            {
+              "id": "everyQuantity",
+              "label": "With every quantity of",
+              "type": "number",
+              "placeholder": "e.g. 5",
+              "required": true
+            },
+            {
+              "id": "itemCategory1",
+              "label": "Apply to Item/Category (quantity)",
+              "type": "select",
+              "options": [
+                { "value": "", "label": "Select Item/Category" },
+                { "value": "item", "label": "Item" },
+                { "value": "category", "label": "Category" }
+              ],
+              "required": true
+            }
+          ]
+        }
+      }
+    ],
+    "nextItem": [
+      {
+        "id": "nextItem1",
+        "label": "Next item / category at $ or % discount",
+        "promoType": "next_item",
+        "formConfig": {
+          "descriptionPlaceholder": "Next item / category at $ or % discount",
+          "specificFields": [
+            {
+              "id": "itemCategory1",
+              "label": "Apply to Item/Category (discount)",
+              "type": "select",
+              "options": [
+                { "value": "", "label": "Select Item/Category" },
+                { "value": "item", "label": "Item" },
+                { "value": "category", "label": "Category" }
+              ],
+              "required": true
+            },
+            {
+              "type": "discountAmount",
+              "id": "discountGroup",
+              "label": "at $5 or 10% off",
+              "required": false,
+              "currencyOptions": [
+                { "value": "fixed", "label": "MYR" },
+                { "value": "percentage", "label": "%" }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "id": "nextItem2",
+        "label": "Next item / category at $ or % discount with minimum spend",
+        "promoType": "next_item",
+        "formConfig": {
+          "descriptionPlaceholder": "Next item / category at $ or % discount with minimum spend",
+          "specificFields": [
+            {
+              "id": "itemCategory2",
+              "label": "Apply to Item/Category (discount)",
+              "type": "select",
+              "options": [
+                { "value": "", "label": "Select Item/Category" },
+                { "value": "item", "label": "Item" },
+                { "value": "category", "label": "Category" }
+              ],
+              "required": true
+            },
+            {
+              "type": "discountAmount",
+              "id": "discountGroup",
+              "label": "at $5 or 10% off",
+              "required": false,
+              "currencyOptions": [
+                { "value": "fixed", "label": "MYR" },
+                { "value": "percentage", "label": "%" }
+              ]
+            },
+            {
+              "id": "minimumSpend",
+              "label": "Minimum Spend (MYR)",
+              "type": "number",
+              "placeholder": "e.g. 50",
+              "required": true
+            }
+          ]
+        }
+      },
+      {
+        "id": "nextItem3",
+        "label": "Next item / category at $ or % discount with minimum spend on item / category",
+        "promoType": "next_item",
+        "formConfig": {
+          "descriptionPlaceholder": "Next item / category at $ or % discount with minimum spend on item / category",
+          "specificFields": [
+            {
+              "id": "itemCategory2",
+              "label": "Apply to Item/Category (discount)",
+              "type": "select",
+              "options": [
+                { "value": "", "label": "Select Item/Category" },
+                { "value": "item", "label": "Item" },
+                { "value": "category", "label": "Category" }
+              ],
+              "required": true
+            },
+            {
+              "type": "discountAmount",
+              "id": "discountGroup",
+              "label": "at $5 or 10% off",
+              "required": false,
+              "currencyOptions": [
+                { "value": "fixed", "label": "MYR" },
+                { "value": "percentage", "label": "%" }
+              ]
+            },
+
+            {
+              "id": "minimumSpend",
+              "label": "Minimum Spend (MYR)",
+              "type": "number",
+              "placeholder": "e.g. 50",
+              "required": true
+            },
+            {
+              "id": "itemCategory1",
+              "label": "Apply to Item/Category (minimum spend)",
+              "type": "select",
+              "options": [
+                { "value": "", "label": "Select Item/Category" },
+                { "value": "item", "label": "Item" },
+                { "value": "category", "label": "Category" }
+              ],
+              "required": true
+            }
+          ]
+        }
+      },
+      {
+        "id": "nextItem4",
+        "label": "Next item / category at $ or % discount with minimum quantity of item / category",
+        "promoType": "next_item",
+        "formConfig": {
+          "descriptionPlaceholder": "Next item / category at $ or % discount with minimum quantity of item / category",
+          "specificFields": [
+            {
+              "id": "itemCategory2",
+              "label": "Apply to Item/Category (discount)",
+              "type": "select",
+              "options": [
+                { "value": "", "label": "Select Item/Category" },
+                { "value": "item", "label": "Item" },
+                { "value": "category", "label": "Category" }
+              ],
+              "required": true,
+              "onChange": "handleItemCategoryChange"
+            },
+            {
+              "type": "discountAmount",
+              "id": "discountGroup",
+              "label": "at $5 or 10% off",
+              "required": false,
+              "currencyOptions": [
+                { "value": "fixed", "label": "MYR" },
+                { "value": "percentage", "label": "%" }
+              ]
+            },
+            {
+              "id": "minimumQuantity",
+              "label": "Minimum Quantity",
+              "type": "number",
+              "placeholder": "e.g. 2",
+              "required": true
+            },
+            {
+              "id": "itemCategory1",
+              "label": "Apply to Item/Category (minimum quantity)",
+              "type": "select",
+              "options": [
+                { "value": "", "label": "Select Item/Category" },
+                { "value": "item", "label": "Item" },
+                { "value": "category", "label": "Category" }
+              ],
+              "required": true,
+              "onChange": "handleItemCategoryChange"
+            }
+          ]
+        }
+      },
+      {
+        "id": "nextItem5",
+        "label": "Next item / category at $ or % discount with every quantity of item / category",
+        "promoType": "next_item",
+        "formConfig": {
+          "descriptionPlaceholder": "Next item / category at $ or % discount with every quantity of item / category",
+          "specificFields": [
+            {
+              "id": "itemCategory2",
+              "label": "Apply to Item/Category (discount)",
+              "type": "select",
+              "options": [
+                { "value": "", "label": "Select Item/Category" },
+                { "value": "item", "label": "Item" },
+                { "value": "category", "label": "Category" }
+              ],
+              "required": true
+            },
+            {
+              "type": "discountAmount",
+              "id": "discountGroup",
+              "label": "at $5 or 10% off",
+              "required": false,
+              "currencyOptions": [
+                { "value": "fixed", "label": "MYR" },
+                { "value": "percentage", "label": "%" }
+              ]
+            },
+            {
+              "id": "everyQuantity",
+              "label": "With every quantity of",
+              "type": "number",
+              "placeholder": "e.g. 5",
+              "required": true
+            },
+            {
+              "id": "itemCategory1",
+              "label": "Apply to Item/Category (quantity)",
+              "type": "select",
+              "options": [
+                { "value": "", "label": "Select Item/Category" },
+                { "value": "item", "label": "Item" },
+                { "value": "category", "label": "Category" }
+              ],
+              "required": true
+            }
+          ]
+        }
+      }
+    ],
+    "freeItem": [
+      {
+        "id": "freeItem1",
+        "label": "Free item / category",
+        "promoType": "free_item",
+        "formConfig": {
+          "descriptionPlaceholder": "Free item / category",
+          "specificFields": [
+            {
+              "id": "getNumber",
+              "label": "Get 1",
+              "type": "number",
+              "placeholder": "e.g. 2",
+              "required": true
+            },
+            {
+              "id": "itemCategory2",
+              "label": "Item Category Free",
+              "type": "select",
+              "options": [
+                { "value": "", "label": "Select Item/Category" },
+                { "value": "item", "label": "Item" },
+                { "value": "category", "label": "Category" }
+              ],
+              "required": true
+            }
+          ]
+        }
+      },
+      {
+        "id": "freeItem2",
+        "label": "Free item / category with minimum spend",
+        "promoType": "free_item",
+        "formConfig": {
+          "discountLabel": "at $5 or 10% off",
+          "descriptionPlaceholder": "Free item / category with minimum spend",
+          "specificFields": [
+            {
+              "id": "getNumber",
+              "label": "Get 1",
+              "type": "number",
+              "placeholder": "e.g. 2",
+              "required": true
+            },
+            {
+              "id": "itemCategory2",
+              "label": "Item Category Free",
+              "type": "select",
+              "options": [
+                { "value": "", "label": "Select Item/Category" },
+                { "value": "item", "label": "Item" },
+                { "value": "category", "label": "Category" }
+              ],
+              "required": true
+            },
+            {
+              "id": "minimumSpend",
+              "label": "Minimum Spend (MYR)",
+              "type": "number",
+              "placeholder": "e.g. 50",
+              "required": true
+            }
+          ]
+        }
+      },
+      {
+        "id": "freeItem3",
+        "label": "Free item / category with minimum spend on item / category",
+        "promoType": "free_item",
+        "formConfig": {
+          "discountLabel": "at $5 or 10% off",
+          "descriptionPlaceholder": "Free item / category with minimum spend on item / category",
+          "specificFields": [
+            {
+              "id": "getNumber",
+              "label": "Get 1",
+              "type": "number",
+              "placeholder": "e.g. 2",
+              "required": true
+            },
+            {
+              "id": "itemCategory2",
+              "label": "Item Category Free",
+              "type": "select",
+              "options": [
+                { "value": "", "label": "Select Item/Category" },
+                { "value": "item", "label": "Item" },
+                { "value": "category", "label": "Category" }
+              ],
+              "required": true
+            },
+            {
+              "id": "minimumSpend",
+              "label": "Minimum Spend (MYR)",
+              "type": "number",
+              "placeholder": "e.g. 50",
+              "required": true
+            },
+            {
+              "id": "itemCategory1",
+              "label": "Item / Category (minimum spend)",
+              "type": "select",
+              "options": [
+                { "value": "", "label": "Select Item/Category" },
+                { "value": "item", "label": "Item" },
+                { "value": "category", "label": "Category" }
+              ],
+              "required": true
+            }
+          ]
+        }
+      },
+      {
+        "id": "freeItem4",
+        "label": "Free item / category with minimum quantity on item / category",
+        "promoType": "free_item",
+        "formConfig": {
+          "discountLabel": "at $5 or 10% off",
+          "descriptionPlaceholder": "Free item / category with minimum quantity on item / category",
+          "specificFields": [
+            {
+              "id": "getNumber",
+              "label": "Get 1",
+              "type": "number",
+              "placeholder": "e.g. 2",
+              "required": true
+            },
+            {
+              "id": "itemCategory2",
+              "label": "Item Category Free",
+              "type": "select",
+              "options": [
+                { "value": "", "label": "Select Item/Category" },
+                { "value": "item", "label": "Item" },
+                { "value": "category", "label": "Category" }
+              ],
+              "required": true
+            },
+            {
+              "id": "minimumQuantity",
+              "label": "Minimum Quantity",
+              "type": "number",
+              "placeholder": "e.g. 2",
+              "required": true
+            },
+            {
+              "id": "itemCategory1",
+              "label": "Item / Category (minimum quantity)",
+              "type": "select",
+              "options": [
+                { "value": "", "label": "Select Item/Category" },
+                { "value": "item", "label": "Item" },
+                { "value": "category", "label": "Category" }
+              ],
+              "required": true
+            }
+          ]
+        }
+      },
+      {
+        "id": "freeItem5",
+        "label": "Free item / category with every quantity of item / category",
+        "promoType": "free_item",
+        "formConfig": {
+          "discountLabel": "at $5 or 10% off",
+          "descriptionPlaceholder": "Free item / category with every quantity of item / category",
+          "specificFields": [
+            {
+              "id": "getNumber",
+              "label": "Get 1",
+              "type": "number",
+              "placeholder": "e.g. 2",
+              "required": true
+            },
+            {
+              "id": "itemCategory2",
+              "label": "Item Category Free",
+              "type": "select",
+              "options": [
+                { "value": "", "label": "Select Item/Category" },
+                { "value": "item", "label": "Item" },
+                { "value": "category", "label": "Category" }
+              ],
+              "required": true
+            },
+            {
+              "id": "everyQuantity",
+              "label": "With every quantity of",
+              "type": "number",
+              "placeholder": "e.g. 5",
+              "required": true
+            },
+            {
+              "id": "itemCategory1",
+              "label": "Item / Category (quantity)",
+              "type": "select",
+              "options": [
+                { "value": "", "label": "Select Item/Category" },
+                { "value": "item", "label": "Item" },
+                { "value": "category", "label": "Category" }
+              ],
+              "required": true
+            }
+          ]
+        }
+      }
+    ],
+    "deliveryOverride": [
+      {
+        "id": "deliveryOverride1",
+        "label": "Free / $ off / % off delivery",
+        "promoType": "delivery",
+        "formConfig": {
+          "discountLabel": "Get $5 / 10% off or free",
+          "descriptionPlaceholder": "Free / $ off / % off delivery",
+          "specificFields": [
+            {
+              "type": "discountAmount",
+              "id": "discountGroup",
+              "label": "Get $5 / 10% off or free",
+              "required": false,
+              "currencyOptions": [
+                { "value": "fixed", "label": "MYR" },
+                { "value": "percentage", "label": "%" }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "id": "deliveryOverride2",
+        "label": "Free / $ off / % off delivery with minimum spend",
+        "promoType": "delivery",
+        "formConfig": {
+          "descriptionPlaceholder": "Free / $ off / % off delivery with minimum spend",
+          "specificFields": [
+            {
+              "type": "discountAmount",
+              "id": "discountGroup",
+              "label": "Get $5 / 10% off or free",
+              "required": false,
+              "currencyOptions": [
+                { "value": "fixed", "label": "MYR" },
+                { "value": "percentage", "label": "%" }
+              ]
+            },
+            {
+              "id": "minimumSpend",
+              "label": "Minimum Spend (MYR)",
+              "type": "number",
+              "placeholder": "e.g. 50",
+              "required": true
+            }
+          ]
+        }
+      },
+      {
+        "id": "deliveryOverride3",
+        "label": "Free / $ off / % off delivery with minimum spend on item / category",
+        "promoType": "delivery",
+        "formConfig": {
+          "descriptionPlaceholder": "Free / $ off / % off delivery with minimum spend on item / category",
+          "specificFields": [
+            {
+              "type": "discountAmount",
+              "id": "discountGroup",
+              "label": "Get $5 / 10% off or free",
+              "required": false,
+              "currencyOptions": [
+                { "value": "fixed", "label": "MYR" },
+                { "value": "percentage", "label": "%" }
+              ]
+            },
+            {
+              "id": "minimumSpend",
+              "label": "Minimum Spend (MYR)",
+              "type": "number",
+              "placeholder": "e.g. 50",
+              "required": true
+            },
+            {
+              "id": "itemCategory1",
+              "label": "Apply to Item/Category (minimum spend)",
+              "type": "select",
+              "options": [
+                { "value": "", "label": "Select Item/Category" },
+                { "value": "item", "label": "Item" },
+                { "value": "category", "label": "Category" }
+              ],
+              "required": true
+            }
+          ]
+        }
+      },
+      {
+        "id": "deliveryOverride4",
+        "label": "Free / $ off / % off delivery with minimum quantity of item / category",
+        "promoType": "delivery",
+        "formConfig": {
+          "descriptionPlaceholder": "Free / $ off / % off delivery with minimum quantity of item / category",
+          "specificFields": [
+            {
+              "type": "discountAmount",
+              "id": "discountGroup",
+              "label": "Get $5 / 10% off or free",
+              "required": false,
+              "currencyOptions": [
+                { "value": "fixed", "label": "MYR" },
+                { "value": "percentage", "label": "%" }
+              ]
+            },
+            {
+              "id": "minimumQuantity",
+              "label": "Minimum Quantity",
+              "type": "number",
+              "placeholder": "e.g. 2",
+              "required": true
+            },
+            {
+              "id": "itemCategory1",
+              "label": "Apply to Item/Category (minimum quantity)",
+              "type": "select",
+              "options": [
+                { "value": "", "label": "Select Item/Category" },
+                { "value": "item", "label": "Item" },
+                { "value": "category", "label": "Category" }
+              ],
+              "required": true
+            }
+          ]
+        }
+      }
+    ],
+    "minimumOrder": [
+      {
+        "id": "minimumOrder1",
+        "label": "Change minimum order amount",
+        "formConfig": {
+          "descriptionPlaceholder": "Change minimum order amount",
+          "specificFields": [
+            {
+              "id": "minimumAmount",
+              "label": "Change minimum amount to",
+              "type": "number",
+              "placeholder": "Percentage amount",
+              "required": true
+            }
+          ]
+        }
+      }
+    ]
+  },
+
+  "commonFields": [
+    {
+      "id": "promotionName",
+      "label": "Promotion Name",
+      "type": "text",
+      "placeholder": "Enter here",
+      "required": true
+    },
+    {
+      "id": "promotionCode",
+      "label": "Apply Promo Code",
+      "type": "text",
+      "placeholder": "Enter here",
+      "required": false,
+      "helpText": "Promotion Code (use comma to separate codes, for example 10OFF, WELCOME10)"
+    },
+    {
+      "id": "usageLimit",
+      "label": "Usage Limit Per Customer",
+      "type": "radio",
+      "options": [
+        { "value": "multiple", "label": "Multiple Times" },
+        { "value": "one", "label": "One Time" }
+      ],
+      "required": true
+    },
+    {
+      "id": "totalRedemptionLimit",
+      "label": "Total Redemption Limit",
+      "type": "number",
+      "placeholder": "Enter here",
+      "required": true,
+      "helpText": "Enter the total number of times the promotion code(s) can be redeemed; enter 0 for unlimited usage"
+    }
+  ],
+
+  "availabilityFields": [
+    {
+      "id": "voucherLimitPerCustomer",
+      "label": "Voucher Limit per Customer",
+      "type": "number",
+      "placeholder": "Enter here",
+      "required": false
+    },
+    {
+      "id": "storeDateRange",
+      "label": "Store Date Range",
+      "type": "dateRange",
+      "fields": [
+        {
+          "id": "storeStartDate",
+          "label": "Start Date",
+          "required": true
+        },
+        {
+          "id": "storeEndDate",
+          "label": "End Date",
+          "required": true
+        }
+      ]
+    },
+    {
+      "id": "customDayTime",
+      "label": "Customise Day & Time",
+      "type": "dayTime",
+      "days": [
+        { "id": "mon", "label": "Monday" },
+        { "id": "tue", "label": "Tuesday" },
+        { "id": "wed", "label": "Wednesday" },
+        { "id": "thurs", "label": "Thursday" },
+        { "id": "fri", "label": "Friday" },
+        { "id": "sat", "label": "Saturday" },
+        { "id": "sun", "label": "Sunday" }
+      ],
+      "required": false
+    },
+    {
+      "id": "applyToDeliveryPickup",
+      "label": "Apply To Delivery or Pickup?",
+      "type": "checkbox-group",
+      "options": [
+        { "value": "all", "label": "All" },
+        { "value": "delivery", "label": "Delivery" },
+        { "value": "pickup", "label": "Pickup" },
+        { "value": "dinein", "label": "Dine In" }
+      ],
+      "required": true
+    }
+  ]
+}
