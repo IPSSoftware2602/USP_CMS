@@ -189,6 +189,26 @@ export const menuItems = [
         childtitle: "Product Report",
         childlink: "report/product",
         permissionKey: "Product Report",
+      },
+      {
+        childtitle: "Order Report",
+        childlink: "report/order",
+        permissionKey: "Order Report",
+      },
+      {
+        childtitle: "Wallet Report",
+        childlink: "report/wallet",
+        permissionKey: "Wallet Report",
+      },
+      {
+        childtitle: "Point Report",
+        childlink: "report/point",
+        permissionKey: "Point Report",
+      },
+      {
+        childtitle: "Unutilized Voucher Report",
+        childlink: "report/unutilized_voucher",
+        permissionKey: "Unutilized Voucher Report",
       }
     ]
   },
