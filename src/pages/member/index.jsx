@@ -543,6 +543,12 @@ const MemberPage = () => {
       sortable: true,
     },
     {
+      name: "Birthday",
+      selector: (row) => row.birthday || "-",
+      minWidth: "200px",
+      sortable: true,
+    },
+    {
       name: "Date Joined",
       selector: (row) => row.created_at || "-",
       minWidth: "200px",

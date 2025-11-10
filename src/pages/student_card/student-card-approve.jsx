@@ -123,6 +123,15 @@ const StudentCardApproval = () => {
         />
       </div>
       <div className="mb-4">
+        <label className="block font-semibold mb-1">Birthday:</label>
+        <input 
+        type="text" 
+        value={new Date(studentCard.birthday).toLocaleDateString()} 
+        readOnly 
+        className="w-full border rounded px-3 py-2 bg-gray-100 cursor-not-allowed"
+        />
+      </div>
+      <div className="mb-4">
         <label className="block font-semibold mb-1">Status:</label>
         <input
           type="text"
