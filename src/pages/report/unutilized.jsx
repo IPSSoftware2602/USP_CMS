@@ -11,10 +11,10 @@ import "react-toastify/dist/ReactToastify.css";
 const UnutilizedReport = () => {
   const [loading, setLoading] = useState(false);
   const [isDisabled, setIsDisabled] = useState(false);
-  const [unutilizedData, setUnutilizedData] = useState([]);
+  const [orderData, setOrderData] = useState([]);
 
 useEffect(() => {
-  fetchUnutilizedReport();
+  fetchOrderSalesReport();
 }, []);
 
 
@@ -30,20 +30,20 @@ useEffect(() => {
 
   const user_id = userData?.user?.user_id || null;
 
-  const fetchPointReport = async (filters = {}) => {
+  const fetchOrderSalesReport = async (filters = {}) => {
   try {
     setLoading(true);
-    const response = await reportService.getPointReport(filters);
+    const response = await reportService.getUnutilizedReport(filters);
     const cleanedData = response.data.map((item) => ({
         ...item,
         Phone: item.Phone?.replace(/=\"|\\"/g, "").replace(/^=/, "")
       }));
     // console.log("Report:", response);
     if (response.status === 200 && response.data) {
-      setPointData(cleanedData);
+      setOrderData(cleanedData);
     } else {
       toast.error("No data found.");
-      setPointData([]);
+      setOrderData([]);
     }
   } catch (error) {
     console.error("Error fetching order report:", error);
@@ -53,89 +53,63 @@ useEffect(() => {
   }
 };
 
-  const columns = [
+ const columns = [
   {
-    name: "Customer Name",
-    selector: (row) => row["Customer Name"],
+    name: "Voucher Name",
+    selector: (row) => row["Voucher Name"],
     width: "200px",
     sortable: true,
     wrap: true,
   },
   {
-    name: "Phone",
-    selector: (row) => row["Phone"],
+    name: "Total Count",
+    selector: (row) => row["Total Count"],
     sortable: true,
     wrap: true,
   },
   {
-    name: "Total Points",
-    selector: (row) => row["Total Points"],
+    name: "Redeem Count",
+    selector: (row) => row["Redeem Count"],
     wrap: true,
   },
   {
-    name: "Order SO",
-    selector: (row) => row["Order SO"],
+    name: "Customer Count",
+    selector: (row) => row["Customer Count"],
     wrap: true,
   },
   {
-    name: "Payment Status",
-    selector: (row) => row["Payment Status"],
+    name: "Expiry Type",
+    selector: (row) => row["Expiry Type"],
     wrap: true,
   },
   {
-    name: "Payment Type",
-    selector: (row) => row["Payment Type"],
+    name: "Expiry Value",
+    selector: (row) => row["Expiry Value"],
     wrap: true,
   },
   {
-    name: "Promo Code",
-    selector: (row) => row["Promo Code"],
+    name: "Expired Date",
+    selector: (row) => row["Expired Date"],
     wrap: true,
   },
   {
-    name: "Voucher List ID",
-    selector: (row) => row["Voucher List ID"],
+    name: "Point Redeem",
+    selector: (row) => row["Point Redeem"],
+    width: "120px",
   },
   {
-    name: "Promo Discount (RM)",
-    selector: (row) => row["Promo Discount (RM)"],
+    name: "Status",
+    selector: (row) => row["Status"],
+    width: "120px",
     right: true,
   },
   {
-    name: "Voucher Discount (RM)",
-    selector: (row) => row["Voucher Discount (RM)"],
+    name: "Created At",
+    selector: (row) => row["Created At"],
+    width: "200px",
     right: true,
   },
-  {
-    name: "Total Discount (RM)",
-    selector: (row) => row["Total Discount (RM)"],
-    right: true,
-  },
-  {
-    name: "Rounding (RM)",
-    selector: (row) => row["Rounding (RM)"],
-    right: true,
-  },
-  {
-    name: "Tax (RM)",
-    selector: (row) => row["Tax (RM)"],
-    right: true,
-  },
-  {
-    name: "Subtotal (RM)",
-    selector: (row) => row["Subtotal (RM)"],
-    right: true,
-  },
-  {
-    name: "Delivery Fee (RM)",
-    selector: (row) => row["Delivery Fee (RM)"],
-    right: true,
-  },
-  {
-    name: "Total Amount (RM)",
-    selector: (row) => row["Total Amount (RM)"],
-    right: true,
-  },
+
 ];
 
   const exportToCSV = async () => {
@@ -228,12 +202,12 @@ useEffect(() => {
 
   return (
     <div className="p-6 min-h-screen">
-      <h3 className="mb-5 ml-2 text-[20px] text-gray-500">Order Sales Report</h3>
+      <h3 className="mb-5 ml-2 text-[20px] text-gray-500">Unutilized Voucher Report</h3>
 
       <div className="bg-white rounded-lg shadow-sm">
         <DataTable
           columns={columns}
-          data={pointData}
+          data={orderData}
           customStyles={customStyles}
           pagination
           paginationPerPage={10}
@@ -250,7 +224,7 @@ useEffect(() => {
           }
           noDataComponent={
             <div className="text-center py-8 text-gray-500">
-              No Unutilized Report found
+              No Order Report found
             </div>
           }
         />

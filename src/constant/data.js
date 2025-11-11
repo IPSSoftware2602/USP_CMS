@@ -207,7 +207,7 @@ export const menuItems = [
       },
       {
         childtitle: "Unutilized Voucher Report",
-        childlink: "report/unutilized_voucher",
+        childlink: "report/unutilized",
         permissionKey: "Unutilized Voucher Report",
       }
     ]

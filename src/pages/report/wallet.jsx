@@ -37,7 +37,7 @@ useEffect(() => {
     if (response.status === 200 && response.data) {
       const cleanedData = response.data.map((item) => ({
         ...item,
-        Phone: item.Phone?.replace(/=\"|\\"/g, "").replace(/^=/, "")
+        Phone: item.Phone?.replace(/=\"|\\"/g, "").replace(/^=/, "").replace(/"$/, "")
       }));
       setPointData(cleanedData);
     } else {

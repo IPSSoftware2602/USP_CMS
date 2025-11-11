@@ -36,7 +36,7 @@ useEffect(() => {
     const response = await reportService.getPointReport(filters);
     const cleanedData = response.data.map((item) => ({
         ...item,
-        Phone: item.Phone?.replace(/=\"|\\"/g, "").replace(/^=/, "")
+        Phone: item.Phone?.replace(/=\"|\\"/g, "").replace(/^=/, "").replace(/"$/, "")
       }));
     // console.log("Report:", response);
     if (response.status === 200 && response.data) {
