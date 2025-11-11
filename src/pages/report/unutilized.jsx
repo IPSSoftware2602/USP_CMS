@@ -224,7 +224,7 @@ useEffect(() => {
           }
           noDataComponent={
             <div className="text-center py-8 text-gray-500">
-              No Order Report found
+              No Unutilized Voucher Report found
             </div>
           }
         />
