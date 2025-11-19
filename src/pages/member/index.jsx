@@ -224,7 +224,7 @@ const MemberPage = () => {
   //   }
   // };
 
-  const fetchCustomers = async (page = 1, limit = 25) => {
+  const fetchCustomers = async (page = 1, limit = 20) => {
   try {
     setLoading(true);
 
@@ -255,7 +255,7 @@ const MemberPage = () => {
     setFilteredCustomerData(result.data || []);
     setTotalRows(result.total || 0);
     setPage(result.page || 1);
-    setLimit(result.limit || 25);
+    setLimit(result.limit || 20);
   } catch (error) {
     console.error("Error fetching customers:", error);
     toast.error("Failed to load customer list");
