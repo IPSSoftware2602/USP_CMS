@@ -165,6 +165,28 @@ const reportService = {
       throw error;
     }
   },
+  exportReport: async (params = {}) => {
+  try {
+    const response = await fetch(`${BASE_URL}report/financereport`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...getAuthHeaders(),
+      },
+      body: JSON.stringify(params),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Export failed: HTTP ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Error exporting report:", error);
+    throw error;
+  }
+},
+
 
   getOrderReport: async (searchParams = {}) => {
     try {
