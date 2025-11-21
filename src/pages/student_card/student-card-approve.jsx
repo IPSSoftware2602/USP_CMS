@@ -148,7 +148,7 @@ const StudentCardApproval = () => {
       <div className="mb-4">
         <label className="block font-semibold mb-1">Student ID Image:</label>
         <img
-          src={`${studentCard.student_id_image}`}
+          src={`${studentCard.student_id_image_url}`}
           alt="Student ID"
           style={{ width: "300px", height: "auto" }}
         />
