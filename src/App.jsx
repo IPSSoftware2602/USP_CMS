@@ -144,7 +144,10 @@ import CsvExport from "./pages/csv/index";
 import SalesReport from "./pages/report/sales";
 import PromoReport from "./pages/report/promo";
 import ProductReport from "./pages/report/product";
-
+import OrderReport from "./pages/report/order";
+import WalletReport from "./pages/report/wallet";
+import PointReport from "./pages/report/point";
+import UnutilizedReport from "./pages/report/unutilized";
 
 function App() {
   const navigate = useNavigate();
@@ -335,6 +338,10 @@ function App() {
               <Route path="sales" element={<SalesReport />} />
               <Route path="promo" element={<PromoReport />} />
               <Route path="product" element={<ProductReport />} />
+              <Route path="order" element={<OrderReport />} />
+              <Route path="wallet" element={<WalletReport />} />
+              <Route path="point" element={<PointReport />} />
+              <Route path="unutilized" element={<UnutilizedReport />} />
             </Route>
 
             {/* Components pages */}

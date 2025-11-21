@@ -76,6 +76,13 @@ const StudentCard = () => {
       center: true,
     },
     {
+      name: 'Birthday',
+      selector: row => row.birthday,
+      sortable: true,
+      minWidth: '150px',
+      center: true,
+    },
+    {
       name: 'Status',
       selector: row => row.status,
       sortable: true,

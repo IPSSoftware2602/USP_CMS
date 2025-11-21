@@ -743,6 +743,7 @@ const EditOutletForm = () => {
     const fd = new FormData();
 
     // Basic fields (strings/numbers)
+    // fd.append("status", formData.status || "active");
     fd.append("title", formData.outletName || "");
     fd.append("email", formData.outletEmail || "");
     fd.append("phone", formData.outletContact || "");
@@ -936,6 +937,23 @@ const EditOutletForm = () => {
     });
   };
 
+  // const handleMultiSelect2 = (field, value) => {
+  //   setFormData((prev) => {
+  //     let processedValue = value;
+
+  //     if (field === "serveMethods") {
+  //       processedValue = value.toLowerCase().replace("-", "");
+  //     }
+
+  //     return {
+  //       ...prev,
+  //       [field]: prev[field].includes(processedValue)
+  //         ? prev[field].filter((item) => item !== processedValue)
+  //         : [...prev[field], processedValue],
+  //     };
+  //   });
+  // };
+
   const handleOperationHoursChange = (day, field, value, slotIndex = 0) => {
     // console.log("Operation hours changed:", value);
     setFormData((prev) => {
@@ -1018,6 +1036,7 @@ const EditOutletForm = () => {
 
   const serveMethods = ["Dine-In", "Delivery", "Pick-Up"];
   const deliveryOptions = ["Lalamove", "Grab Express", "3rd Party Delivery"];
+  const activeMethods = ["Active", "Inactive"];
 
   if (fetchingData) {
     return (
@@ -1596,6 +1615,52 @@ const EditOutletForm = () => {
           </div>
         </div>
 
+        {/* Outlet Settings Section */}
+        <div>
+          <div className="bg-indigo-900 text-center py-2 mb-6">
+            <h3 className="text-lg text-white font-semibold">OUTLET SETTINGS</h3>
+          </div>
+
+          <div className="space-y-4 grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Outlet Status
+              </label>
+              <div className="flex items-center space-x-6">
+                {/* Active Checkbox */}
+                <label className="flex items-center space-x-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={formData.status === "active"}
+                    onChange={() =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        status: prev.status === "active" ? "inactive" : "active",
+                      }))
+                    }
+                    className="rounded"
+                  />
+                  <span className="text-md">Active</span>
+                </label>
+                {/* Inactive Checkbox */}
+                <label className="flex items-center space-x-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={formData.status === "inactive"}
+                    onChange={() =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        status: prev.status === "inactive" ? "active" : "inactive",
+                      }))
+                    }
+                    className="rounded"
+                  />
+                  <span className="text-md">Inactive</span>
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
         <div className="flex justify-end">
           <button className="px-8 py-3 bg-indigo-900 text-white rounded-lg hover:bg-indigo-800 transition-colors">
             Save Changes
