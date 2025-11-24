@@ -2,8 +2,8 @@ import React, { lazy, Suspense, useEffect } from "react";
 import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import { useSelector } from 'react-redux';
 // import { toast } from "react-toastify";
-import { useSessionManager } from "./hooks/useSessionManager";
-import SessionWarningModal from "./pages/components/sessionWarningModal";
+// import { useSessionManager } from "./hooks/useSessionManager";
+// import SessionWarningModal from "./pages/components/sessionWarningModal";
 import AuthInterceptor from "./components/authinterceptor";
 
 // home pages & dashboard
@@ -152,30 +152,30 @@ import UnutilizedReport from "./pages/report/unutilized";
 function App() {
   const navigate = useNavigate();
   const { isAuth } = useSelector(state => state.auth);
-  const {
-    showWarning,
-    timeLeft,
-    timeLeftMs,
-    expirationInfo,
-    checkAutoLogin,
-    extendSession,
-    handleLogout,
-    handleSessionExpiry, // Make sure this is destructured from useSessionManager
-    checkSession // Make sure this is destructured from useSessionManager
-  } = useSessionManager();
+  // const {
+  //   showWarning,
+  //   timeLeft,
+  //   timeLeftMs,
+  //   expirationInfo,
+  //   checkAutoLogin,
+  //   extendSession,
+  //   handleLogout,
+  //   handleSessionExpiry, // Make sure this is destructured from useSessionManager
+  //   checkSession // Make sure this is destructured from useSessionManager
+  // } = useSessionManager();
 
-  useEffect(() => {
-    console.log('App mounted, checking auto login...');
-    if (!isAuth) {
-      const autoLoggedIn = checkAutoLogin();
-      if (autoLoggedIn) {
-        console.log('Auto login successful, navigating to dashboard');
-        navigate("/dashboard");
-      } else {
-        navigate("/login");
-      }
-    }
-  }, []);
+  // useEffect(() => {
+  //   console.log('App mounted, checking auto login...');
+  //   if (!isAuth) {
+  //     const autoLoggedIn = checkAutoLogin();
+  //     if (autoLoggedIn) {
+  //       console.log('Auto login successful, navigating to dashboard');
+  //       navigate("/dashboard");
+  //     } else {
+  //       navigate("/login");
+  //     }
+  //   }
+  // }, []);
 
 
   useEffect(() => {
@@ -393,13 +393,13 @@ function App() {
           />
         </Routes>
 
-        <SessionWarningModal
+        {/* <SessionWarningModal
           isOpen={showWarning}
           timeLeft={timeLeft}
           timeLeftMs={timeLeftMs}
           onExtend={extendSession}
           onLogout={handleLogout}
-        />
+        /> */}
       </APIProvider>
     </main>
   );
