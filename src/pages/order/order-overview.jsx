@@ -1041,8 +1041,8 @@ const OrderOverview = () => {
                   </span>
                 </div>
 
-                {order.order_type === "Delivery" && order.customer_address && (
-                  <div>
+                {order.order_type === "delivery" && order.customer_address && (
+                  <div className="flex justify-between">
                     <p className="text-gray-600 mb-1">Delivery Address</p>
                     <p className="font-medium text-sm">
                       {order.customer_address}
