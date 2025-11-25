@@ -301,7 +301,7 @@ const OrderPending = () => {
   }, []);
 
   const user_id = userData?.user?.user_id || null;
-  // const outlet_id = userData?.user?.outlet_id || null;
+  const outlet_id = userData?.user?.outlet_id || null;
 
   const navigate = useNavigate();
 
@@ -323,7 +323,8 @@ const OrderPending = () => {
         `${VITE_API_BASE_URL}/order/list`,
         {
           params: {
-            user_id,
+            user_id: user_id,
+            outlet_id: outlet_id,
             status: "pending", // ✅ directly request pending orders
             page,
             per_page: perPage,
