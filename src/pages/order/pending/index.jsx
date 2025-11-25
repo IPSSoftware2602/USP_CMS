@@ -301,16 +301,16 @@ const OrderPending = () => {
   }, []);
 
   const user_id = userData?.user?.user_id || null;
-  const outlet_id = userData?.user?.outlet_id || null;
+  // const outlet_id = userData?.user?.outlet_id || null;
 
   const navigate = useNavigate();
 
   // Load initial data
   useEffect(() => {
-    if (user_id && outlet_id) {
+    if (user_id) {
       loadOrders();
     }
-  }, [user_id, outlet_id]);
+  }, [user_id]);
 
   const loadOrders = async (filters = {}, page = 1, perPage = 1000) => {
     setLoading(true);
@@ -323,8 +323,7 @@ const OrderPending = () => {
         `${VITE_API_BASE_URL}/order/list`,
         {
           params: {
-            user_id: user_id,
-            outlet_id: outlet_id,
+            user_id,
             status: "pending", // ✅ directly request pending orders
             page,
             per_page: perPage,
