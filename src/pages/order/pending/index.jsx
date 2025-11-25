@@ -320,7 +320,7 @@ const OrderPending = () => {
       const token = sessionStorage.getItem("token");
 
       const response = await axios.get(
-        `${VITE_API_BASE_URL}order/list`,
+        `${VITE_API_BASE_URL}/order/list`,
         {
           params: {
             user_id: user_id,

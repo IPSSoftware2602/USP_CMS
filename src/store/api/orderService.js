@@ -16,6 +16,7 @@ export const orderService = {
         ...(filters.payment_status ? { payment_status: filters.payment_status } : {}),
         ...(filters.payment_method ? { payment_method: filters.payment_method } : {}),
         ...(filters.search ? { search: filters.search } : {}),
+        ...(filters.outlet_id ? { outlet_id: filters.outlet_id } : {}),
       });
 
       const response = await fetch(`${VITE_API_BASE_URL}order/list?${params}`, {
