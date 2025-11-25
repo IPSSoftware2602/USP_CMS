@@ -272,7 +272,7 @@ export const orderService = {
       throw new Error('No authentication token found');
     }
 
-    const res = await fetch(`${API_BASE_URL}order/cancel-order/${order_id}`, {
+    const res = await fetch(`${VITE_API_BASE_URL}order/cancel-order/${order_id}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
