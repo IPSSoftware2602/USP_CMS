@@ -317,6 +317,7 @@ const OrderList = () => {
   }, []);
 
   const user_id = userData?.user?.user_id || null;
+  const outlet_id = userData?.user?.outlet_id || null;
 
     const exportToCSV = async () => {
       if (isDisabled) return;
@@ -363,7 +364,8 @@ const OrderList = () => {
   const startTime = Date.now();
 
     try {
-      const result = await orderService.getCustomerOrderList(user_id, filters, page, perPage);
+      const filtersWithOutlet = { ...filters, outlet_id };
+      const result = await orderService.getCustomerOrderList(user_id, filtersWithOutlet, page, perPage);
       const orders = result.data || [];
 
       // Transform your order data
@@ -759,6 +761,7 @@ const OrderList = () => {
       payment_status: filters.paymentStatus || "",
       payment_method: filters.paymentMethod || "",
       search: filters.search || "",
+      outlet_id: outlet_id || "",
     };
 
     setActiveFilters(backendFilters);
