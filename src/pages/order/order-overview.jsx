@@ -722,7 +722,11 @@ const OrderOverview = () => {
                         order.status === "ready_to_pickup") &&
                         order.updated_at && (
                           <p className="text-sm text-gray-500">
-                            {formatDate(order.updated_at)}
+                            {order.status === "completed" && order.order_type === "delivery"
+                              ? formatDate(order.deliveries?.[0]?.updated_at)
+                              : order.status === "pending" && order.order_type === "delivery"
+                              ? formatDate(order.payments?.[0]?.paid_at)
+                              : formatDate(order.updated_at)}
                           </p>
                         )}
                     </div>
