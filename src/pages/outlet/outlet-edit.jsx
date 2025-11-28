@@ -83,6 +83,10 @@ const EditOutletForm = () => {
   const [geocodeTimeout, setGeocodeTimeout] = useState(null);
   const [hasDineIn, setHasDineIn] = useState(false);
 
+  const auth = JSON.parse(localStorage.getItem("user"));
+  const currentUserId = auth?.user?.user_id;
+  const isSuperAdmin = String(currentUserId) === "1";
+
   useEffect(() => {
     if (id) {
       fetchOutletData();
@@ -1175,13 +1179,15 @@ const EditOutletForm = () => {
               <input
                 type="text"
                 placeholder="Enter Zeoniq code..."
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className={`w-full px-3 py-2 border rounded-lg focus:outline-none ${
+                  isSuperAdmin
+                    ? "border-gray-300 focus:ring-indigo-500"
+                    : "bg-gray-100 border-gray-200 cursor-not-allowed text-gray-500"
+                }`}
                 value={formData.outletZeoniqCode}
+                readOnly={!isSuperAdmin}
                 onChange={(e) =>
-                  handleInputChange(
-                    "outletZeoniqCode",
-                    e.target.value
-                  )
+                  isSuperAdmin && handleInputChange("outletZeoniqCode", e.target.value)
                 }
               />
             </div>
