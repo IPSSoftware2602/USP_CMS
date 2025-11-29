@@ -118,9 +118,8 @@ const ChangeOutletModal = ({
           <button
             onClick={onConfirm}
             disabled={loading}
-            className={`px-4 py-2 bg-indigo-700 hover:bg-indigo-600 text-white rounded ${
-              loading && "opacity-70 cursor-not-allowed"
-            }`}
+            className={`px-4 py-2 bg-indigo-700 hover:bg-indigo-600 text-white rounded ${loading && "opacity-70 cursor-not-allowed"
+              }`}
           >
             {loading ? "Updating..." : "Confirm"}
           </button>
@@ -149,7 +148,7 @@ const OrderOverview = () => {
   const handleOpenOutletModal = async () => {
     try {
       const userObj = JSON.parse(localStorage.getItem("user"));
-      const userId = userObj?.user?.user_id; 
+      const userId = userObj?.user?.user_id;
       if (!userId) {
         toast.error("User not logged in or ID missing");
         return;
@@ -452,17 +451,16 @@ const OrderOverview = () => {
           <div className="flex gap-2">
             {getStatusBadge(order.status)}
             <span
-              className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium text-white ${
-                order.order_type?.toLowerCase() === "delivery"
+              className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium text-white ${order.order_type?.toLowerCase() === "delivery"
                   ? "bg-blue-600"
                   : "bg-purple-600"
-              }`}
+                }`}
             >
               {order.order_type
                 ? order.order_type
-                    .split("-") // Split by dashes
-                    .map((word) => word.charAt(0).toUpperCase() + word.slice(1)) // Capitalize each word
-                    .join(" ") // Join with spaces
+                  .split("-") // Split by dashes
+                  .map((word) => word.charAt(0).toUpperCase() + word.slice(1)) // Capitalize each word
+                  .join(" ") // Join with spaces
                 : "N/A"}
             </span>
             {getPaymentStatusBadge(order.payment_status)}
@@ -632,21 +630,19 @@ const OrderOverview = () => {
                   <div className="flex items-start">
                     <div className="flex flex-col items-center mr-4">
                       <div
-                        className={`w-4 h-4 rounded-full mt-1 ${
-                          order.payment_status === "paid"
+                        className={`w-4 h-4 rounded-full mt-1 ${order.payment_status === "paid"
                             ? "bg-green-500"
                             : "bg-gray-300"
-                        }`}
+                          }`}
                       ></div>
                       <div className="w-px h-full bg-gray-300"></div>
                     </div>
                     <div className="flex-1">
                       <p
-                        className={`font-medium ${
-                          order.payment_status === "paid"
+                        className={`font-medium ${order.payment_status === "paid"
                             ? "text-green-600"
                             : "text-gray-500"
-                        }`}
+                          }`}
                       >
                         Payment{" "}
                         {order.payment_status === "paid"
@@ -665,54 +661,52 @@ const OrderOverview = () => {
                   <div className="flex items-start">
                     <div className="flex flex-col items-center mr-4">
                       <div
-                        className={`w-4 h-4 rounded-full mt-1 ${
-                          order.status === "completed"
+                        className={`w-4 h-4 rounded-full mt-1 ${order.status === "completed"
                             ? "bg-green-500"
                             : order.status === "cancelled"
-                            ? "bg-red-500"
-                            : order.status === "on_the_way"
-                            ? "bg-blue-500"
-                            : order.status === "picked_up"
-                            ? "bg-purple-500"
-                            : order.status === "pending"
-                            ? "bg-yellow-500"
-                            : order.status === "ready_to_pickup"
-                            ? "bg-indigo-500"
-                            : "bg-gray-300"
-                        }`}
+                              ? "bg-red-500"
+                              : order.status === "on_the_way"
+                                ? "bg-blue-500"
+                                : order.status === "picked_up"
+                                  ? "bg-purple-500"
+                                  : order.status === "pending"
+                                    ? "bg-yellow-500"
+                                    : order.status === "ready_to_pickup"
+                                      ? "bg-indigo-500"
+                                      : "bg-gray-300"
+                          }`}
                       ></div>
                     </div>
                     <div className="flex-1">
                       <p
-                        className={`font-medium ${
-                          order.status === "completed"
+                        className={`font-medium ${order.status === "completed"
                             ? "text-green-600"
                             : order.status === "cancelled"
-                            ? "text-red-600"
-                            : order.status === "on_the_way"
-                            ? "text-blue-600"
-                            : order.status === "picked_up"
-                            ? "text-purple-600"
-                            : order.status === "pending"
-                            ? "text-yellow-600"
-                            : order.status === "ready_to_pickup"
-                            ? "text-indigo-600"
-                            : "text-gray-500"
-                        }`}
+                              ? "text-red-600"
+                              : order.status === "on_the_way"
+                                ? "text-blue-600"
+                                : order.status === "picked_up"
+                                  ? "text-purple-600"
+                                  : order.status === "pending"
+                                    ? "text-yellow-600"
+                                    : order.status === "ready_to_pickup"
+                                      ? "text-indigo-600"
+                                      : "text-gray-500"
+                          }`}
                       >
                         {order.status === "completed"
                           ? "Order Completed"
                           : order.status === "cancelled"
-                          ? "Order Cancelled"
-                          : order.status === "on_the_way"
-                          ? "Delivering"
-                          : order.status === "picked_up"
-                          ? "Picked Up"
-                          : order.status === "pending"
-                          ? "Preparing Order"
-                          : order.status === "ready_to_pickup"
-                          ? "Ready For Pickup"
-                          : "Order In Progress"}
+                            ? "Order Cancelled"
+                            : order.status === "on_the_way"
+                              ? "Delivering"
+                              : order.status === "picked_up"
+                                ? "Picked Up"
+                                : order.status === "pending"
+                                  ? "Preparing Order"
+                                  : order.status === "ready_to_pickup"
+                                    ? "Ready For Pickup"
+                                    : "Order In Progress"}
                       </p>
                       {(order.status === "completed" ||
                         order.status === "cancelled" ||
@@ -725,8 +719,8 @@ const OrderOverview = () => {
                             {order.status === "completed" && order.order_type === "delivery"
                               ? formatDate(order.deliveries?.[0]?.updated_at)
                               : order.status === "pending" && order.order_type === "delivery"
-                              ? formatDate(order.payments?.[0]?.paid_at)
-                              : formatDate(order.updated_at)}
+                                ? formatDate(order.payments?.[0]?.paid_at)
+                                : formatDate(order.updated_at)}
                           </p>
                         )}
                     </div>
@@ -769,7 +763,7 @@ const OrderOverview = () => {
                       <div className="flex justify-between items-center">
                         <span className="text-gray-600">Tracking Link</span>
                         {order.lalamove_quot_id == null &&
-                        order.grab_quot_id == null ? (
+                          order.grab_quot_id == null ? (
                           <button
                             className="text-indigo-600 hover:text-indigo-800"
                             onClick={handleTrackingLink}
@@ -834,7 +828,7 @@ const OrderOverview = () => {
                 <span className="font-medium">
                   {order.payments[0]?.payment_method
                     ? order.payments[0].payment_method.charAt(0).toUpperCase() +
-                      order.payments[0].payment_method.slice(1)
+                    order.payments[0].payment_method.slice(1)
                     : "-"}
                 </span>
               </div>
@@ -865,8 +859,8 @@ const OrderOverview = () => {
                   <span className="font-medium">
                     {order.selected_date
                       ? `${order.selected_date}  ${formatTime(
-                          order.selected_time
-                        )}`
+                        order.selected_time
+                      )}`
                       : "ASAP"}
                   </span>
                   {(isAdmin || hasUpdatePermission) && (
@@ -888,12 +882,12 @@ const OrderOverview = () => {
                       order.status === "on_the_way"
                         ? "Delivering"
                         : order.status
-                            .split("_") // Split by underscores
-                            .map(
-                              (word) =>
-                                word.charAt(0).toUpperCase() + word.slice(1)
-                            ) // Capitalize each word
-                            .join(" ") // Join with spaces instead of underscores
+                          .split("_") // Split by underscores
+                          .map(
+                            (word) =>
+                              word.charAt(0).toUpperCase() + word.slice(1)
+                          ) // Capitalize each word
+                          .join(" ") // Join with spaces instead of underscores
                     }
                   </span>
                   {(isAdmin || hasUpdatePermission) && (
@@ -911,7 +905,7 @@ const OrderOverview = () => {
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600">Tracking Link</span>
                   {order.lalamove_quot_id == null &&
-                  order.grab_quot_id == null ? (
+                    order.grab_quot_id == null ? (
                     (isAdmin || hasUpdatePermission) && (
                       <button
                         className="text-indigo-600 hover:text-indigo-800"
@@ -965,7 +959,7 @@ const OrderOverview = () => {
                           // Extract error message from API
                           const apiMessage =
                             err?.response?.data?.messages?.error ||
-                            err?.response?.data?.message || 
+                            err?.response?.data?.message ||
                             err?.message ||
                             "Failed to cancel delivery order.";
 
@@ -1002,7 +996,7 @@ const OrderOverview = () => {
                           );
                           console.log(
                             res?.message ||
-                              "Delivery order cancelled successfully."
+                            "Delivery order cancelled successfully."
                           );
                           toast.success(
                             "Delivery order cancelled successfully.",
@@ -1059,7 +1053,7 @@ const OrderOverview = () => {
                   </span>
                 </div>
 
-                 {order.order_type === "delivery" && order.customer_address && (
+                {order.order_type === "delivery" && order.customer_address && (
                   <div className="flex justify-between">
                     <p className="text-gray-600 mb-1">Delivery Address</p>
                     <p className="font-medium text-sm">
@@ -1154,18 +1148,18 @@ const OrderOverview = () => {
         </div>
       </div>
       <ChangeOutletModal
-  open={showOutletModal}
-  onClose={() => setShowOutletModal(false)}
-  outlets={outlets}
-  selectedOutlet={selectedOutlet}
-  onSelect={setSelectedOutlet}
-  onConfirm={handleChangeOutlet}
-  loading={isChangingOutlet}
-/>
-    
+        open={showOutletModal}
+        onClose={() => setShowOutletModal(false)}
+        outlets={outlets}
+        selectedOutlet={selectedOutlet}
+        onSelect={setSelectedOutlet}
+        onConfirm={handleChangeOutlet}
+        loading={isChangingOutlet}
+      />
+
     </div>
-    
-    
+
+
   );
 };
 

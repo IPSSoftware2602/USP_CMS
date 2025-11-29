@@ -87,7 +87,6 @@ const EditOutletForm = () => {
   const currentUserId = auth?.user?.user_id;
   const isSuperAdmin = String(currentUserId) === "1";
 
-
   useEffect(() => {
     if (id) {
       fetchOutletData();
@@ -710,112 +709,112 @@ const EditOutletForm = () => {
   };
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
-  setError("");
-  setSuccess("");
+    e.preventDefault();
+    setError("");
+    setSuccess("");
 
-  if (!formData.outletName?.trim()) return setError("Outlet name is required");
-  if (!formData.outletEmail?.trim()) return setError("Outlet email is required");
-  if (!formData.outletContact?.trim()) return setError("Outlet contact is required");
-  if (formData.outletPassword && formData.outletPassword !== formData.outletPasswordConfirmation) {
-    return setError("Passwords do not match");
-  }
-
-  try {
-    setLoading(true);
-
-    // Build operatingDays & operatingHours
-    const operatingDays = {};
-    const operatingHours = {};
-    Object.entries(formData.operationHours).forEach(([dayName, dayData]) => {
-      operatingDays[dayName] = { is_operated: !!dayData.is_operated };
-      operatingHours[dayName] = (dayData.slots || []).map((slot) => ({
-        start_time: slot.opening ? `${slot.opening}:00` : "",
-        end_time: slot.closing ? `${slot.closing}:00` : "",
-      }));
-    });
-
-    // Taxes
-    const outletTax = [];
-    if (formData.applySst === "Yes") outletTax.push({ tax_id: 1 });
-    if (formData.applyServiceTax === "Yes") outletTax.push({ tax_id: 2 });
-
-    // Split images into existing vs new
-    const existingImages = (images || []).filter((img) => img.existing && img.id);
-    const newImages = (images || []).filter((img) => !img.existing && img.file instanceof File);
-
-    // Build FormData
-    const fd = new FormData();
-
-    // Basic fields (strings/numbers)
-    // fd.append("status", formData.status || "active");
-    fd.append("title", formData.outletName || "");
-    fd.append("email", formData.outletEmail || "");
-    fd.append("phone", formData.outletContact || "");
-    fd.append("address", formData.outletAddress || "");
-    fd.append("state", formData.outletState || "");
-    fd.append("postal_code", formData.outletPostcode || "");
-    fd.append("country", "Malaysia");
-    // numeric-ish: fallback to "0" (CI4 validation requires numeric)
-    fd.append("latitude", formData.outletLatitude?.toString() || "0");
-    fd.append("longitude", formData.outletLongitude?.toString() || "0");
-    fd.append("serve_method", (formData.serveMethods || []).join(","));
-    fd.append("delivery_options", (formData.deliveryOptions || []).join(","));
-    fd.append("outlet_delivery_coverage", (formData.deliveryRange ?? 0).toString());
-    fd.append("order_max_per_hour", (formData.orderSlots ?? 0).toString());
-    fd.append("item_max_per_hour", (formData.pizzaSlots ?? 0).toString());
-    fd.append("status", formData.status || "active");
-    fd.append("zeoniq_loc_code", formData.outletZeoniqCode || "");
-
-    // Optional password
-    if (formData.outletPassword?.trim()) {
-      fd.append("password", formData.outletPassword.trim());
+    if (!formData.outletName?.trim()) return setError("Outlet name is required");
+    if (!formData.outletEmail?.trim()) return setError("Outlet email is required");
+    if (!formData.outletContact?.trim()) return setError("Outlet contact is required");
+    if (formData.outletPassword && formData.outletPassword !== formData.outletPasswordConfirmation) {
+      return setError("Passwords do not match");
     }
 
-    // ===== CHANGES START HERE =====
+    try {
+      setLoading(true);
 
-    // Complex objects — backend expects [0], so wrap in single-element array
-    fd.append("outlet_tax", JSON.stringify(outletTax));
-    fd.append("outlet_operating_days", JSON.stringify([operatingDays]));   // <—
-    fd.append("outlet_operating_hours", JSON.stringify([operatingHours])); // <—
+      // Build operatingDays & operatingHours
+      const operatingDays = {};
+      const operatingHours = {};
+      Object.entries(formData.operationHours).forEach(([dayName, dayData]) => {
+        operatingDays[dayName] = { is_operated: !!dayData.is_operated };
+        operatingHours[dayName] = (dayData.slots || []).map((slot) => ({
+          start_time: slot.opening ? `${slot.opening}:00` : "",
+          end_time: slot.closing ? `${slot.closing}:00` : "",
+        }));
+      });
 
-    // Menu items — backend expects array, not JSON
-    // selectedMenuItems can be ids or objects; normalize to ids:
-    const menuIds = (selectedMenuItems || []).map((m) => (typeof m === "object" ? (m.id ?? m) : m)).filter(Boolean);
-    if (menuIds.length) {
-      menuIds.forEach((id) => fd.append("outlet_menu[]", String(id)));     // <—
-    } else {
-      // optional: if you want "delete all" behavior even when empty
-      // fd.append("outlet_menu[]", "");
+      // Taxes
+      const outletTax = [];
+      if (formData.applySst === "Yes") outletTax.push({ tax_id: 1 });
+      if (formData.applyServiceTax === "Yes") outletTax.push({ tax_id: 2 });
+
+      // Split images into existing vs new
+      const existingImages = (images || []).filter((img) => img.existing && img.id);
+      const newImages = (images || []).filter((img) => !img.existing && img.file instanceof File);
+
+      // Build FormData
+      const fd = new FormData();
+
+      // Basic fields (strings/numbers)
+      // fd.append("status", formData.status || "active");
+      fd.append("title", formData.outletName || "");
+      fd.append("email", formData.outletEmail || "");
+      fd.append("phone", formData.outletContact || "");
+      fd.append("address", formData.outletAddress || "");
+      fd.append("state", formData.outletState || "");
+      fd.append("postal_code", formData.outletPostcode || "");
+      fd.append("country", "Malaysia");
+      // numeric-ish: fallback to "0" (CI4 validation requires numeric)
+      fd.append("latitude", formData.outletLatitude?.toString() || "0");
+      fd.append("longitude", formData.outletLongitude?.toString() || "0");
+      fd.append("serve_method", (formData.serveMethods || []).join(","));
+      fd.append("delivery_options", (formData.deliveryOptions || []).join(","));
+      fd.append("outlet_delivery_coverage", (formData.deliveryRange ?? 0).toString());
+      fd.append("order_max_per_hour", (formData.orderSlots ?? 0).toString());
+      fd.append("item_max_per_hour", (formData.pizzaSlots ?? 0).toString());
+      fd.append("status", formData.status || "active");
+      fd.append("zeoniq_loc_code", formData.outletZeoniqCode || "");
+
+      // Optional password
+      if (formData.outletPassword?.trim()) {
+        fd.append("password", formData.outletPassword.trim());
+      }
+
+      // ===== CHANGES START HERE =====
+
+      // Complex objects — backend expects [0], so wrap in single-element array
+      fd.append("outlet_tax", JSON.stringify(outletTax));
+      fd.append("outlet_operating_days", JSON.stringify([operatingDays]));   // <—
+      fd.append("outlet_operating_hours", JSON.stringify([operatingHours])); // <—
+
+      // Menu items — backend expects array, not JSON
+      // selectedMenuItems can be ids or objects; normalize to ids:
+      const menuIds = (selectedMenuItems || []).map((m) => (typeof m === "object" ? (m.id ?? m) : m)).filter(Boolean);
+      if (menuIds.length) {
+        menuIds.forEach((id) => fd.append("outlet_menu[]", String(id)));     // <—
+      } else {
+        // optional: if you want "delete all" behavior even when empty
+        // fd.append("outlet_menu[]", "");
+      }
+
+      // Existing image ids (array)
+      existingImages.forEach((img) => {
+        fd.append("existing_image[]", String(img.id));
+      });
+
+      // New images (files) — IMPORTANT: use [] name for multiple
+      newImages.forEach((img, idx) => {
+        fd.append("outlet_images[]", img.file, img.file.name || `outlet_${idx}.jpg`);
+      });
+
+      removedImages.forEach((id) => {
+        fd.append("delete_image[]", String(id));
+      });
+
+      // Send (service will pass-through FormData unchanged)
+      console.log("Submitting updated outlet data...", fd);
+      const res = await OutletService.updateOutlet(id, fd);
+
+      setSuccess("Outlet updated successfully!");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } catch (err) {
+      console.error("Error updating outlet:", err);
+      setError("Failed to update outlet: " + (err?.message || "Unknown error"));
+    } finally {
+      setLoading(false);
     }
-
-    // Existing image ids (array)
-    existingImages.forEach((img) => {
-      fd.append("existing_image[]", String(img.id));
-    });
-
-    // New images (files) — IMPORTANT: use [] name for multiple
-    newImages.forEach((img, idx) => {
-      fd.append("outlet_images[]", img.file, img.file.name || `outlet_${idx}.jpg`);
-    });
-
-    removedImages.forEach((id) => {
-      fd.append("delete_image[]", String(id));
-    });
-
-    // Send (service will pass-through FormData unchanged)
-    console.log("Submitting updated outlet data...", fd);
-    const res = await OutletService.updateOutlet(id, fd);
-
-    setSuccess("Outlet updated successfully!");
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  } catch (err) {
-    console.error("Error updating outlet:", err);
-    setError("Failed to update outlet: " + (err?.message || "Unknown error"));
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
 
   useEffect(() => {
@@ -1180,11 +1179,10 @@ const EditOutletForm = () => {
               <input
                 type="text"
                 placeholder="Enter Zeoniq code..."
-                className={`w-full px-3 py-2 border rounded-lg focus:outline-none ${
-                  isSuperAdmin
+                className={`w-full px-3 py-2 border rounded-lg focus:outline-none ${isSuperAdmin
                     ? "border-gray-300 focus:ring-indigo-500"
                     : "bg-gray-100 border-gray-200 cursor-not-allowed text-gray-500"
-                }`}
+                  }`}
                 value={formData.outletZeoniqCode}
                 readOnly={!isSuperAdmin}
                 onChange={(e) =>
@@ -1280,22 +1278,20 @@ const EditOutletForm = () => {
                 <div className="flex bg-gray-100 border-b">
                   <button
                     type="button"
-                    className={`px-4 py-2 text-sm ${
-                      mapType === "roadmap"
+                    className={`px-4 py-2 text-sm ${mapType === "roadmap"
                         ? "bg-white text-black"
                         : "text-gray-600"
-                    }`}
+                      }`}
                     onClick={() => handleMapTypeChange("roadmap")}
                   >
                     Map
                   </button>
                   <button
                     type="button"
-                    className={`px-4 py-2 text-sm ${
-                      mapType === "satellite"
+                    className={`px-4 py-2 text-sm ${mapType === "satellite"
                         ? "bg-white text-black"
                         : "text-gray-600"
-                    }`}
+                      }`}
                     onClick={() => handleMapTypeChange("satellite")}
                   >
                     Satellite
