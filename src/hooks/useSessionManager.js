@@ -16,7 +16,7 @@ export const useSessionManager = () => {
   const [dismissed, setDismissed] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
   // ...existing code...
-const { expired } = useSelector(state => state.auth);
+  const { expired } = useSelector(state => state.auth);
 
 const checkSession = useCallback(() => {
   let expireAt = parseInt(sessionStorage.getItem('expireAt'), 10);

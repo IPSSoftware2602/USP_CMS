@@ -16,6 +16,7 @@ export const orderService = {
         ...(filters.payment_status ? { payment_status: filters.payment_status } : {}),
         ...(filters.payment_method ? { payment_method: filters.payment_method } : {}),
         ...(filters.search ? { search: filters.search } : {}),
+        ...(filters.outlet_id ? { outlet_id: filters.outlet_id } : {}),
       });
 
       const response = await fetch(`${VITE_API_BASE_URL}order/list?${params}`, {
@@ -53,7 +54,7 @@ export const orderService = {
       }
 
       const result = await response.json();
-      
+
       if (result.status !== 200) {
         throw new Error(result.message || 'Failed to fetch order');
       }
@@ -92,7 +93,7 @@ export const orderService = {
       }
 
       const result = await response.json();
-      
+
       if (result.status !== 200) {
         throw new Error(result.message || 'Failed to update order schedule');
       }
@@ -130,7 +131,7 @@ export const orderService = {
       }
 
       const result = await response.json();
-      
+
       if (result.status !== 200) {
         throw new Error(result.message || 'Failed to update order status');
       }
@@ -142,41 +143,41 @@ export const orderService = {
     }
   },
 
- createOrderDelivery: async (deliveryData) => {
-  try {
-    const user = JSON.parse(localStorage.getItem('user'));
-    const token = user?.token;
+  createOrderDelivery: async (deliveryData) => {
+    try {
+      const user = JSON.parse(localStorage.getItem('user'));
+      const token = user?.token;
 
-    if (!token) {
-      throw new Error('No authentication token found');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      // Validate required fields
+      if (!deliveryData.order_id || !deliveryData.actual_fee_amount || !deliveryData.tracking_link) {
+        throw new Error('order_id, actual_fee_amount, and tracking_link are required');
+      }
+
+      const response = await fetch(`${VITE_API_BASE_URL}/order/create-deliveries`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(deliveryData)
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || `HTTP error! status: ${response.status}`);
+      }
+
+      return result.data;
+    } catch (error) {
+      console.error('Error creating order delivery:', error);
+      throw error;
     }
-
-    // Validate required fields
-    if (!deliveryData.order_id || !deliveryData.actual_fee_amount || !deliveryData.tracking_link) {
-      throw new Error('order_id, actual_fee_amount, and tracking_link are required');
-    }
-
-    const response = await fetch(`${VITE_API_BASE_URL}/order/create-deliveries`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(deliveryData)
-    });
-
-    const result = await response.json();
-
-    if (!response.ok) {
-      throw new Error(result.message || `HTTP error! status: ${response.status}`);
-    }
-
-    return result.data;
-  } catch (error) {
-    console.error('Error creating order delivery:', error);
-    throw error;
-  }
-},
+  },
 
   getOrderDelivery: async (orderId) => {
     try {
@@ -208,7 +209,7 @@ export const orderService = {
       }
 
       const result = await response.json();
-      
+
       if (result.status !== 200) {
         throw new Error(result.message || 'Failed to fetch order delivery');
       }
@@ -253,7 +254,7 @@ export const orderService = {
       }
 
       const result = await response.json();
-      
+
       if (result.status !== 200) {
         throw new Error(result.message || 'Failed to update order delivery');
       }
@@ -265,14 +266,14 @@ export const orderService = {
     }
   },
 
-   async cancelOrderDelivery(order_id) {
+  async cancelOrderDelivery(order_id) {
     const user = JSON.parse(localStorage.getItem('user'));
     const token = user?.token;
     if (!token) {
       throw new Error('No authentication token found');
     }
 
-    const res = await fetch(`${API_BASE_URL}order/cancel-order/${order_id}`, {
+    const res = await fetch(`${VITE_API_BASE_URL}order/cancel-order/${order_id}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -289,7 +290,15 @@ export const orderService = {
       data = { message: raw };
     }
 
-    if (!res.ok) throw new Error(data?.message || 'Cancel failed');
+    if (!res.ok) {
+      const backendError =
+        data?.messages?.error ||
+        data?.error ||
+        data?.message ||
+        "Cancel failed";
+
+      throw new Error(backendError);
+    }
     return data;
   },
 
@@ -300,7 +309,7 @@ export const orderService = {
       throw new Error('No authentication token found');
     }
 
-    const res = await fetch(`${API_BASE_URL}order/edit-order-outlet/${order_id}`, {
+    const res = await fetch(`${VITE_API_BASE_URL}order/edit-order-outlet/${order_id}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -320,7 +329,7 @@ export const orderService = {
   }
 
 
-  
+
 
 
   // You can add more order-related API calls here as needed

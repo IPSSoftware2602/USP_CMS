@@ -300,6 +300,7 @@ const OrderComfirmed = () => {
   }, []);
 
   const user_id = userData?.user?.user_id || null;
+  const outlet_id = userData?.user?.outlet_id || null;
 
   const navigate = useNavigate();
 
@@ -319,7 +320,8 @@ const OrderComfirmed = () => {
     try {
       const response = await axios.get(`${VITE_API_BASE_URL}/order/list`, {
         params: {
-          user_id: 1,
+          user_id: user_id,
+          outlet_id: outlet_id,
           status: "completed",
           page,
           per_page: perPage,

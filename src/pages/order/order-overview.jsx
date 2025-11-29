@@ -722,7 +722,11 @@ const OrderOverview = () => {
                         order.status === "ready_to_pickup") &&
                         order.updated_at && (
                           <p className="text-sm text-gray-500">
-                            {formatDate(order.updated_at)}
+                            {order.status === "completed" && order.order_type === "delivery"
+                              ? formatDate(order.deliveries?.[0]?.updated_at)
+                              : order.status === "pending" && order.order_type === "delivery"
+                              ? formatDate(order.payments?.[0]?.paid_at)
+                              : formatDate(order.updated_at)}
                           </p>
                         )}
                     </div>
@@ -744,6 +748,18 @@ const OrderOverview = () => {
                     <div className="flex justify-between">
                       <span>Delivery Carrier</span>
                       <span>{order.deliveries[0]?.provider_name || "N/A"}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Driver Name</span>
+                      <span>{order.deliveries[0]?.driver_name || "N/A"}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Driver Phone</span>
+                      <span>{order.deliveries[0]?.driver_phone || "N/A"}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Driver Plate</span>
+                      <span>{order.deliveries[0]?.driver_plate || "N/A"}</span>
                     </div>
                     <div className="flex justify-between">
                       <span>Delivery Fee</span>
@@ -917,7 +933,7 @@ const OrderOverview = () => {
                 </div>
               )}
               {order.order_type?.toLowerCase() === "delivery" &&
-                order.deliveries?.[0]?.provider_name === "Grab" && (
+                (order.deliveries?.[0]?.provider_name === "Grab" || order.deliveries?.[0]?.provider_name === "Lalamove") && (
                   <>
                     <button
                       className="w-full mt-4 bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded font-medium transition-colors"
@@ -933,25 +949,27 @@ const OrderOverview = () => {
                         setIsCancelling(true);
                         try {
                           const local_order_id = order.id;
-                          // console.log('Local Order ID:', local_order_id);
-                          const res = await orderService.cancelOrderDelivery(
-                            local_order_id
-                          );
-                          // console.log(res?.message || 'Delivery order cancelled successfully.');
-                          toast.success(
-                            "Delivery order cancelled successfully.",
-                            "success"
-                          );
-                          // Refresh order details
-                          const updatedOrder = await orderService.getOrderById(
-                            id
-                          );
+
+                          const res = await orderService.cancelOrderDelivery(local_order_id);
+
+                          toast.success("Delivery order cancelled successfully.");
+
+                          // Refresh
+                          const updatedOrder = await orderService.getOrderById(id);
                           setOrder(updatedOrder);
+
                         } catch (err) {
+
                           console.error(err);
-                          console.log(
-                            err?.message || "Failed to cancel Delivery order."
-                          );
+
+                          // Extract error message from API
+                          const apiMessage =
+                            err?.response?.data?.messages?.error ||
+                            err?.response?.data?.message || 
+                            err?.message ||
+                            "Failed to cancel delivery order.";
+
+                          toast.error(apiMessage);
                         } finally {
                           setIsCancelling(false);
                           setShowCancelModal(false);
@@ -961,7 +979,7 @@ const OrderOverview = () => {
                   </>
                 )}
               {order.order_type?.toLowerCase() === "pickup" &&
-                order.deliveries?.[0]?.provider_name === "Grab" && (
+                (order.deliveries?.[0]?.provider_name === "Grab" || order.deliveries?.[0]?.provider_name === "Lalamove") && (
                   <>
                     <button
                       className="w-full mt-4 bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded font-medium transition-colors"
@@ -1041,8 +1059,8 @@ const OrderOverview = () => {
                   </span>
                 </div>
 
-                {order.order_type === "Delivery" && order.customer_address && (
-                  <div>
+                 {order.order_type === "delivery" && order.customer_address && (
+                  <div className="flex justify-between">
                     <p className="text-gray-600 mb-1">Delivery Address</p>
                     <p className="font-medium text-sm">
                       {order.customer_address}

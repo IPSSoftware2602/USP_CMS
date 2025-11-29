@@ -487,6 +487,12 @@ const MemberPage = () => {
       sortable: true,
     },
     {
+      name: "Customer Type",
+      selector: (row) => row.customer_type,
+      minWidth: "280px",
+      sortable: true,
+    },
+    {
       name: "Membership Tier",
       selector: (row) => row.customer_tier_id,
       cell: (row) =>

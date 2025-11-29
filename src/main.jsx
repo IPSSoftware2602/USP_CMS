@@ -5,10 +5,10 @@ import "simplebar-react/dist/simplebar.min.css";
 import "flatpickr/dist/themes/light.css";
 import "../src/assets/scss/app.scss";
 import { BrowserRouter } from "react-router-dom";
-import "react-toastify/dist/ReactToastify.css";
 import { Provider } from "react-redux";
 import store from "./store";
-// import "react-toastify/dist/ReactToastify.css";
+import SessionRoot from "./SessionRoot";
+
 import "./server";
 
 const localToken = localStorage.getItem("user")
@@ -21,11 +21,11 @@ if (!sessionToken && localToken) {
 }
 
 ReactDOM.createRoot(document.getElementById("root")).render(
-  <>
-    <BrowserRouter basename="/cms">
-      <Provider store={store}>
+  <BrowserRouter basename="/cms">
+    <Provider store={store}>
+      <SessionRoot>
         <App />
-      </Provider>
-    </BrowserRouter>
-  </>
+      </SessionRoot>
+    </Provider>
+  </BrowserRouter>
 );
