@@ -87,6 +87,7 @@ const EditOutletForm = () => {
   const currentUserId = auth?.user?.user_id;
   const isSuperAdmin = String(currentUserId) === "1";
 
+
   useEffect(() => {
     if (id) {
       fetchOutletData();
@@ -864,12 +865,13 @@ const EditOutletForm = () => {
         const location = data.results[0].geometry.location;
 
         // console.log("Geocoded location:", location);
-
-        setFormData((prev) => ({
-          ...prev,
-          outletLatitude: location.lat.toFixed(4),
-          outletLongitude: location.lng.toFixed(4),
-        }));
+        if (isNaN(location.lat) || isNaN(location.lng)) {
+          setFormData((prev) => ({
+            ...prev,
+            outletLatitude: location.lat.toFixed(4),
+            outletLongitude: location.lng.toFixed(4),
+          }));
+        }
 
         setMapKey((prev) => prev + 1);
       } else {
