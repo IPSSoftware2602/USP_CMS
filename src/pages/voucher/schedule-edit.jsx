@@ -12,7 +12,7 @@ import "primereact/resources/themes/lara-light-cyan/theme.css";
 const ScheduleEditForm = () => {
   const { scheduleId } = useParams();
   const navigate = useNavigate();
-  
+
   const [formData, setFormData] = useState({
     promo_setting_id: "",
     voucher_schedule_mode: "",
@@ -90,8 +90,8 @@ const ScheduleEditForm = () => {
       console.log('Schedule Details:', scheduleDetails);
 
       const validDateTypes = ['none', 'birth', 'membership', 'birthday', 'join_date'];
-      const dateType = validDateTypes.includes(scheduleDetails.voucher_date_type) 
-        ? scheduleDetails.voucher_date_type 
+      const dateType = validDateTypes.includes(scheduleDetails.voucher_date_type)
+        ? scheduleDetails.voucher_date_type
         : 'none';
 
       let voucherSettings = {};
@@ -104,10 +104,10 @@ const ScheduleEditForm = () => {
         }
       }
 
-      const memberModeArray = scheduleDetails.filter_membership 
+      const memberModeArray = scheduleDetails.filter_membership
         ? scheduleDetails.filter_membership.split(",").map(id => parseInt(id.trim())).filter(id => !isNaN(id))
         : [];
-      const customerModeArray = scheduleDetails.filter_customer_type 
+      const customerModeArray = scheduleDetails.filter_customer_type
         ? scheduleDetails.filter_customer_type.split(",").map(id => parseInt(id.trim())).filter(id => !isNaN(id))
         : [];
 
@@ -174,8 +174,8 @@ const ScheduleEditForm = () => {
 
   useEffect(() => {
     const loadData = async () => {
-      await fetchDropdownData(); 
-      await fetchInitialData(); 
+      await fetchDropdownData();
+      await fetchInitialData();
     };
     loadData();
   }, [scheduleId]);
@@ -187,7 +187,7 @@ const ScheduleEditForm = () => {
 
     if (field === 'promo_setting_id') {
       setFormData(prev => ({ ...prev, [field]: value }));
-      
+
       if (value) {
         promoSettingsService.getById(value)
           .then(response => {
@@ -267,7 +267,9 @@ const ScheduleEditForm = () => {
   const scheduleModeOptions = [
     { value: 'daily', label: 'Daily' },
     { value: 'weekly', label: 'Weekly' },
-    { value: 'monthly', label: 'Monthly' }
+    { value: 'monthly', label: 'Monthly' },
+    { value: 'quarterly', label: 'Quarterly' },
+    { value: 'yearly', label: 'Yearly' }
   ];
 
   const voucherModeOptions = [
@@ -302,27 +304,27 @@ const ScheduleEditForm = () => {
 
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           {/* Voucher Settings */}
-         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Voucher Settings <span className="text-red-500">*</span>
-          </label>
-          <div className="relative">
-            <select
-              value={formData.promo_setting_id}
-              onChange={e => handleInputChange('promo_setting_id', e.target.value)}
-              className={`w-full px-4 py-3 border ${formErrors.promo_setting_id ? 'border-red-500' : 'border-gray-300'} rounded-lg appearance-none bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
-            >
-              <option value="" disabled>Choose</option>
-              {voucherData.map((option) => (
-                <option key={option.id} value={option.id}>
-                  {option.title}
-                </option>
-              ))}
-            </select>
-            <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Voucher Settings <span className="text-red-500">*</span>
+            </label>
+            <div className="relative">
+              <select
+                value={formData.promo_setting_id}
+                onChange={e => handleInputChange('promo_setting_id', e.target.value)}
+                className={`w-full px-4 py-3 border ${formErrors.promo_setting_id ? 'border-red-500' : 'border-gray-300'} rounded-lg appearance-none bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
+              >
+                <option value="" disabled>Choose</option>
+                {voucherData.map((option) => (
+                  <option key={option.id} value={option.id}>
+                    {option.title}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+            </div>
+            {formErrors.promo_setting_id && <p className="mt-1 text-sm text-red-600">{formErrors.promo_setting_id}</p>}
           </div>
-          {formErrors.promo_setting_id && <p className="mt-1 text-sm text-red-600">{formErrors.promo_setting_id}</p>}
-        </div>
 
           {/* Schedule Mode */}
           <div>
@@ -333,9 +335,8 @@ const ScheduleEditForm = () => {
               <select
                 value={formData.voucher_schedule_mode}
                 onChange={e => handleInputChange('voucher_schedule_mode', e.target.value)}
-                className={`w-full px-4 py-3 border rounded-lg appearance-none bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                  formErrors.voucher_schedule_mode ? 'border-red-500' : 'border-gray-300'
-                }`}
+                className={`w-full px-4 py-3 border rounded-lg appearance-none bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${formErrors.voucher_schedule_mode ? 'border-red-500' : 'border-gray-300'
+                  }`}
               >
                 <option value="">Choose Schedule Mode</option>
                 {scheduleModeOptions.map((option) => (
@@ -359,17 +360,15 @@ const ScheduleEditForm = () => {
                 type="date"
                 value={formData.schedule_date}
                 onChange={(e) => handleInputChange('schedule_date', e.target.value)}
-                className={`w-full border rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                  formErrors.schedule_date ? 'border-red-500' : 'border-gray-300'
-                }`}
+                className={`w-full border rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 ${formErrors.schedule_date ? 'border-red-500' : 'border-gray-300'
+                  }`}
               />
               <input
                 type="time"
                 value={formData.schedule_time}
                 onChange={(e) => handleInputChange('schedule_time', e.target.value)}
-                className={`w-full border rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                  formErrors.schedule_time ? 'border-red-500' : 'border-gray-300'
-                }`}
+                className={`w-full border rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 ${formErrors.schedule_time ? 'border-red-500' : 'border-gray-300'
+                  }`}
               />
             </div>
             {(formErrors.schedule_date || formErrors.schedule_time) && (
@@ -492,9 +491,8 @@ const ScheduleEditForm = () => {
               value={formData.quantity}
               onChange={e => handleInputChange('quantity', e.target.value)}
               placeholder="Enter quantity"
-              className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                formErrors.quantity ? 'border-red-500' : 'border-gray-300'
-              }`}
+              className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${formErrors.quantity ? 'border-red-500' : 'border-gray-300'
+                }`}
             />
             {formErrors.quantity && (
               <p className="mt-1 text-sm text-red-600">{formErrors.quantity}</p>

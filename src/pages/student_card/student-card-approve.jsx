@@ -7,7 +7,7 @@ import { VITE_API_BASE_URL } from '../../constant/config';
 const StudentCardApproval = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  
+
   const authToken = sessionStorage.getItem('token');
 
   const [studentCard, setStudentCard] = useState(null);
@@ -97,38 +97,38 @@ const StudentCardApproval = () => {
       </div>
       <div className="mb-4">
         <label className="block font-semibold mb-1">Student ID:</label>
-        <input 
-        type="text" 
-        value={studentCard.student_id} 
-        readOnly 
-        className="w-full border rounded px-3 py-2 bg-gray-100 cursor-not-allowed"
+        <input
+          type="text"
+          value={studentCard.student_id}
+          readOnly
+          className="w-full border rounded px-3 py-2 bg-gray-100 cursor-not-allowed"
         />
       </div>
       <div className="mb-4">
         <label className="block font-semibold mb-1">Institution:</label>
-        <input 
-        type="text" 
-        value={studentCard.institution} 
-        readOnly 
-        className="w-full border rounded px-3 py-2 bg-gray-100 cursor-not-allowed"
+        <input
+          type="text"
+          value={studentCard.institution}
+          readOnly
+          className="w-full border rounded px-3 py-2 bg-gray-100 cursor-not-allowed"
         />
       </div>
       <div className="mb-4">
         <label className="block font-semibold mb-1">Graduate Date:</label>
-        <input 
-        type="text" 
-        value={new Date(studentCard.graduate_date).toLocaleDateString()} 
-        readOnly 
-        className="w-full border rounded px-3 py-2 bg-gray-100 cursor-not-allowed"
+        <input
+          type="text"
+          value={new Date(studentCard.graduate_date).toLocaleDateString()}
+          readOnly
+          className="w-full border rounded px-3 py-2 bg-gray-100 cursor-not-allowed"
         />
       </div>
       <div className="mb-4">
         <label className="block font-semibold mb-1">Birthday:</label>
-        <input 
-        type="text" 
-        value={new Date(studentCard.birthday).toLocaleDateString()} 
-        readOnly 
-        className="w-full border rounded px-3 py-2 bg-gray-100 cursor-not-allowed"
+        <input
+          type="text"
+          value={new Date(studentCard.birthday).toLocaleDateString()}
+          readOnly
+          className="w-full border rounded px-3 py-2 bg-gray-100 cursor-not-allowed"
         />
       </div>
       <div className="mb-4">
@@ -137,18 +137,17 @@ const StudentCardApproval = () => {
           type="text"
           value={studentCard.status}
           readOnly
-          className={`w-full border rounded px-3 py-2 cursor-not-allowed font-semibold capitalize ${
-            studentCard.status === 'approved' ? 'text-green-600 bg-green-100' :
-            studentCard.status === 'pending' ? 'text-yellow-600 bg-yellow-100' :
-            'text-red-600 bg-red-100'
-          }`}
+          className={`w-full border rounded px-3 py-2 cursor-not-allowed font-semibold capitalize ${studentCard.status === 'approved' ? 'text-green-600 bg-green-100' :
+              studentCard.status === 'pending' ? 'text-yellow-600 bg-yellow-100' :
+                'text-red-600 bg-red-100'
+            }`}
         />
       </div>
 
       <div className="mb-4">
         <label className="block font-semibold mb-1">Student ID Image:</label>
         <img
-          src={`${studentCard.student_id_image}`}
+          src={`${studentCard.student_id_image_url}`}
           alt="Student ID"
           style={{ width: "300px", height: "auto" }}
         />
@@ -160,22 +159,20 @@ const StudentCardApproval = () => {
         <button
           onClick={() => updateStatus('approved')}
           disabled={loading || studentCard.status !== 'pending'}
-          className={`flex-1 py-2 rounded font-semibold text-white ${
-            studentCard.status !== 'pending'
+          className={`flex-1 py-2 rounded font-semibold text-white ${studentCard.status !== 'pending'
               ? 'bg-green-300 cursor-not-allowed'
               : 'bg-green-600 hover:bg-green-700'
-          }`}
+            }`}
         >
           Approve
         </button>
         <button
           onClick={() => updateStatus('rejected')}
           disabled={loading || studentCard.status !== 'pending'}
-          className={`flex-1 py-2 rounded font-semibold text-white ${
-            studentCard.status !== 'pending'
+          className={`flex-1 py-2 rounded font-semibold text-white ${studentCard.status !== 'pending'
               ? 'bg-red-300 cursor-not-allowed'
               : 'bg-red-600 hover:bg-red-700'
-          }`}
+            }`}
         >
           Reject
         </button>
