@@ -27,12 +27,12 @@ const AddOutletForm = () => {
   };
 
   function buildOperatingDays(operationHours) {
-  const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-  return days.reduce((acc, day) => {
-    acc[day] = { is_operated: operationHours[day]?.is_operated || false };
-    return acc;
-  }, {});
-}
+    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    return days.reduce((acc, day) => {
+      acc[day] = { is_operated: operationHours[day]?.is_operated || false };
+      return acc;
+    }, {});
+  }
 
 
   useEffect(() => {
@@ -47,15 +47,15 @@ const AddOutletForm = () => {
   }, [images]);
 
   function buildOperatingHours(operationHours) {
-  const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-  return days.reduce((acc, day) => {
-    acc[day] = (operationHours[day]?.slots || []).map(slot => ({
-      start_time: slot.opening,
-      end_time: slot.closing
-    }));
-    return acc;
-  }, {});
-}
+    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    return days.reduce((acc, day) => {
+      acc[day] = (operationHours[day]?.slots || []).map(slot => ({
+        start_time: slot.opening,
+        end_time: slot.closing
+      }));
+      return acc;
+    }, {});
+  }
 
   const [formData, setFormData] = useState({
     outletName: "",
@@ -81,6 +81,16 @@ const AddOutletForm = () => {
     serveMethods: [],
     deliveryOptions: [],
     deliveryRange: "",
+    regularDelivery: {
+      days: {
+        '1': true, '2': true, '3': true, '4': true, '5': false, '6': false, '0': false
+      },
+      startTime: "10:00 AM",
+      endTime: "10:00 PM",
+      interval: 15,
+      maxOrders: 10,
+      leadTime: { day: 0, hour: 0, minute: 45 }
+    },
     reservationSlots: "",
     orderSlots: "",
     pizzaSlots: "",
@@ -106,7 +116,7 @@ const AddOutletForm = () => {
       try {
         const categoriesResponse = await categoryService.getCategories();
         let categoriesData = [];
-        
+
         if (Array.isArray(categoriesResponse)) {
           categoriesData = categoriesResponse;
         } else if (categoriesResponse.data && Array.isArray(categoriesResponse.data)) {
@@ -116,10 +126,10 @@ const AddOutletForm = () => {
         } else if (categoriesResponse.categories && Array.isArray(categoriesResponse.categories)) {
           categoriesData = categoriesResponse.categories;
         }
-        
+
         const itemsResponse = await itemService.getMenuItems();
         let itemsData = [];
-        
+
         if (Array.isArray(itemsResponse)) {
           itemsData = itemsResponse;
         } else if (itemsResponse.data && Array.isArray(itemsResponse.data)) {
@@ -127,9 +137,9 @@ const AddOutletForm = () => {
         } else if (itemsResponse.result && Array.isArray(itemsResponse.result)) {
           itemsData = itemsResponse.result;
         }
-        
+
         const transformedItems = itemsData.map(item => itemService.transformApiItemToComponent(item));
-        
+
         setCategories(categoriesData);
         setItems(transformedItems);
       } catch (error) {
@@ -143,12 +153,12 @@ const AddOutletForm = () => {
   }, []);
 
   useEffect(() => {
-  // Check if Dine-In is selected (case-insensitive)
-  const dineInSelected = formData.serveMethods.some(method => 
-    method.toLowerCase().includes('dine') || method.toLowerCase().includes('dinein')
-  );
-  setHasDineIn(dineInSelected);
-}, [formData.serveMethods]);
+    // Check if Dine-In is selected (case-insensitive)
+    const dineInSelected = formData.serveMethods.some(method =>
+      method.toLowerCase().includes('dine') || method.toLowerCase().includes('dinein')
+    );
+    setHasDineIn(dineInSelected);
+  }, [formData.serveMethods]);
 
   useEffect(() => {
     const lat = parseFloat(formData.outletLatitude);
@@ -163,101 +173,101 @@ const AddOutletForm = () => {
   }, [formData.outletLatitude, formData.outletLongitude]);
 
   const getUncategorizedItems = () => {
-  return items.filter(item => {
-    // Check all possible category fields to determine if item is uncategorized
-    return !item.categoryId && 
-          (!item.category || item.category.length === 0) &&
-          (!item.categories || item.categories.length === 0);
-  });
-};
+    return items.filter(item => {
+      // Check all possible category fields to determine if item is uncategorized
+      return !item.categoryId &&
+        (!item.category || item.category.length === 0) &&
+        (!item.categories || item.categories.length === 0);
+    });
+  };
 
   const getItemsForCategory = (categoryId) => {
-  return items.filter(item => {
-    return item.categoryId === categoryId || 
-          (item.category && Array.isArray(item.category) && item.category.some(cat => cat.id === categoryId)) ||
-          (item.categories && Array.isArray(item.categories) && item.categories.some(cat => cat.id === categoryId));
-  });
-};
+    return items.filter(item => {
+      return item.categoryId === categoryId ||
+        (item.category && Array.isArray(item.category) && item.category.some(cat => cat.id === categoryId)) ||
+        (item.categories && Array.isArray(item.categories) && item.categories.some(cat => cat.id === categoryId));
+    });
+  };
 
 
   const toggleCategoryExpansion = (categoryId) => {
-  setExpandedCategories(prev => ({
-    ...prev,
-    [categoryId]: !prev[categoryId]
-  }));
-};
+    setExpandedCategories(prev => ({
+      ...prev,
+      [categoryId]: !prev[categoryId]
+    }));
+  };
 
-// Replace the handleItemChange function with this:
-const handleItemChange = (itemId, isChecked) => {
-  // Ensure we're working with numbers for IDs
-  const id = Number(itemId);
-  
-  setSelectedMenuItems(prev => 
-    isChecked 
-      ? [...prev, id] 
-      : prev.filter(selectedId => selectedId !== id)
-  );
-};
+  // Replace the handleItemChange function with this:
+  const handleItemChange = (itemId, isChecked) => {
+    // Ensure we're working with numbers for IDs
+    const id = Number(itemId);
+
+    setSelectedMenuItems(prev =>
+      isChecked
+        ? [...prev, id]
+        : prev.filter(selectedId => selectedId !== id)
+    );
+  };
 
   const handleCategoryItemsChange = (categoryId, checked) => {
-  const categoryItems = categoryId === 'uncategorized'
-    ? getUncategorizedItems()
-    : getItemsForCategory(categoryId);
-    
-  const categoryItemIds = categoryItems.map(item => Number(item.id));
-  
-  setSelectedMenuItems(prev => {
-    if (checked) {
-      // Add all category items that aren't already selected
-      const newItems = [...prev];
-      categoryItemIds.forEach(itemId => {
-        if (!newItems.includes(itemId)) {
-          newItems.push(itemId);
-        }
-      });
-      return newItems;
-    } else {
-      // Remove all category items
-      return prev.filter(id => !categoryItemIds.includes(id));
-    }
-  });
-};
+    const categoryItems = categoryId === 'uncategorized'
+      ? getUncategorizedItems()
+      : getItemsForCategory(categoryId);
 
-const areAllCategoryItemsSelected = (categoryId) => {
-  const categoryItems = categoryId === 'uncategorized' 
-    ? getUncategorizedItems()
-    : getItemsForCategory(categoryId);
-    
-  if (categoryItems.length === 0) return false;
-  
-  const categoryItemIds = categoryItems.map(item => Number(item.id));
-  return categoryItemIds.every(itemId => 
-    selectedMenuItems.includes(itemId)
-  );
-};
+    const categoryItemIds = categoryItems.map(item => Number(item.id));
+
+    setSelectedMenuItems(prev => {
+      if (checked) {
+        // Add all category items that aren't already selected
+        const newItems = [...prev];
+        categoryItemIds.forEach(itemId => {
+          if (!newItems.includes(itemId)) {
+            newItems.push(itemId);
+          }
+        });
+        return newItems;
+      } else {
+        // Remove all category items
+        return prev.filter(id => !categoryItemIds.includes(id));
+      }
+    });
+  };
+
+  const areAllCategoryItemsSelected = (categoryId) => {
+    const categoryItems = categoryId === 'uncategorized'
+      ? getUncategorizedItems()
+      : getItemsForCategory(categoryId);
+
+    if (categoryItems.length === 0) return false;
+
+    const categoryItemIds = categoryItems.map(item => Number(item.id));
+    return categoryItemIds.every(itemId =>
+      selectedMenuItems.includes(itemId)
+    );
+  };
 
 
   const getSelectedItemsNames = () => {
-  if (selectedMenuItems.length === 0) return "No items selected";
-  
-  const allItemIds = items.map(item => Number(item.id));
-  const allSelected = allItemIds.length > 0 && allItemIds.every(id => selectedMenuItems.includes(id));
-  
-  if (allSelected) return "All items selected";
-  
-  const selectedItems = items.filter(item => 
-    selectedMenuItems.includes(Number(item.id))
-  );
-  
-  const displayNames = selectedItems
-    .slice(0, 3)
-    .map(item => item.name || item.title || item.label || `Item #${item.id}`)
-    .join(', ');
-    
-  return selectedItems.length > 3 
-    ? `${displayNames} and ${selectedItems.length - 3} more...`
-    : displayNames;
-};
+    if (selectedMenuItems.length === 0) return "No items selected";
+
+    const allItemIds = items.map(item => Number(item.id));
+    const allSelected = allItemIds.length > 0 && allItemIds.every(id => selectedMenuItems.includes(id));
+
+    if (allSelected) return "All items selected";
+
+    const selectedItems = items.filter(item =>
+      selectedMenuItems.includes(Number(item.id))
+    );
+
+    const displayNames = selectedItems
+      .slice(0, 3)
+      .map(item => item.name || item.title || item.label || `Item #${item.id}`)
+      .join(', ');
+
+    return selectedItems.length > 3
+      ? `${displayNames} and ${selectedItems.length - 3} more...`
+      : displayNames;
+  };
 
   const openMenuPopup = () => {
     setPopupState({
@@ -276,183 +286,183 @@ const areAllCategoryItemsSelected = (categoryId) => {
   };
 
   const renderPopup = () => {
-  if (!popupState.isOpen) return null;
+    if (!popupState.isOpen) return null;
 
-  const allItemIds = items.map(item => Number(item.id));
-  const allSelected = allItemIds.length > 0 && allItemIds.every(id => selectedMenuItems.includes(id));
-  
-return (
-  <div className="fixed inset-0 bg-gray-800 backdrop-blur-sm bg-opacity-50 flex items-center justify-center p-4 z-50">
-    <div className="bg-white rounded-lg w-full max-w-2xl max-h-96 overflow-hidden">
-      <div className="p-4 border-b flex justify-between items-center">
-        <h3 className="text-lg font-medium">Select Menu Items</h3>
-        <div className="flex items-center space-x-4">
-            <button
-              onClick={() => {
-                if (allSelected) {
-                  setSelectedMenuItems([]);
-                } else {
-                  setSelectedMenuItems(allItemIds);
-                }
-              }}
-              className={`text-sm ${allSelected ? 'text-indigo-600' : 'text-indigo-500'} underline hover:text-indigo-700`}
-            >
-              {allSelected ? 'Deselect All' : 'Select All'}
-            </button>
+    const allItemIds = items.map(item => Number(item.id));
+    const allSelected = allItemIds.length > 0 && allItemIds.every(id => selectedMenuItems.includes(id));
+
+    return (
+      <div className="fixed inset-0 bg-gray-800 backdrop-blur-sm bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div className="bg-white rounded-lg w-full max-w-2xl max-h-96 overflow-hidden">
+          <div className="p-4 border-b flex justify-between items-center">
+            <h3 className="text-lg font-medium">Select Menu Items</h3>
+            <div className="flex items-center space-x-4">
+              <button
+                onClick={() => {
+                  if (allSelected) {
+                    setSelectedMenuItems([]);
+                  } else {
+                    setSelectedMenuItems(allItemIds);
+                  }
+                }}
+                className={`text-sm ${allSelected ? 'text-indigo-600' : 'text-indigo-500'} underline hover:text-indigo-700`}
+              >
+                {allSelected ? 'Deselect All' : 'Select All'}
+              </button>
+              <button
+                onClick={closePopup}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X size={20} />
+              </button>
+            </div>
+          </div>
+
+          <div className="max-h-64 overflow-y-auto p-4">
+            {loadingCategories ? (
+              <div className="text-center py-4">
+                <div className="text-gray-500">Loading items...</div>
+              </div>
+            ) : categories.length === 0 && getUncategorizedItems().length === 0 ? (
+              <div className="text-center py-4">
+                <div className="text-gray-500">No items available</div>
+              </div>
+            ) : (
+              <>
+                {/* Existing categories rendering */}
+                {categories.map((category) => {
+                  const categoryItems = getItemsForCategory(category.id);
+                  const isExpanded = expandedCategories[category.id] || false;
+
+                  if (categoryItems.length === 0) return null;
+
+                  return (
+                    <div key={category.id} className="border rounded-lg mb-3">
+                      <div
+                        className="p-3 bg-gray-50 flex items-center justify-between cursor-pointer hover:bg-gray-100"
+                        onClick={() => toggleCategoryExpansion(category.id)}
+                      >
+                        <div className="flex items-center flex-1">
+                          <input
+                            type="checkbox"
+                            checked={areAllCategoryItemsSelected(category.id)}
+                            onChange={(e) => {
+                              e.stopPropagation();
+                              handleCategoryItemsChange(category.id, e.target.checked);
+                            }}
+                            className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded mr-3"
+                          />
+                          <span className="font-medium text-gray-900 flex-1">
+                            {category.name || category.title} ({categoryItems.length} items)
+                          </span>
+                        </div>
+                        <div>
+                          {isExpanded ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
+                        </div>
+                      </div>
+
+                      {isExpanded && (
+                        <div className="border-t">
+                          <div className="p-3 space-y-2">
+                            {categoryItems.map((item) => (
+                              <label
+                                key={item.id}
+                                className="flex items-center p-2 hover:bg-gray-50 rounded cursor-pointer"
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={selectedMenuItems.includes(Number(item.id))}
+                                  onChange={(e) => handleItemChange(item.id, e.target.checked)}
+                                  className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded mr-3"
+                                />
+                                <div className="flex-1">
+                                  <div className="text-sm font-medium text-gray-900">
+                                    {item.name || item.title}
+                                  </div>
+                                  <div className="text-xs text-gray-500">
+                                    Price: RM{item.price || 'N/A'}  | {(item.optionGroups?.length || 0)} Option Group{(item.optionGroups?.length || 0) !== 1 ? 's' : ''}
+                                  </div>
+                                </div>
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+
+                {/* New "Other Items" section */}
+                {getUncategorizedItems().length > 0 && (
+                  <div className="border rounded-lg mb-3">
+                    <div
+                      className="p-3 bg-gray-50 flex items-center justify-between cursor-pointer hover:bg-gray-100"
+                      onClick={() => toggleCategoryExpansion('uncategorized')}
+                    >
+                      <div className="flex items-center flex-1">
+                        <input
+                          type="checkbox"
+                          checked={areAllCategoryItemsSelected('uncategorized')}
+                          onChange={(e) => {
+                            e.stopPropagation();
+                            handleCategoryItemsChange('uncategorized', e.target.checked);
+                          }}
+                          className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded mr-3"
+                        />
+                        <span className="font-medium text-gray-900 flex-1">
+                          Other Items ({getUncategorizedItems().length})
+                        </span>
+                      </div>
+                      <div>
+                        {expandedCategories['uncategorized'] ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
+                      </div>
+                    </div>
+
+                    {expandedCategories['uncategorized'] && (
+                      <div className="border-t">
+                        <div className="p-3 space-y-2">
+                          {getUncategorizedItems().map((item) => (
+                            <label
+                              key={item.id}
+                              className="flex items-center p-2 hover:bg-gray-50 rounded cursor-pointer"
+                            >
+                              <input
+                                type="checkbox"
+                                checked={selectedMenuItems.includes(Number(item.id))}
+                                onChange={(e) => handleItemChange(item.id, e.target.checked)}
+                                className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded mr-3"
+                              />
+                              <div className="flex-1">
+                                <div className="text-sm font-medium text-gray-900">
+                                  {item.name || item.title}
+                                </div>
+                                <div className="text-xs text-gray-500">
+                                  Price: RM{item.price || 'N/A'}  | {(item.optionGroups?.length || 0)} Option Group{(item.optionGroups?.length || 0) !== 1 ? 's' : ''}
+                                </div>
+                              </div>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+
+          <div className="p-4 border-t flex justify-end space-x-2">
             <button
               onClick={closePopup}
-              className="text-gray-400 hover:text-gray-600"
+              className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
             >
-              <X size={20} />
+              Done
             </button>
           </div>
         </div>
-      
-      <div className="max-h-64 overflow-y-auto p-4">
-        {loadingCategories ? (
-          <div className="text-center py-4">
-            <div className="text-gray-500">Loading items...</div>
-          </div>
-        ) : categories.length === 0 && getUncategorizedItems().length === 0 ? (
-          <div className="text-center py-4">
-            <div className="text-gray-500">No items available</div>
-          </div>
-        ) : (
-          <>
-            {/* Existing categories rendering */}
-            {categories.map((category) => {
-              const categoryItems = getItemsForCategory(category.id);
-              const isExpanded = expandedCategories[category.id] || false;
-
-              if (categoryItems.length === 0) return null;
-
-              return (
-                <div key={category.id} className="border rounded-lg mb-3">
-                  <div 
-                    className="p-3 bg-gray-50 flex items-center justify-between cursor-pointer hover:bg-gray-100"
-                    onClick={() => toggleCategoryExpansion(category.id)}
-                  >
-                    <div className="flex items-center flex-1">
-                      <input
-                        type="checkbox"
-                        checked={areAllCategoryItemsSelected(category.id)}
-                        onChange={(e) => {
-                          e.stopPropagation();
-                          handleCategoryItemsChange(category.id, e.target.checked);
-                        }}
-                        className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded mr-3"
-                      />
-                      <span className="font-medium text-gray-900 flex-1">
-                        {category.name || category.title} ({categoryItems.length} items)
-                      </span>
-                    </div>
-                    <div>
-                      {isExpanded ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
-                    </div>
-                  </div>
-
-                  {isExpanded && (
-                    <div className="border-t">
-                      <div className="p-3 space-y-2">
-                        {categoryItems.map((item) => (
-                          <label 
-                            key={item.id} 
-                            className="flex items-center p-2 hover:bg-gray-50 rounded cursor-pointer"
-                          >
-                            <input
-                              type="checkbox"
-                              checked={selectedMenuItems.includes(Number(item.id))}
-                              onChange={(e) => handleItemChange(item.id, e.target.checked)}
-                              className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded mr-3"
-                            />
-                            <div className="flex-1">
-                              <div className="text-sm font-medium text-gray-900">
-                                {item.name || item.title}
-                              </div>
-                              <div className="text-xs text-gray-500">
-                                Price: RM{item.price || 'N/A'}  | {(item.optionGroups?.length || 0)} Option Group{(item.optionGroups?.length || 0) !== 1 ? 's' : ''}
-                              </div>
-                            </div>
-                          </label>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-
-            {/* New "Other Items" section */}
-            {getUncategorizedItems().length > 0 && (
-              <div className="border rounded-lg mb-3">
-                <div 
-                  className="p-3 bg-gray-50 flex items-center justify-between cursor-pointer hover:bg-gray-100"
-                  onClick={() => toggleCategoryExpansion('uncategorized')}
-                >
-                  <div className="flex items-center flex-1">
-                    <input
-                      type="checkbox"
-                      checked={areAllCategoryItemsSelected('uncategorized')}
-                      onChange={(e) => {
-                        e.stopPropagation();
-                        handleCategoryItemsChange('uncategorized', e.target.checked);
-                      }}
-                      className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded mr-3"
-                    />
-                    <span className="font-medium text-gray-900 flex-1">
-                      Other Items ({getUncategorizedItems().length})
-                    </span>
-                  </div>
-                  <div>
-                    {expandedCategories['uncategorized'] ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
-                  </div>
-                </div>
-
-                {expandedCategories['uncategorized'] && (
-                  <div className="border-t">
-                    <div className="p-3 space-y-2">
-                      {getUncategorizedItems().map((item) => (
-                        <label 
-                          key={item.id} 
-                          className="flex items-center p-2 hover:bg-gray-50 rounded cursor-pointer"
-                        >
-                          <input
-                            type="checkbox"
-                            checked={selectedMenuItems.includes(Number(item.id))}
-                            onChange={(e) => handleItemChange(item.id, e.target.checked)}
-                            className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded mr-3"
-                          />
-                          <div className="flex-1">
-                            <div className="text-sm font-medium text-gray-900">
-                              {item.name || item.title}
-                            </div>
-                            <div className="text-xs text-gray-500">
-                              Price: RM{item.price || 'N/A'}  | {(item.optionGroups?.length || 0)} Option Group{(item.optionGroups?.length || 0) !== 1 ? 's' : ''}
-                            </div>
-                          </div>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-          </>
-        )}
       </div>
-      
-      <div className="p-4 border-t flex justify-end space-x-2">
-        <button
-          onClick={closePopup}
-          className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
-        >
-          Done
-        </button>
-      </div>
-    </div>
-  </div>
-);
-};
+    );
+  };
 
   const geocodeAddress = async (address, state, postcode) => {
     if (!address.trim() && !state.trim() && !postcode.trim()) {
@@ -580,14 +590,14 @@ return (
   const handleMultiSelect = (field, value) => {
     setFormData(prev => {
       let processedValue = value;
-      
+
       if (field === 'serveMethods') {
         processedValue = value.toLowerCase().replace('-', '');
       }
-      
+
       return {
         ...prev,
-        [field]: prev[field].includes(processedValue) 
+        [field]: prev[field].includes(processedValue)
           ? prev[field].filter(item => item !== processedValue)
           : [...prev[field], processedValue]
       };
@@ -604,10 +614,10 @@ return (
           ...(field === "is_operated" ? { is_operated: value } : {}),
           ...(field !== "is_operated"
             ? {
-                slots: prev.operationHours[day].slots.map((slot, idx) =>
-                  idx === slotIndex ? { ...slot, [field]: value } : slot
-                ),
-              }
+              slots: prev.operationHours[day].slots.map((slot, idx) =>
+                idx === slotIndex ? { ...slot, [field]: value } : slot
+              ),
+            }
             : {}),
         },
       },
@@ -643,6 +653,53 @@ return (
         },
       },
     }));
+  };
+
+  const handleRegularDeliveryChange = (field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      regularDelivery: {
+        ...prev.regularDelivery,
+        [field]: value
+      }
+    }));
+  };
+
+  const handleRegularDeliveryDayChange = (day) => {
+    setFormData(prev => ({
+      ...prev,
+      regularDelivery: {
+        ...prev.regularDelivery,
+        days: {
+          ...prev.regularDelivery.days,
+          [day]: !prev.regularDelivery.days[day]
+        }
+      }
+    }));
+  };
+
+  const handleRegularDeliveryLeadTimeChange = (field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      regularDelivery: {
+        ...prev.regularDelivery,
+        leadTime: {
+          ...prev.regularDelivery.leadTime,
+          [field]: parseInt(value) || 0
+        }
+      }
+    }));
+  };
+
+  const generateTimeOptions = () => {
+    const times = [];
+    for (let i = 0; i < 24; i++) {
+      const hour = i % 12 === 0 ? 12 : i % 12;
+      const ampm = i < 12 ? 'AM' : 'PM';
+      times.push(`${hour}:00 ${ampm}`);
+      times.push(`${hour}:30 ${ampm}`);
+    }
+    return times;
   };
 
   const validateForm = () => {
@@ -760,63 +817,64 @@ return (
     return Object.keys(newErrors).length === 0;
   };
 
-const handleSubmit = async () => {
-  if (!validateForm()) return;
+  const handleSubmit = async () => {
+    if (!validateForm()) return;
 
-  try {
-    // Prepare tax data (already correct)
-    const taxData = [];
-    if (formData.applySst === "Yes") taxData.push(1);
-    if (formData.applyServiceTax === "Yes") taxData.push(2);
-    // Prepare operating schedule (already correct)
-    const operatingDays = buildOperatingDays(formData.operationHours);
-    const operatingHours = buildOperatingHours(formData.operationHours);
+    try {
+      // Prepare tax data (already correct)
+      const taxData = [];
+      if (formData.applySst === "Yes") taxData.push(1);
+      if (formData.applyServiceTax === "Yes") taxData.push(2);
+      // Prepare operating schedule (already correct)
+      const operatingDays = buildOperatingDays(formData.operationHours);
+      const operatingHours = buildOperatingHours(formData.operationHours);
 
-    // Prepare images (already correct)
-    const imageFiles = images.map(img => img.file || img);
+      // Prepare images (already correct)
+      const imageFiles = images.map(img => img.file || img);
 
-    // Construct outlet data (adjusted to match service expectations)
-    const outletData = {
-      title: formData.outletName,
-      email: formData.outletEmail,
-      phone: formData.outletContact,
-      address: formData.outletAddress,
-      state: formData.outletState,
-      postal_code: formData.outletPostcode,
-      country: "Malaysia",
-      status: "active",
-      zeoniq_loc_code: formData.outletZeoniqCode,
-      latitude: formData.outletLatitude,
-      longitude: formData.outletLongitude,
-      password: formData.outletPassword,
-      serve_method: formData.serveMethods.join(", "),
-      delivery_options: formData.deliveryOptions.join(", "),
-      outlet_delivery_coverage: formData.deliveryRange || "0",
-      order_max_per_hour: formData.orderSlots || "0",
-      item_max_per_hour: formData.pizzaSlots || "0",
-      outlet_menu: selectedMenuItems.map(Number),
-      outlet_tax: taxData,
-      operating_days: operatingDays,
-      operating_hours: operatingHours,
-      operating_hours_exceptions: [],
-      images: imageFiles
-    };
+      // Construct outlet data (adjusted to match service expectations)
+      const outletData = {
+        title: formData.outletName,
+        email: formData.outletEmail,
+        phone: formData.outletContact,
+        address: formData.outletAddress,
+        state: formData.outletState,
+        postal_code: formData.outletPostcode,
+        country: "Malaysia",
+        status: "active",
+        zeoniq_loc_code: formData.outletZeoniqCode,
+        latitude: formData.outletLatitude,
+        longitude: formData.outletLongitude,
+        password: formData.outletPassword,
+        serve_method: formData.serveMethods.join(", "),
+        delivery_options: formData.deliveryOptions.join(", "),
+        outlet_delivery_coverage: formData.deliveryRange || "0",
+        order_max_per_hour: formData.orderSlots || "0",
+        item_max_per_hour: formData.pizzaSlots || "0",
+        outlet_menu: selectedMenuItems.map(Number),
+        outlet_tax: taxData,
+        operating_days: operatingDays,
+        operating_hours: operatingHours,
+        operating_hours_exceptions: [],
+        images: imageFiles,
+        regular_delivery_settings: formData.regularDelivery
+      };
 
-    console.log("Submitting outlet data:", outletData);
-    const response = await OutletService.createOutlet(outletData);
-    
-    if (response && response.status === 200) {
-      toast.success("Outlet created successfully!", {
-        onClose: () => {
-          navigate('/outlets');
-        }
-      });
-    } else {
-      throw new Error(response?.message || "Failed to create outlet");
-    }
-  } catch (error) {
-    console.error("Error:", error);
-    toast.error(err.message, {
+      console.log("Submitting outlet data:", outletData);
+      const response = await OutletService.createOutlet(outletData);
+
+      if (response && response.status === 200) {
+        toast.success("Outlet created successfully!", {
+          onClose: () => {
+            navigate('/outlets');
+          }
+        });
+      } else {
+        throw new Error(response?.message || "Failed to create outlet");
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      toast.error(err.message, {
         position: "top-right",
         autoClose: 3000,
         hideProgressBar: false,
@@ -826,8 +884,8 @@ const handleSubmit = async () => {
         progress: undefined,
         theme: "light",
       });
-  }
-};
+    }
+  };
 
   const getInputClasses = (fieldName) => {
     const baseClasses =
@@ -1015,32 +1073,32 @@ const handleSubmit = async () => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Outlet State</label>
-              <select
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                value={formData.outletState}
-                onChange={(e) => handleAddressChange('outletState', e.target.value)}
-              >
-                <option value="">Select State</option>
-                <option value="Johor">Johor</option>
-                <option value="Kedah">Kedah</option>
-                <option value="Kelantan">Kelantan</option>
-                <option value="Malacca">Melaka</option>
-                <option value="Negeri Sembilan">Negeri Sembilan</option>
-                <option value="Pahang">Pahang</option>
-                <option value="Penang">Pulau Pinang</option>
-                <option value="Perak">Perak</option>
-                <option value="Perlis">Perlis</option>
-                <option value="Sabah">Sabah</option>
-                <option value="Sarawak">Sarawak</option>
-                <option value="Selangor">Selangor</option>
-                <option value="Terengganu">Terengganu</option>
-                <option value="Kuala Lumpur">Kuala Lumpur</option>
-                <option value="Labuan">Labuan</option>
-                <option value="Putrajaya">Putrajaya</option>
-              </select>
-            </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Outlet State</label>
+                <select
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  value={formData.outletState}
+                  onChange={(e) => handleAddressChange('outletState', e.target.value)}
+                >
+                  <option value="">Select State</option>
+                  <option value="Johor">Johor</option>
+                  <option value="Kedah">Kedah</option>
+                  <option value="Kelantan">Kelantan</option>
+                  <option value="Malacca">Melaka</option>
+                  <option value="Negeri Sembilan">Negeri Sembilan</option>
+                  <option value="Pahang">Pahang</option>
+                  <option value="Penang">Pulau Pinang</option>
+                  <option value="Perak">Perak</option>
+                  <option value="Perlis">Perlis</option>
+                  <option value="Sabah">Sabah</option>
+                  <option value="Sarawak">Sarawak</option>
+                  <option value="Selangor">Selangor</option>
+                  <option value="Terengganu">Terengganu</option>
+                  <option value="Kuala Lumpur">Kuala Lumpur</option>
+                  <option value="Labuan">Labuan</option>
+                  <option value="Putrajaya">Putrajaya</option>
+                </select>
+              </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Outlet Postcode
@@ -1066,21 +1124,19 @@ const handleSubmit = async () => {
               <div className="border border-gray-300 rounded-lg">
                 <div className="flex bg-gray-100 border-b">
                   <button
-                    className={`px-4 py-2 text-sm ${
-                      mapType === "roadmap"
-                        ? "bg-white text-black"
-                        : "text-gray-600"
-                    }`}
+                    className={`px-4 py-2 text-sm ${mapType === "roadmap"
+                      ? "bg-white text-black"
+                      : "text-gray-600"
+                      }`}
                     onClick={() => handleMapTypeChange("roadmap")}
                   >
                     Map
                   </button>
                   <button
-                    className={`px-4 py-2 text-sm ${
-                      mapType === "satellite"
-                        ? "bg-white text-black"
-                        : "text-gray-600"
-                    }`}
+                    className={`px-4 py-2 text-sm ${mapType === "satellite"
+                      ? "bg-white text-black"
+                      : "text-gray-600"
+                      }`}
                     onClick={() => handleMapTypeChange("satellite")}
                   >
                     Satellite
@@ -1215,30 +1271,30 @@ const handleSubmit = async () => {
             </div>
 
             {images.length > 0 && (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {images.map((image, index) => (
-                <div key={index} className="relative">
-                  {image.preview ? (
-                    <img
-                      src={image.preview}
-                      alt={`Preview ${index + 1}`}
-                      className="w-full h-32 object-cover rounded-lg"
-                    />
-                  ) : (
-                    <div className="w-full h-32 bg-gray-200 rounded-lg flex items-center justify-center">
-                      <span className="text-gray-500">Preview not available</span>
-                    </div>
-                  )}
-                  <button
-                    onClick={() => removeImage(index)}
-                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600"
-                  >
-                    <X size={14} />
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {images.map((image, index) => (
+                  <div key={index} className="relative">
+                    {image.preview ? (
+                      <img
+                        src={image.preview}
+                        alt={`Preview ${index + 1}`}
+                        className="w-full h-32 object-cover rounded-lg"
+                      />
+                    ) : (
+                      <div className="w-full h-32 bg-gray-200 rounded-lg flex items-center justify-center">
+                        <span className="text-gray-500">Preview not available</span>
+                      </div>
+                    )}
+                    <button
+                      onClick={() => removeImage(index)}
+                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600"
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
 
             {/* Menu Items Selection */}
             <div>
@@ -1259,13 +1315,13 @@ const handleSubmit = async () => {
                   <ChevronDown size={16} className="text-gray-500" />
                 </button>
               </div>
-              
+
               {selectedMenuItems.length > 0 && (
                 <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded text-sm text-blue-700">
                   Selected items: {getSelectedItemsNames()}
                 </div>
               )}
-              
+
               {renderPopup()}
             </div>
           </div>
@@ -1319,6 +1375,132 @@ const handleSubmit = async () => {
                       ))}
                     </div>
                     <ErrorMessage error={errors.deliveryOptions} />
+                  </div>
+                </div>
+
+                {/* Regular Delivery Section */}
+                <div className="mt-8 pt-6 border-t border-gray-200">
+                  <h4 className="text-lg font-semibold text-gray-800 mb-6 bg-gray-800 text-white p-3 rounded-t-lg -mx-4 -mt-6">Regular Delivery</h4>
+
+                  <div className="mb-6">
+                    <label className="block text-sm font-bold text-gray-700 mb-3">Available Days</label>
+                    <div className="flex flex-wrap gap-6">
+                      {[
+                        { key: '1', label: 'Mon' },
+                        { key: '2', label: 'Tue' },
+                        { key: '3', label: 'Wed' },
+                        { key: '4', label: 'Thu' },
+                        { key: '5', label: 'Fri' },
+                        { key: '6', label: 'Sat' },
+                        { key: '0', label: 'Sun' }
+                      ].map(({ key, label }) => (
+                        <label key={key} className="flex items-center space-x-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={formData.regularDelivery.days[key]}
+                            onChange={() => handleRegularDeliveryDayChange(key)}
+                            className="rounded text-indigo-600 focus:ring-indigo-500 w-5 h-5"
+                          />
+                          <span className="text-sm text-gray-700 font-medium">{label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  <p className="text-sm text-gray-500 mb-6 italic">All fields compulsory unless marked optional</p>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-6">
+                    <div>
+                      <label className="block text-sm font-bold text-gray-700 mb-2">Delivery Slot Starts At</label>
+                      <select
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        value={formData.regularDelivery.startTime}
+                        onChange={(e) => handleRegularDeliveryChange('startTime', e.target.value)}
+                      >
+                        {generateTimeOptions().map(time => (
+                          <option key={time} value={time}>{time}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-bold text-gray-700 mb-2">Delivery Slots End At</label>
+                      <select
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        value={formData.regularDelivery.endTime}
+                        onChange={(e) => handleRegularDeliveryChange('endTime', e.target.value)}
+                      >
+                        {generateTimeOptions().map(time => (
+                          <option key={time} value={time}>{time}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="mb-6">
+                    <label className="block text-sm font-bold text-gray-700 mb-2">Interval In Minutes</label>
+                    <select
+                      className="w-full md:w-1/3 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      value={formData.regularDelivery.interval}
+                      onChange={(e) => handleRegularDeliveryChange('interval', e.target.value)}
+                    >
+                      {[15, 30, 45, 60].map(val => (
+                        <option key={val} value={val}>{val}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="mb-6">
+                    <label className="block text-sm font-bold text-gray-700 mb-2">Max Orders Per Slot</label>
+                    <input
+                      type="number"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      value={formData.regularDelivery.maxOrders}
+                      onChange={(e) => handleRegularDeliveryChange('maxOrders', e.target.value)}
+                    />
+                  </div>
+
+                  <div className="mb-6">
+                    <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center">
+                      Lead Time (DD HH MM)
+                      <span className="ml-2 text-gray-400 cursor-help" title="Days, Hours, Minutes">ℹ️</span>
+                    </label>
+                    <div className="flex gap-4">
+                      <div className="flex-1">
+                        <input
+                          type="number"
+                          min="0"
+                          placeholder="0"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-center"
+                          value={formData.regularDelivery.leadTime.day}
+                          onChange={(e) => handleRegularDeliveryLeadTimeChange('day', e.target.value)}
+                        />
+                        <div className="text-xs text-center mt-1 text-gray-500">Days</div>
+                      </div>
+                      <div className="flex-1">
+                        <input
+                          type="number"
+                          min="0"
+                          max="23"
+                          placeholder="0"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-center"
+                          value={formData.regularDelivery.leadTime.hour}
+                          onChange={(e) => handleRegularDeliveryLeadTimeChange('hour', e.target.value)}
+                        />
+                        <div className="text-xs text-center mt-1 text-gray-500">Hours</div>
+                      </div>
+                      <div className="flex-1">
+                        <input
+                          type="number"
+                          min="0"
+                          max="59"
+                          placeholder="45"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-center"
+                          value={formData.regularDelivery.leadTime.minute}
+                          onChange={(e) => handleRegularDeliveryLeadTimeChange('minute', e.target.value)}
+                        />
+                        <div className="text-xs text-center mt-1 text-gray-500">Minutes</div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1401,20 +1583,20 @@ const handleSubmit = async () => {
               </select>
             </div>
             {hasDineIn && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Apply Service Charge
-              </label>
-              <select
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                value={formData.applyServiceTax}
-                onChange={(e) => handleInputChange('applyServiceTax', e.target.value)}
-              >
-                <option value="Yes">Yes</option>
-                <option value="No">No</option>
-              </select>
-            </div>
-          )}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Apply Service Charge
+                </label>
+                <select
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  value={formData.applyServiceTax}
+                  onChange={(e) => handleInputChange('applyServiceTax', e.target.value)}
+                >
+                  <option value="Yes">Yes</option>
+                  <option value="No">No</option>
+                </select>
+              </div>
+            )}
           </div>
         </div>
 
