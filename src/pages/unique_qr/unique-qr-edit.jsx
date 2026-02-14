@@ -84,7 +84,7 @@ const UniqueQrEdit = () => {
                 setUniqueCode(qr.unique_code || "");
 
                 if (qr.qr_image) {
-                    setQrImage(`${BASE_URL}backend/uploads/unique_qr/${qr.qr_image}`);
+                    setQrImage(qr.qr_image_url || `${BASE_URL}backend/uploads/unique_qr/${qr.qr_image}`);
                 }
 
                 // Restore selected menu items
