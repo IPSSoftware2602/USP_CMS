@@ -1,4 +1,4 @@
-import {VITE_API_BASE_URL} from "../../constant/config";
+import { VITE_API_BASE_URL } from "../../constant/config";
 
 const BASE_URL = VITE_API_BASE_URL;
 
@@ -13,25 +13,25 @@ const reportService = {
   getPromoReport: async (searchParams = {}) => {
     try {
       const queryParams = new URLSearchParams();
-      
+
       Object.keys(searchParams).forEach(key => {
         if (searchParams[key]) {
           queryParams.append(key, searchParams[key]);
         }
       });
-      
+
       const queryString = queryParams.toString();
       const url = `${BASE_URL}report/promo${queryString ? `?${queryString}` : ''}`;
-      
+
       // console.log('Making request to:', url);
-      
+
       const response = await fetch(url, {
         headers: {
           'Content-Type': 'application/json',
           ...getAuthHeaders(),
         }
       });
-      
+
       if (response.status === 404) {
         throw new Error(`Endpoint not found: ${url}`);
       }
@@ -41,7 +41,7 @@ const reportService = {
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: Failed to fetch promo settings`);
       }
-      
+
       return await response.json();
     } catch (error) {
       console.error('Error fetching promo settings:', error);
@@ -50,27 +50,27 @@ const reportService = {
   },
 
   getSalesReport: async (searchParams = {}) => {
-      try {
+    try {
       const queryParams = new URLSearchParams();
-      
+
       Object.keys(searchParams).forEach(key => {
         if (searchParams[key]) {
           queryParams.append(key, searchParams[key]);
         }
       });
-      
+
       const queryString = queryParams.toString();
       const url = `${BASE_URL}report/sales${queryString ? `?${queryString}` : ''}`;
-      
+
       // console.log('Making request to:', url);
-      
+
       const response = await fetch(url, {
         headers: {
           'Content-Type': 'application/json',
           ...getAuthHeaders(),
         }
       });
-      
+
       if (response.status === 404) {
         throw new Error(`Endpoint not found: ${url}`);
       }
@@ -80,7 +80,7 @@ const reportService = {
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: Failed to fetch promo settings`);
       }
-      
+
       return await response.json();
     } catch (error) {
       console.error('Error fetching promo settings:', error);
@@ -166,26 +166,26 @@ const reportService = {
     }
   },
   exportReport: async (params = {}) => {
-  try {
-    const response = await fetch(`${BASE_URL}report/financereport`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...getAuthHeaders(),
-      },
-      body: JSON.stringify(params),
-    });
+    try {
+      const response = await fetch(`${BASE_URL}report/financereport`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...getAuthHeaders(),
+        },
+        body: JSON.stringify(params),
+      });
 
-    if (!response.ok) {
-      throw new Error(`Export failed: HTTP ${response.status}`);
+      if (!response.ok) {
+        throw new Error(`Export failed: HTTP ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error("Error exporting report:", error);
+      throw error;
     }
-
-    return await response.json();
-  } catch (error) {
-    console.error("Error exporting report:", error);
-    throw error;
-  }
-},
+  },
 
 
   getOrderReport: async (searchParams = {}) => {
@@ -339,6 +339,90 @@ const reportService = {
       return await response.json();
     } catch (error) {
       console.error('Error fetching order sales report:', error);
+      throw error;
+    }
+  },
+
+  getUniqueQrSummary: async (searchParams = {}) => {
+    try {
+      const queryParams = new URLSearchParams();
+      Object.keys(searchParams).forEach(key => {
+        if (searchParams[key]) queryParams.append(key, searchParams[key]);
+      });
+      const queryString = queryParams.toString();
+      const url = `${BASE_URL}unique-qr-report/summary${queryString ? `?${queryString}` : ''}`;
+
+      const response = await fetch(url, {
+        headers: { 'Content-Type': 'application/json', ...getAuthHeaders() }
+      });
+
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching Unique QR summary:', error);
+      throw error;
+    }
+  },
+
+  getUniqueQrDetails: async (uniqueCode, searchParams = {}) => {
+    try {
+      const queryParams = new URLSearchParams();
+      Object.keys(searchParams).forEach(key => {
+        if (searchParams[key]) queryParams.append(key, searchParams[key]);
+      });
+      const queryString = queryParams.toString();
+      const url = `${BASE_URL}unique-qr-report/details/${uniqueCode}${queryString ? `?${queryString}` : ''}`;
+
+      const response = await fetch(url, {
+        headers: { 'Content-Type': 'application/json', ...getAuthHeaders() }
+      });
+
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching Unique QR details:', error);
+      throw error;
+    }
+  },
+
+  exportUniqueQrSummary: async (searchParams = {}) => {
+    try {
+      const queryParams = new URLSearchParams();
+      Object.keys(searchParams).forEach(key => {
+        if (searchParams[key]) queryParams.append(key, searchParams[key]);
+      });
+      const queryString = queryParams.toString();
+      const url = `${BASE_URL}unique-qr-report/export-summary${queryString ? `?${queryString}` : ''}`;
+
+      const response = await fetch(url, {
+        headers: { 'Content-Type': 'application/json', ...getAuthHeaders() }
+      });
+
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      return await response.json();
+    } catch (error) {
+      console.error('Error exporting Unique QR summary:', error);
+      throw error;
+    }
+  },
+
+  exportUniqueQrDetails: async (uniqueCode, searchParams = {}) => {
+    try {
+      const queryParams = new URLSearchParams();
+      Object.keys(searchParams).forEach(key => {
+        if (searchParams[key]) queryParams.append(key, searchParams[key]);
+      });
+      const queryString = queryParams.toString();
+      const url = `${BASE_URL}unique-qr-report/export-details/${uniqueCode}${queryString ? `?${queryString}` : ''}`;
+
+      const response = await fetch(url, {
+        headers: { 'Content-Type': 'application/json', ...getAuthHeaders() }
+      });
+
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      return await response.json();
+    } catch (error) {
+      console.error('Error exporting Unique QR details:', error);
       throw error;
     }
   },

@@ -80,6 +80,9 @@ import OutletMenuPage from "./pages/outlet/menu";
 import AddOutletForm from "./pages/outlet/outlet-add";
 import EditOutletForm from "./pages/outlet/outlet-edit";
 import EditPasswordOutlet from "./pages/outlet/outlet-password";
+import UniqueQrList from "./pages/unique_qr";
+import UniqueQrAdd from "./pages/unique_qr/unique-qr-add";
+import UniqueQrEdit from "./pages/unique_qr/unique-qr-edit";
 import CustomMap from "./pages/components/customMap";
 import { APIProvider } from "@vis.gl/react-google-maps";
 import OrderList from "./pages/order/lists";
@@ -148,6 +151,8 @@ import OrderReport from "./pages/report/order";
 import WalletReport from "./pages/report/wallet";
 import PointReport from "./pages/report/point";
 import UnutilizedReport from "./pages/report/unutilized";
+import UniqueQrReport from "./pages/report/unique-qr";
+import UniqueQrDetailReport from "./pages/report/unique-qr-detail";
 
 function App() {
   const navigate = useNavigate();
@@ -236,6 +241,12 @@ function App() {
               {/* If you need nested menu routes, you can add them here */}
             </Route>
 
+            <Route path="unique-qr">
+              <Route index element={<UniqueQrList />} />
+              <Route path="add" element={<UniqueQrAdd />} />
+              <Route path="edit/:id" element={<UniqueQrEdit />} />
+            </Route>
+
             <Route path="menu">
               <Route index element={<Navigate to="item" />} />
               <Route path="item" element={<Item />} />
@@ -267,9 +278,9 @@ function App() {
               <Route path="pwp" element={<PWP />} />
               <Route path="pwp/add_new_pwp" element={<PWPAdd />} />
               <Route path="pwp/edit_pwp/:id" element={<PWPEdit />} />
-              <Route path="discount" element={<DiscountList/>}/>
-              <Route path="discount/add_new_discount" element={<CreateDiscount/>}/>
-              <Route path="discount/update_discount/:id" element={<UpdateDiscount/>}/>
+              <Route path="discount" element={<DiscountList />} />
+              <Route path="discount/add_new_discount" element={<CreateDiscount />} />
+              <Route path="discount/update_discount/:id" element={<UpdateDiscount />} />
               <Route path="promo_code" element={<PromoCodeLists />} />
               <Route path="promo_code/new" element={<PromoCodeAdd />} />
               <Route path="promo_code/edit/:id" element={<PromoCodeEdit />} />
@@ -342,6 +353,8 @@ function App() {
               <Route path="wallet" element={<WalletReport />} />
               <Route path="point" element={<PointReport />} />
               <Route path="unutilized" element={<UnutilizedReport />} />
+              <Route path="unique_qr" element={<UniqueQrReport />} />
+              <Route path="unique_qr/details/:id" element={<UniqueQrDetailReport />} />
             </Route>
 
             {/* Components pages */}

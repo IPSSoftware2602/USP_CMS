@@ -80,6 +80,13 @@ export const menuItems = [
     ],
   },
   {
+    title: "Unique QR",
+    isHide: true,
+    icon: "heroicons-outline:qr-code",
+    link: "unique-qr",
+    permissionKey: "Unique QR",
+  },
+  {
     title: "Menu",
     icon: "heroicons-outline:clipboard",
     link: "#",
@@ -176,14 +183,14 @@ export const menuItems = [
     permissionKey: "Report",
     child: [
       {
-          childtitle: "Sales Report",
-          childlink: "report/sales",
-          permissionKey: "Sales Report",
+        childtitle: "Sales Report",
+        childlink: "report/sales",
+        permissionKey: "Sales Report",
       },
       {
-          childtitle: "Promo Report",
-          childlink: "report/promo",
-          permissionKey: "Promo Report",
+        childtitle: "Promo Report",
+        childlink: "report/promo",
+        permissionKey: "Promo Report",
       },
       {
         childtitle: "Product Report",
@@ -209,6 +216,11 @@ export const menuItems = [
         childtitle: "Unutilized Voucher Report",
         childlink: "report/unutilized",
         permissionKey: "Unutilized Voucher Report",
+      },
+      {
+        childtitle: "Unique QR Report",
+        childlink: "report/unique_qr",
+        permissionKey: "Unique QR Report",
       }
     ]
   },

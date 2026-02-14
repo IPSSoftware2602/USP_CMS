@@ -71,10 +71,20 @@ const EditOutletForm = () => {
     applySst: "No",
     applyServiceTax: "No",
     status: "active",
-    regularDelivery: {
+    deliverySettings: [{
       days: {
         '1': true, '2': true, '3': true, '4': true, '5': false, '6': false, '0': false
       },
+      startTime: "10:00 AM",
+      endTime: "10:00 PM",
+      interval: 15,
+      maxOrders: 10,
+      leadTime: { day: 0, hour: 0, minute: 45 }
+    }],
+    editingDeliveryIndex: null,
+    showDeliveryModal: false,
+    deliveryModalData: {
+      days: { '1': true, '2': true, '3': true, '4': true, '5': false, '6': false, '0': false },
       startTime: "10:00 AM",
       endTime: "10:00 PM",
       interval: 15,
@@ -156,8 +166,8 @@ const EditOutletForm = () => {
   const handleRegularDeliveryChange = (field, value) => {
     setFormData(prev => ({
       ...prev,
-      regularDelivery: {
-        ...prev.regularDelivery,
+      deliveryModalData: {
+        ...prev.deliveryModalData,
         [field]: value
       }
     }));
@@ -166,11 +176,11 @@ const EditOutletForm = () => {
   const handleRegularDeliveryDayChange = (day) => {
     setFormData(prev => ({
       ...prev,
-      regularDelivery: {
-        ...prev.regularDelivery,
+      deliveryModalData: {
+        ...prev.deliveryModalData,
         days: {
-          ...prev.regularDelivery.days,
-          [day]: !prev.regularDelivery.days[day]
+          ...prev.deliveryModalData.days,
+          [day]: !prev.deliveryModalData.days[day]
         }
       }
     }));
@@ -179,14 +189,128 @@ const EditOutletForm = () => {
   const handleRegularDeliveryLeadTimeChange = (field, value) => {
     setFormData(prev => ({
       ...prev,
-      regularDelivery: {
-        ...prev.regularDelivery,
+      deliveryModalData: {
+        ...prev.deliveryModalData,
         leadTime: {
-          ...prev.regularDelivery.leadTime,
+          ...prev.deliveryModalData.leadTime,
           [field]: parseInt(value) || 0
         }
       }
     }));
+  };
+
+  const openDeliveryModal = (index = null) => {
+    const defaultData = {
+      days: { '1': true, '2': true, '3': true, '4': true, '5': false, '6': false, '0': false },
+      startTime: "10:00 AM",
+      endTime: "10:00 PM",
+      interval: 15,
+      maxOrders: 10,
+      leadTime: { day: 0, hour: 0, minute: 45 }
+    };
+    setFormData(prev => ({
+      ...prev,
+      editingDeliveryIndex: index,
+      showDeliveryModal: true,
+      deliveryModalData: index !== null ? { ...prev.deliverySettings[index] } : defaultData
+    }));
+  };
+
+  const closeDeliveryModal = () => {
+    setFormData(prev => ({ ...prev, showDeliveryModal: false, editingDeliveryIndex: null }));
+  };
+
+  const saveDeliverySetting = () => {
+    setFormData(prev => {
+      const updated = [...prev.deliverySettings];
+      if (prev.editingDeliveryIndex !== null) {
+        updated[prev.editingDeliveryIndex] = { ...prev.deliveryModalData };
+      } else {
+        updated.push({ ...prev.deliveryModalData });
+      }
+      return { ...prev, deliverySettings: updated, showDeliveryModal: false, editingDeliveryIndex: null };
+    });
+  };
+
+  const deleteDeliverySetting = (index) => {
+    if (!window.confirm('Are you sure you want to delete this delivery setting?')) return;
+    setFormData(prev => {
+      const updated = prev.deliverySettings.filter((_, i) => i !== index);
+      return { ...prev, deliverySettings: updated };
+    });
+  };
+
+  const dayLabels = { '0': 'Sun', '1': 'Mon', '2': 'Tue', '3': 'Wed', '4': 'Thu', '5': 'Fri', '6': 'Sat' };
+  const getActiveDaysLabel = (days) => {
+    if (!days) return '-';
+    return Object.entries(days).filter(([, v]) => v).map(([k]) => dayLabels[k] || k).join(', ') || 'None';
+  };
+  const getLeadTimeLabel = (lt) => {
+    if (!lt) return '-';
+    const parts = [];
+    if (lt.day > 0) parts.push(`${lt.day}d`);
+    if (lt.hour > 0) parts.push(`${lt.hour}h`);
+    parts.push(`${lt.minute || 0}m`);
+    return parts.join(' ');
+  };
+
+  // Parse delivery_settings array from API into frontend format
+  const parseDeliverySettingsFromApi = (outlet) => {
+    const formatApiTime = (timeStr) => {
+      if (!timeStr) return "10:00 AM";
+      try {
+        const [hours, minutes] = timeStr.split(':');
+        let h = parseInt(hours, 10);
+        const ampm = h >= 12 ? 'PM' : 'AM';
+        h = h % 12 || 12;
+        return `${h}:${minutes} ${ampm}`;
+      } catch (e) { return "10:00 AM"; }
+    };
+    const parseDays = (daysStr) => {
+      const daysMap = { '1': false, '2': false, '3': false, '4': false, '5': false, '6': false, '0': false };
+      if (daysStr) {
+        daysStr.split(',').forEach(d => {
+          const key = d.trim();
+          if (key in daysMap) daysMap[key] = true;
+        });
+      }
+      return daysMap;
+    };
+    const parseLeadTime = (totalMinutes) => {
+      const total = parseInt(totalMinutes) || 0;
+      const day = Math.floor(total / 1440);
+      const hour = Math.floor((total % 1440) / 60);
+      const minute = total % 60;
+      return { day, hour, minute };
+    };
+    const parseOne = (s) => ({
+      days: parseDays(s.delivery_available_days),
+      startTime: formatApiTime(s.delivery_start),
+      endTime: formatApiTime(s.delivery_end),
+      interval: parseInt(s.delivery_interval) || 15,
+      maxOrders: parseInt(s.max_order_per_slot) || 10,
+      leadTime: parseLeadTime(s.lead_time)
+    });
+
+    // If API returns delivery_settings array, use it
+    if (outlet.delivery_settings && Array.isArray(outlet.delivery_settings) && outlet.delivery_settings.length > 0) {
+      return outlet.delivery_settings.map(parseOne);
+    }
+
+    // Fallback: use flat outlet columns (backward compat)
+    if (outlet.delivery_available_days || outlet.delivery_start) {
+      return [parseOne(outlet)];
+    }
+
+    // Default
+    return [{
+      days: { '1': true, '2': true, '3': true, '4': true, '5': false, '6': false, '0': false },
+      startTime: "10:00 AM",
+      endTime: "10:00 PM",
+      interval: 15,
+      maxOrders: 10,
+      leadTime: { day: 0, hour: 0, minute: 45 }
+    }];
   };
 
   const generateTimeOptions = () => {
@@ -195,7 +319,9 @@ const EditOutletForm = () => {
       const hour = i % 12 === 0 ? 12 : i % 12;
       const ampm = i < 12 ? 'AM' : 'PM';
       times.push(`${hour}:00 ${ampm}`);
+      times.push(`${hour}:15 ${ampm}`);
       times.push(`${hour}:30 ${ampm}`);
+      times.push(`${hour}:45 ${ampm}`);
     }
     return times;
   };
@@ -357,14 +483,7 @@ const EditOutletForm = () => {
             applySst: outlet.outlet_tax?.sst ? "Yes" : "No",
             applyServiceTax: outlet.outlet_tax?.service_tax ? "Yes" : "No",
             status: outlet.status || "active",
-            regularDelivery: outlet.regular_delivery_settings || {
-              days: { '1': true, '2': true, '3': true, '4': true, '5': false, '6': false, '0': false },
-              startTime: "10:00 AM",
-              endTime: "10:00 PM",
-              interval: 15,
-              maxOrders: 10,
-              leadTime: { day: 0, hour: 0, minute: 45 }
-            },
+            deliverySettings: parseDeliverySettingsFromApi(outlet),
           });
 
           setMarkerLocation({
@@ -413,67 +532,7 @@ const EditOutletForm = () => {
             ? "Yes"
             : "No",
           status: outlet.status || "active",
-          regularDelivery: (() => {
-            // Helper to format time "10:00:00" -> "10:00 AM"
-            const formatApiTime = (timeStr) => {
-              if (!timeStr) return "10:00 AM";
-              try {
-                const [hours, minutes] = timeStr.split(':');
-                let h = parseInt(hours, 10);
-                const ampm = h >= 12 ? 'PM' : 'AM';
-                h = h % 12;
-                h = h ? h : 12; // the hour '0' should be '12'
-                return `${h}:${minutes} ${ampm}`;
-              } catch (e) {
-                return "10:00 AM";
-              }
-            };
-
-            // Helper to parse days string "0,1,2" -> object
-            const parseDays = (daysStr) => {
-              const daysMap = { '1': false, '2': false, '3': false, '4': false, '5': false, '6': false, '0': false };
-              if (daysStr) {
-                daysStr.split(',').forEach(day => {
-                  if (daysMap.hasOwnProperty(day.trim())) {
-                    daysMap[day.trim()] = true;
-                  }
-                });
-              }
-              return daysMap;
-            };
-
-            // Helper to parse lead time (total minutes) -> { day, hour, minute }
-            const parseLeadTime = (totalMinutes) => {
-              const total = parseInt(totalMinutes) || 0;
-              const day = Math.floor(total / 1440);
-              const remainder = total % 1440;
-              const hour = Math.floor(remainder / 60);
-              const minute = remainder % 60;
-              return { day, hour, minute };
-            };
-
-            // Use API fields if available, otherwise fallback
-            if (outlet.delivery_available_days || outlet.delivery_start) {
-              return {
-                days: parseDays(outlet.delivery_available_days),
-                startTime: formatApiTime(outlet.delivery_start),
-                endTime: formatApiTime(outlet.delivery_end),
-                interval: parseInt(outlet.delivery_interval) || 15,
-                maxOrders: parseInt(outlet.max_order_per_slot) || 10,
-                leadTime: parseLeadTime(outlet.lead_time)
-              };
-            }
-
-            // Fallback to existing or default
-            return outlet.regular_delivery_settings || {
-              days: { '1': true, '2': true, '3': true, '4': true, '5': false, '6': false, '0': false },
-              startTime: "10:00 AM",
-              endTime: "10:00 PM",
-              interval: 15,
-              maxOrders: 10,
-              leadTime: { day: 0, hour: 0, minute: 45 }
-            };
-          })(),
+          deliverySettings: parseDeliverySettingsFromApi(outlet),
         });
 
         setImages(
@@ -904,7 +963,7 @@ const EditOutletForm = () => {
       fd.append("outlet_tax", JSON.stringify(outletTax));
       fd.append("outlet_operating_days", JSON.stringify([operatingDays]));   // <—
       fd.append("outlet_operating_hours", JSON.stringify([operatingHours])); // <—
-      fd.append("regular_delivery_settings", JSON.stringify(formData.regularDelivery));
+      fd.append("regular_delivery_settings", JSON.stringify(formData.deliverySettings));
 
       // Menu items — backend expects array, not JSON
       // selectedMenuItems can be ids or objects; normalize to ids:
@@ -1665,74 +1724,47 @@ const EditOutletForm = () => {
             <div className="mt-8 pt-6 border-t border-gray-200">
               <h4 className="text-lg font-semibold text-gray-800 mb-6 bg-gray-800 text-white p-3 rounded-t-lg -mx-4 -mt-6">Regular Delivery</h4>
 
-              <div className="mb-6">
-                <label className="block text-sm font-bold text-gray-700 mb-3">Available Days</label>
-                <div className="flex flex-wrap gap-6">
-                  {[
-                    { key: '1', label: 'Mon' },
-                    { key: '2', label: 'Tue' },
-                    { key: '3', label: 'Wed' },
-                    { key: '4', label: 'Thu' },
-                    { key: '5', label: 'Fri' },
-                    { key: '6', label: 'Sat' },
-                    { key: '0', label: 'Sun' }
-                  ].map(({ key, label }) => (
-                    <label key={key} className="flex items-center space-x-2 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={formData.regularDelivery.days[key]}
-                        onChange={() => handleRegularDeliveryDayChange(key)}
-                        className="rounded text-indigo-600 focus:ring-indigo-500 w-5 h-5"
-                      />
-                      <span className="text-sm text-gray-700 font-medium">{label}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-
-              <p className="text-sm text-gray-500 mb-6 italic">All fields compulsory unless marked optional</p>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-6">
-                <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">Delivery Slot Starts At</label>
-                  <select
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    value={formData.regularDelivery.startTime}
-                    onChange={(e) => handleRegularDeliveryChange('startTime', e.target.value)}
-                  >
-                    {generateTimeOptions().map(time => (
-                      <option key={time} value={time}>{time}</option>
+              {/* Table */}
+              <div className="overflow-x-auto mb-4">
+                <table className="w-full table-auto border-collapse text-sm">
+                  <thead>
+                    <tr className="bg-gray-100">
+                      <th className="border px-3 py-2 text-left">#</th>
+                      <th className="border px-3 py-2 text-left">Days</th>
+                      <th className="border px-3 py-2 text-left">Start</th>
+                      <th className="border px-3 py-2 text-left">End</th>
+                      <th className="border px-3 py-2 text-left">Interval</th>
+                      <th className="border px-3 py-2 text-left">Max Orders</th>
+                      <th className="border px-3 py-2 text-left">Lead Time</th>
+                      <th className="border px-3 py-2 text-center">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(formData.deliverySettings || []).length === 0 ? (
+                      <tr><td colSpan="8" className="border px-3 py-4 text-center text-gray-400">No delivery settings configured</td></tr>
+                    ) : formData.deliverySettings.map((ds, idx) => (
+                      <tr key={idx} className="hover:bg-gray-50">
+                        <td className="border px-3 py-2">{idx + 1}</td>
+                        <td className="border px-3 py-2">{getActiveDaysLabel(ds.days)}</td>
+                        <td className="border px-3 py-2">{ds.startTime}</td>
+                        <td className="border px-3 py-2">{ds.endTime}</td>
+                        <td className="border px-3 py-2">{ds.interval} min</td>
+                        <td className="border px-3 py-2">{ds.maxOrders}</td>
+                        <td className="border px-3 py-2">{getLeadTimeLabel(ds.leadTime)}</td>
+                        <td className="border px-3 py-2 text-center">
+                          <button type="button" onClick={() => openDeliveryModal(idx)} className="text-indigo-600 hover:text-indigo-800 mr-2" title="Edit">✏️</button>
+                          <button type="button" onClick={() => deleteDeliverySetting(idx)} className="text-red-600 hover:text-red-800" title="Delete">🗑️</button>
+                        </td>
+                      </tr>
                     ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">Delivery Slots End At</label>
-                  <select
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    value={formData.regularDelivery.endTime}
-                    onChange={(e) => handleRegularDeliveryChange('endTime', e.target.value)}
-                  >
-                    {generateTimeOptions().map(time => (
-                      <option key={time} value={time}>{time}</option>
-                    ))}
-                  </select>
-                </div>
+                  </tbody>
+                </table>
               </div>
+              <button type="button" onClick={() => openDeliveryModal()} className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 text-sm flex items-center gap-2">
+                <Plus size={16} /> Add Delivery Setting
+              </button>
 
-              <div className="mb-6">
-                <label className="block text-sm font-bold text-gray-700 mb-2">Interval In Minutes</label>
-                <select
-                  className="w-full md:w-1/3 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  value={formData.regularDelivery.interval}
-                  onChange={(e) => handleRegularDeliveryChange('interval', e.target.value)}
-                >
-                  {[15, 30, 45, 60].map(val => (
-                    <option key={val} value={val}>{val}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="mb-6">
+              <div className="mt-6 mb-6">
                 <label className="block text-sm font-bold text-gray-700 mb-2">Delivery Coverage Radius (km)</label>
                 <input
                   type="number"
@@ -1742,59 +1774,80 @@ const EditOutletForm = () => {
                 />
               </div>
 
-              <div className="mb-6">
-                <label className="block text-sm font-bold text-gray-700 mb-2">Max Orders Per Slot</label>
-                <input
-                  type="number"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  value={formData.regularDelivery.maxOrders}
-                  onChange={(e) => handleRegularDeliveryChange('maxOrders', e.target.value)}
-                />
-              </div>
-
-              <div className="mb-6">
-                <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center">
-                  Lead Time (DD HH MM)
-                  <span className="ml-2 text-gray-400 cursor-help" title="Days, Hours, Minutes">ℹ️</span>
-                </label>
-                <div className="flex gap-4">
-                  <div className="flex-1">
-                    <input
-                      type="number"
-                      min="0"
-                      placeholder="0"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-center"
-                      value={formData.regularDelivery.leadTime.day}
-                      onChange={(e) => handleRegularDeliveryLeadTimeChange('day', e.target.value)}
-                    />
-                    <div className="text-xs text-center mt-1 text-gray-500">Days</div>
-                  </div>
-                  <div className="flex-1">
-                    <input
-                      type="number"
-                      min="0"
-                      max="23"
-                      placeholder="0"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-center"
-                      value={formData.regularDelivery.leadTime.hour}
-                      onChange={(e) => handleRegularDeliveryLeadTimeChange('hour', e.target.value)}
-                    />
-                    <div className="text-xs text-center mt-1 text-gray-500">Hours</div>
-                  </div>
-                  <div className="flex-1">
-                    <input
-                      type="number"
-                      min="0"
-                      max="59"
-                      placeholder="45"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-center"
-                      value={formData.regularDelivery.leadTime.minute}
-                      onChange={(e) => handleRegularDeliveryLeadTimeChange('minute', e.target.value)}
-                    />
-                    <div className="text-xs text-center mt-1 text-gray-500">Minutes</div>
+              {/* Add/Edit Delivery Setting Modal */}
+              {formData.showDeliveryModal && (
+                <div className="fixed inset-0 bg-gray-800 backdrop-blur-sm bg-opacity-50 flex items-center justify-center p-4 z-50">
+                  <div className="bg-white rounded-lg w-full max-w-lg max-h-[90vh] overflow-y-auto">
+                    <div className="p-4 border-b flex justify-between items-center">
+                      <h3 className="text-lg font-medium">{formData.editingDeliveryIndex !== null ? 'Edit' : 'Add'} Delivery Setting</h3>
+                      <button onClick={closeDeliveryModal} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
+                    </div>
+                    <div className="p-4 space-y-5">
+                      {/* Days */}
+                      <div>
+                        <label className="block text-sm font-bold text-gray-700 mb-2">Available Days</label>
+                        <div className="flex flex-wrap gap-4">
+                          {[{ key: '1', label: 'Mon' }, { key: '2', label: 'Tue' }, { key: '3', label: 'Wed' }, { key: '4', label: 'Thu' }, { key: '5', label: 'Fri' }, { key: '6', label: 'Sat' }, { key: '0', label: 'Sun' }].map(({ key, label }) => (
+                            <label key={key} className="flex items-center space-x-1 cursor-pointer">
+                              <input type="checkbox" checked={formData.deliveryModalData.days[key]} onChange={() => handleRegularDeliveryDayChange(key)} className="rounded text-indigo-600 w-4 h-4" />
+                              <span className="text-sm">{label}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                      {/* Start / End Time */}
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-bold text-gray-700 mb-1">Start Time</label>
+                          <select className="w-full px-3 py-2 border rounded-lg" value={formData.deliveryModalData.startTime} onChange={(e) => handleRegularDeliveryChange('startTime', e.target.value)}>
+                            {generateTimeOptions().map(t => <option key={t} value={t}>{t}</option>)}
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-bold text-gray-700 mb-1">End Time</label>
+                          <select className="w-full px-3 py-2 border rounded-lg" value={formData.deliveryModalData.endTime} onChange={(e) => handleRegularDeliveryChange('endTime', e.target.value)}>
+                            {generateTimeOptions().map(t => <option key={t} value={t}>{t}</option>)}
+                          </select>
+                        </div>
+                      </div>
+                      {/* Interval */}
+                      <div>
+                        <label className="block text-sm font-bold text-gray-700 mb-1">Interval (minutes)</label>
+                        <select className="w-full px-3 py-2 border rounded-lg" value={formData.deliveryModalData.interval} onChange={(e) => handleRegularDeliveryChange('interval', e.target.value)}>
+                          {[15, 30, 45, 60].map(v => <option key={v} value={v}>{v}</option>)}
+                        </select>
+                      </div>
+                      {/* Max Orders */}
+                      <div>
+                        <label className="block text-sm font-bold text-gray-700 mb-1">Max Orders Per Slot</label>
+                        <input type="number" className="w-full px-3 py-2 border rounded-lg" value={formData.deliveryModalData.maxOrders} onChange={(e) => handleRegularDeliveryChange('maxOrders', e.target.value)} />
+                      </div>
+                      {/* Lead Time */}
+                      <div>
+                        <label className="block text-sm font-bold text-gray-700 mb-1">Lead Time</label>
+                        <div className="flex gap-3">
+                          <div className="flex-1">
+                            <input type="number" min="0" className="w-full px-3 py-2 border rounded-lg text-center" value={formData.deliveryModalData.leadTime.day} onChange={(e) => handleRegularDeliveryLeadTimeChange('day', e.target.value)} />
+                            <div className="text-xs text-center mt-1 text-gray-500">Days</div>
+                          </div>
+                          <div className="flex-1">
+                            <input type="number" min="0" max="23" className="w-full px-3 py-2 border rounded-lg text-center" value={formData.deliveryModalData.leadTime.hour} onChange={(e) => handleRegularDeliveryLeadTimeChange('hour', e.target.value)} />
+                            <div className="text-xs text-center mt-1 text-gray-500">Hours</div>
+                          </div>
+                          <div className="flex-1">
+                            <input type="number" min="0" max="59" className="w-full px-3 py-2 border rounded-lg text-center" value={formData.deliveryModalData.leadTime.minute} onChange={(e) => handleRegularDeliveryLeadTimeChange('minute', e.target.value)} />
+                            <div className="text-xs text-center mt-1 text-gray-500">Minutes</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="p-4 border-t flex justify-end gap-3">
+                      <button type="button" onClick={closeDeliveryModal} className="px-4 py-2 border rounded-lg hover:bg-gray-50">Cancel</button>
+                      <button type="button" onClick={saveDeliverySetting} className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Save</button>
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
         </div>
