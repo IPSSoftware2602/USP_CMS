@@ -102,7 +102,7 @@ class ItemService {
   // Sync menu
   async syncMenu() {
     const url = `${BASE_URL}menu-item/sync-menu`;
-    return this.makeJsonRequest(url, "POST");
+    return this.makeJsonRequest(url, "GET");
   }
 
   //pwp create
