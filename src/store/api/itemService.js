@@ -99,6 +99,12 @@ class ItemService {
     const url = `${BASE_URL}menu-item/delete/${id}`;
     return this.makeJsonRequest(url, "POST");
   }
+  // Sync menu
+  async syncMenu() {
+    const url = `${BASE_URL}menu-item/sync-menu`;
+    return this.makeJsonRequest(url, "POST");
+  }
+
   //pwp create
   async createPwp(itemData) {
     const url = `${BASE_URL}pwp/create`;
