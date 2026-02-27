@@ -13,6 +13,7 @@ import {
 } from 'chart.js';
 import UserService from '@/store/api/userService';
 import { toast } from 'react-toastify';
+import useExportPermission from '@/hooks/useExportPermission';
 
 ChartJS.register(ArcElement, Title, Tooltip, Legend);
 
@@ -20,10 +21,10 @@ const ProductReport = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [topProducts, setTopProducts] = useState([]);
-  const [filters, setFilters] = useState({ 
-    startDate: '', 
-    endDate: '', 
-    outlet: 'All', 
+  const [filters, setFilters] = useState({
+    startDate: '',
+    endDate: '',
+    outlet: 'All',
     orderMethod: 'All',
     reportMode: 'total',
     year: new Date().getFullYear().toString() // Default to current year
@@ -35,6 +36,7 @@ const ProductReport = () => {
   const [hasUpdatePermission, setHasUpdatePermission] = useState(false);
   const [hasDeletePermission, setHasDeletePermission] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const hasExportPermission = useExportPermission();
   const [legendPage, setLegendPage] = useState(0);
   const itemsPerPage = 10;
 
@@ -53,7 +55,7 @@ const ProductReport = () => {
   const fetchUserPermissions = async () => {
     try {
       if (!user_id) return;
-      
+
       const userDataRes = await UserService.getUser(user_id);
       const userData = userDataRes?.data;
       if (!userData) return;
@@ -99,7 +101,7 @@ const ProductReport = () => {
       if (res.status === 200) {
         const list = res.result;
         setOutletOptions(list);
-      } 
+      }
     } catch (e) {
       console.error('Failed to fetch outlets', e);
     }
@@ -107,7 +109,7 @@ const ProductReport = () => {
 
   const buildSearchParams = (f) => {
     const params = {};
-    
+
     // Handle date parameters based on report mode
     if (f.reportMode === 'daily') {
       if (f.startDate) params.start_date = f.startDate;
@@ -119,7 +121,7 @@ const ProductReport = () => {
       }
     }
     // For yearly and total modes, no date parameters needed
-    
+
     if (f.outlet && f.outlet !== 'All') params.outlet_id = f.outlet;
     if (f.orderMethod && f.orderMethod !== 'All') params.order_type = f.orderMethod;
     if (f.reportMode) params.report_mode = f.reportMode;
@@ -132,7 +134,7 @@ const ProductReport = () => {
     setError(null);
     try {
       const response = await reportService.getProductReport(buildSearchParams(applied));
-      if(response.status == 200){
+      if (response.status == 200) {
         const products = response.data;
         console.log(products)
         setTopProducts(products);
@@ -147,7 +149,7 @@ const ProductReport = () => {
   useEffect(() => {
     fetchOutlets();
     fetchReport();
-    fetchUserPermissions(); 
+    fetchUserPermissions();
   }, []);
 
   // Generate year options (last 10 years + next 1 year)
@@ -197,16 +199,16 @@ const ProductReport = () => {
     // For comparative modes (daily, monthly, yearly)
     else if (topProducts.length > 0 && topProducts[0].comparative_data) {
       const periods = Object.keys(topProducts[0].comparative_data).sort();
-      
+
       // Add period columns
       periods.forEach(period => {
         let headerName = period;
-        
+
         // Format monthly headers (01 -> Jan, 02 -> Feb, etc.)
         if (filters.reportMode === 'monthly' && monthNames[period]) {
           headerName = monthNames[period];
         }
-        
+
         baseColumns.push({
           Header: headerName,
           accessor: `comparative_data.${period}`,
@@ -358,8 +360,8 @@ const ProductReport = () => {
     maintainAspectRatio: false,
     plugins: {
       legend: { display: false },
-      title: { 
-        display: true, 
+      title: {
+        display: true,
         text: `Top Sales Products - ${filters.reportMode.charAt(0).toUpperCase() + filters.reportMode.slice(1)}${filters.reportMode === 'monthly' ? ` ${filters.year}` : ''}`,
         font: {
           size: 18,
@@ -409,36 +411,36 @@ const ProductReport = () => {
 
   const CustomLegend = memo(({ labels, colors, data }) => {
     const total = useMemo(() => data.reduce((sum, value) => sum + parseInt(value), 0), [data]);
-    
+
     const totalPages = Math.ceil(labels.length / itemsPerPage);
     const startIndex = legendPage * itemsPerPage;
     const endIndex = Math.min(startIndex + itemsPerPage, labels.length);
     const currentItems = labels.slice(startIndex, endIndex);
-    
+
     const handlePrevious = useCallback(() => {
       setLegendPage(prev => Math.max(0, prev - 1));
     }, []);
-    
+
     const handleNext = useCallback(() => {
       setLegendPage(prev => Math.min(totalPages - 1, prev + 1));
     }, [totalPages]);
-    
+
     return (
       <div className="w-full max-w-sm">
         <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
           <div className="px-3 py-2 border-b border-gray-200 bg-gray-50">
             <h3 className="text-sm font-semibold text-gray-900">Product Breakdown</h3>
           </div>
-          
+
           <div className="p-3 space-y-2 min-h-[250px]">
             {currentItems.map((label, i) => {
               const originalIndex = startIndex + i;
               const value = data[originalIndex];
               const percentage = total ? ((parseInt(value) / total) * 100).toFixed(1) : 0;
-              
+
               return (
-                <div 
-                  key={`${label}-${originalIndex}`} 
+                <div
+                  key={`${label}-${originalIndex}`}
                   className="group flex items-center justify-between p-2 rounded hover:bg-gray-50 transition-colors duration-200 cursor-pointer"
                 >
                   <div className="flex items-center space-x-2 flex-1 min-w-0">
@@ -461,7 +463,7 @@ const ProductReport = () => {
               );
             })}
           </div>
-          
+
           <div className="px-3 py-2 border-t border-gray-200 bg-gray-50">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center space-x-1">
@@ -489,7 +491,7 @@ const ProductReport = () => {
                 {legendPage + 1}/{totalPages}
               </div>
             </div>
-            
+
             <div className="flex justify-between items-center text-xs">
               <span className="font-medium text-gray-700">Total:</span>
               <span className="font-bold text-gray-900">{total.toLocaleString()}</span>
@@ -500,7 +502,7 @@ const ProductReport = () => {
     );
   });
 
-  const exportToCSV = async() => {
+  const exportToCSV = async () => {
     let searchParams = buildSearchParams(filters);
     searchParams = {
       ...searchParams,
@@ -511,7 +513,7 @@ const ProductReport = () => {
     setError(null);
     try {
       const response = await reportService.getExportExcel(searchParams);
-      if(response.status == 200){
+      if (response.status == 200) {
         toast.success(response.message);
       }
       setLoading(false);
@@ -568,14 +570,16 @@ const ProductReport = () => {
                 className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                 onClick={() => setShowFilters(v => !v)}
               >Filter</button>
-              <button
-                className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                onClick={exportToCSV}
-                disabled={topProducts.length === 0}
-              >
-                <Download className="mr-2 h-4 w-4" />
-                Export Report
-              </button>
+              {hasExportPermission && (
+                <button
+                  className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  onClick={exportToCSV}
+                  disabled={topProducts.length === 0}
+                >
+                  <Download className="mr-2 h-4 w-4" />
+                  Export Report
+                </button>
+              )}
             </div>
           </div>
 
@@ -584,9 +588,9 @@ const ProductReport = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-5">
                 <div className="space-y-1.5">
                   <label className="block text-xs font-semibold uppercase tracking-wide text-gray-600">Report Mode</label>
-                  <select 
+                  <select
                     className="block w-full h-10 rounded-md border border-gray-300 bg-white shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm px-3"
-                    value={filters.reportMode} 
+                    value={filters.reportMode}
                     onChange={e => handleReportModeChange(e.target.value)}
                   >
                     {reportModeOptions.map((mode, i) => (
@@ -594,14 +598,14 @@ const ProductReport = () => {
                     ))}
                   </select>
                 </div>
-                
+
                 {/* Show year selector for monthly mode */}
                 {filters.reportMode === 'monthly' && (
                   <div className="space-y-1.5">
                     <label className="block text-xs font-semibold uppercase tracking-wide text-gray-600">Year</label>
-                    <select 
+                    <select
                       className="block w-full h-10 rounded-md border border-gray-300 bg-white shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm px-3"
-                      value={filters.year} 
+                      value={filters.year}
                       onChange={e => setFilters(prev => ({ ...prev, year: e.target.value }))}
                     >
                       {yearOptions.map((year) => (
@@ -610,38 +614,38 @@ const ProductReport = () => {
                     </select>
                   </div>
                 )}
-                
+
                 {/* Show date range only for daily mode */}
                 {filters.reportMode === 'daily' && (
                   <>
                     <div className="space-y-1.5">
                       <label className="block text-xs font-semibold uppercase tracking-wide text-gray-600">Start Date</label>
-                      <input 
-                        type="date" 
+                      <input
+                        type="date"
                         className="block w-full h-10 rounded-md border border-gray-300 bg-white shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm px-3"
-                        value={filters.startDate} 
-                        onChange={e => setFilters(prev => ({ ...prev, startDate: e.target.value }))} 
+                        value={filters.startDate}
+                        onChange={e => setFilters(prev => ({ ...prev, startDate: e.target.value }))}
                       />
                     </div>
                     <div className="space-y-1.5">
                       <label className="block text-xs font-semibold uppercase tracking-wide text-gray-600">End Date</label>
-                      <input 
-                        type="date" 
+                      <input
+                        type="date"
                         className="block w-full h-10 rounded-md border border-gray-300 bg-white shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm px-3"
-                        value={filters.endDate} 
-                        onChange={e => setFilters(prev => ({ ...prev, endDate: e.target.value }))} 
+                        value={filters.endDate}
+                        onChange={e => setFilters(prev => ({ ...prev, endDate: e.target.value }))}
                       />
                     </div>
                   </>
                 )}
-                
+
                 {/* Show empty space when inputs are hidden to maintain layout */}
                 {filters.reportMode !== 'daily' && filters.reportMode !== 'monthly' && (
                   <>
                     <div className="space-y-1.5 opacity-50">
                       <label className="block text-xs font-semibold uppercase tracking-wide text-gray-600">Start Date</label>
-                      <input 
-                        type="date" 
+                      <input
+                        type="date"
                         className="block w-full h-10 rounded-md border border-gray-300 bg-gray-100 shadow-sm text-sm px-3"
                         disabled
                         placeholder="Not applicable"
@@ -649,8 +653,8 @@ const ProductReport = () => {
                     </div>
                     <div className="space-y-1.5 opacity-50">
                       <label className="block text-xs font-semibold uppercase tracking-wide text-gray-600">End Date</label>
-                      <input 
-                        type="date" 
+                      <input
+                        type="date"
                         className="block w-full h-10 rounded-md border border-gray-300 bg-gray-100 shadow-sm text-sm px-3"
                         disabled
                         placeholder="Not applicable"
@@ -658,7 +662,7 @@ const ProductReport = () => {
                     </div>
                   </>
                 )}
-                
+
                 <div className="space-y-1.5">
                   <label className="block text-xs font-semibold uppercase tracking-wide text-gray-600">Outlet</label>
                   <select className="block w-full h-10 rounded-md border border-gray-300 bg-white shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm px-3"
@@ -704,10 +708,10 @@ const ProductReport = () => {
                       </div>
                     </div>
                   </div>
-                  
+
                   <div className="lg:col-span-1">
-                    <CustomLegend 
-                      labels={chartData.labels} 
+                    <CustomLegend
+                      labels={chartData.labels}
                       colors={chartData.datasets[0].backgroundColor}
                       data={chartData.datasets[0].data}
                     />
@@ -719,11 +723,11 @@ const ProductReport = () => {
 
           <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
             <h3 className="text-lg font-semibold text-gray-900">
-              {filters.reportMode === 'total' 
-                ? 'Top Products - Total Sales' 
+              {filters.reportMode === 'total'
+                ? 'Top Products - Total Sales'
                 : filters.reportMode === 'monthly'
-                ? `Top Products Table - Monthly ${filters.year}`
-                : `Top Products Table - ${filters.reportMode.charAt(0).toUpperCase() + filters.reportMode.slice(1)}`
+                  ? `Top Products Table - Monthly ${filters.year}`
+                  : `Top Products Table - ${filters.reportMode.charAt(0).toUpperCase() + filters.reportMode.slice(1)}`
               }
             </h3>
           </div>

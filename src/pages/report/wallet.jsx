@@ -2,8 +2,8 @@ import React, { useState, useEffect, useMemo } from "react";
 import DataTable from "react-data-table-component";
 import { ChevronDown, Filter, RotateCcw, Loader } from "lucide-react";
 import { ToastContainer, toast } from "react-toastify";
-import reportService from "@/store/api/reportService";
 import { VITE_API_BASE_URL } from "../../constant/config";
+import useExportPermission from "@/hooks/useExportPermission";
 import "react-toastify/dist/ReactToastify.css";
 
 const SingleDateInput = ({
@@ -31,6 +31,7 @@ const SingleDateInput = ({
 const WalletReport = () => {
   const [loading, setLoading] = useState(false);
   const [isDisabled, setIsDisabled] = useState(false);
+  const hasExportPermission = useExportPermission();
   const [walletData, setWalletData] = useState([]);
   const [summaryData, setSummaryData] = useState([]);
   const [filters, setFilters] = useState({
@@ -91,33 +92,33 @@ const WalletReport = () => {
     }
   };
 
-const handleExport = async () => {
-  if (isDisabled) return;
-  setIsDisabled(true);
+  const handleExport = async () => {
+    if (isDisabled) return;
+    setIsDisabled(true);
 
-  try {
-    const params = {
-      type: "wallet-transaction",
-      start_date: filters.dateFrom,
-      end_date: filters.dateTo,
-    };
+    try {
+      const params = {
+        type: "wallet-transaction",
+        start_date: filters.dateFrom,
+        end_date: filters.dateTo,
+      };
 
-    const response = await reportService.exportReport(params);
+      const response = await reportService.exportReport(params);
 
-    if (response.status === 200) {
-      toast.success(
-        "Export file has been processed, this may take a while! You can find it in the Excel Report tab."
-      );
-    } else {
-      toast.error("Failed to export file.");
+      if (response.status === 200) {
+        toast.success(
+          "Export file has been processed, this may take a while! You can find it in the Excel Report tab."
+        );
+      } else {
+        toast.error("Failed to export file.");
+      }
+    } catch (error) {
+      console.error("Export error:", error);
+      toast.error("Something went wrong.");
+    } finally {
+      setTimeout(() => setIsDisabled(false), 1000);
     }
-  } catch (error) {
-    console.error("Export error:", error);
-    toast.error("Something went wrong.");
-  } finally {
-    setTimeout(() => setIsDisabled(false), 1000);
-  }
-};
+  };
 
 
   const handleFilterChange = (name, value) => {
@@ -242,12 +243,14 @@ const handleExport = async () => {
             <span>Filters</span>
           </button>
 
-          <button
-            onClick={handleExport}
-            className="px-4 py-2 bg-indigo-600 text-white font-medium rounded-md hover:bg-indigo-700 transition flex items-center space-x-2"
-          >
-            Export CSV
-          </button>
+          {hasExportPermission && (
+            <button
+              onClick={handleExport}
+              className="px-4 py-2 bg-indigo-600 text-white font-medium rounded-md hover:bg-indigo-700 transition flex items-center space-x-2"
+            >
+              Export CSV
+            </button>
+          )}
         </div>
       </div>
 

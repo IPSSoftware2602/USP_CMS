@@ -4,8 +4,8 @@ import DataTable from "react-data-table-component";
 import { useNavigate } from "react-router-dom";
 import DeleteConfirmationModal from "@/components/ui/DeletePopUp";
 import { toast } from "react-toastify";
-import UserService from "../../../store/api/userService";
 import { VITE_API_BASE_URL } from "../../../constant/config";
+import useExportPermission from '@/hooks/useExportPermission';
 import "react-toastify/dist/ReactToastify.css";
 import { ToastContainer } from "react-toastify";
 
@@ -22,6 +22,7 @@ const DiscountList = () => {
   const [hasUpdatePermission, setHasUpdatePermission] = useState(false);
   const [hasDeletePermission, setHasDeletePermission] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const hasExportPermission = useExportPermission();
   const [tierData, setTierData] = useState([]);
   const authToken = sessionStorage.getItem("token");
   const [editingSortOrder, setEditingSortOrder] = useState(null);
@@ -558,11 +559,10 @@ const DiscountList = () => {
               }
             >
               <span
-                className={`${
-                  isAdmin || hasUpdatePermission
+                className={`${isAdmin || hasUpdatePermission
                     ? "group-hover:text-indigo-600"
                     : ""
-                }`}
+                  }`}
               >
                 {row.sortable || 0}
               </span>
@@ -698,18 +698,19 @@ const DiscountList = () => {
                 + Add Discount
               </button>
             )}
-            <button
-              onClick={exportToCSV}
-              disabled={isDisabled}
-              className={`bg-white border border-gray-300 px-4 py-2 rounded-md flex items-center gap-2 transition ${
-                isDisabled
-                  ? "opacity-60 cursor-not-allowed"
-                  : "hover:bg-gray-50"
-              }`}
-            >
-              <Download size={18} />
-              Export Report
-            </button>
+            {hasExportPermission && (
+              <button
+                onClick={exportToCSV}
+                disabled={isDisabled}
+                className={`bg-white border border-gray-300 px-4 py-2 rounded-md flex items-center gap-2 transition ${isDisabled
+                    ? "opacity-60 cursor-not-allowed"
+                    : "hover:bg-gray-50"
+                  }`}
+              >
+                <Download size={18} />
+                Export Report
+              </button>
+            )}
           </div>
         </div>
 

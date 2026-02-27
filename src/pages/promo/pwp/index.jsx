@@ -6,7 +6,7 @@ import itemService from "../../../store/api/itemService";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import customStyles from "@/utils/dataTableStyles";
-import UserService from "@/store/api/userService";
+import useExportPermission from '@/hooks/useExportPermission';
 
 const PWP = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -28,6 +28,7 @@ const PWP = () => {
   const [hasUpdatePermission, setHasUpdatePermission] = useState(false);
   const [hasDeletePermission, setHasDeletePermission] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const hasExportPermission = useExportPermission();
   const [loading, setLoading] = useState(false);
   const [searchMode, setSearchMode] = useState("");
   const [searchAmountType, setSearchAmountType] = useState("");
@@ -170,8 +171,8 @@ const PWP = () => {
         } else {
           toast.error(
             response?.message ||
-              response?.data?.message ||
-              "Failed to delete PWP item."
+            response?.data?.message ||
+            "Failed to delete PWP item."
           );
         }
       } catch (error) {
@@ -230,8 +231,8 @@ const PWP = () => {
           {row?.mode === "selected_item"
             ? "Selected Items"
             : row?.mode === "all_item"
-            ? "All Items"
-            : "Unknown"}
+              ? "All Items"
+              : "Unknown"}
         </span>
       ),
       width: "12%",
@@ -398,9 +399,9 @@ const PWP = () => {
         </div>
       </div>
 
-       <div className="text-2xl font-semibold text-gray-800">Listing</div>
+      <div className="text-2xl font-semibold text-gray-800">Listing</div>
       <div className="flex justify-end items-center p-6 border-b border-gray-200 mt-6 bg-white rounded-t-md gap-4">
-       
+
         {(isAdmin || hasCreatePermission) && (
           <button
             onClick={handleAddNew}
@@ -410,10 +411,12 @@ const PWP = () => {
             Add New PWP
           </button>
         )}
-        <button className="bg-white hover:bg-gray-50 text-gray-700 px-4 py-2 rounded-lg border border-gray-300 flex items-center gap-2 transition-colors">
-                    <Download size={20} />
-                    Export Report
-                  </button>
+        {hasExportPermission && (
+          <button className="bg-white hover:bg-gray-50 text-gray-700 px-4 py-2 rounded-lg border border-gray-300 flex items-center gap-2 transition-colors">
+            <Download size={20} />
+            Export Report
+          </button>
+        )}
       </div>
 
       <div className="overflow-x-auto">

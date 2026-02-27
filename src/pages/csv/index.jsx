@@ -4,13 +4,15 @@ import { ChevronDown, Download } from "lucide-react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { VITE_API_BASE_URL } from "../../constant/config";
+import useExportPermission from '@/hooks/useExportPermission';
 
 const CsvExport = () => {
   const authToken = sessionStorage.getItem("token");
+  const hasExportPermission = useExportPermission();
   const [reportList, setReportList] = useState([]);
   const [filteredList, setFilteredList] = useState([]);
-  const [searchName, setSearchName] = useState(""); 
-  const [searchType, setSearchType] = useState(""); 
+  const [searchName, setSearchName] = useState("");
+  const [searchType, setSearchType] = useState("");
   const [searchDate, setSearchDate] = useState("");
   const [resetPaginationToggle, setResetPaginationToggle] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -92,13 +94,19 @@ const CsvExport = () => {
       minWidth: "50px",
       center: true,
       cell: (row) => (
-        <a
-          href={row.file_url}
-          download
-          className="p-2 rounded hover:bg-gray-100 transition"
-        >
-          <Download size={22} />
-        </a>
+        hasExportPermission ? (
+          <a
+            href={row.file_url}
+            download
+            className="p-2 rounded hover:bg-gray-100 transition"
+          >
+            <Download size={22} />
+          </a>
+        ) : (
+          <span className="text-gray-400 p-2" title="No Permission">
+            <Download size={22} />
+          </span>
+        )
       ),
     },
     {

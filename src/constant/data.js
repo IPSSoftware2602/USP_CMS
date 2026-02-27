@@ -255,7 +255,11 @@ export const menuItems = [
         childlink: "settings/delivery_settings",
         permissionKey: "Delivery",
       },
-
+      {
+        childtitle: "Push App Notification",
+        childlink: "push-notifications",
+        permissionKey: "Push App Notification",
+      },
       {
         childtitle: "Membership Settings",
         isHide: true,

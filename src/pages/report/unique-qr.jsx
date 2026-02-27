@@ -4,6 +4,7 @@ import { toast } from 'react-toastify';
 import { BarChart3, Download, Loader2, Search, Store } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import reportService from '@/store/api/reportService';
+import useExportPermission from '@/hooks/useExportPermission';
 
 
 const UniqueQrReport = () => {
@@ -11,6 +12,7 @@ const UniqueQrReport = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [data, setData] = useState([]);
+    const hasExportPermission = useExportPermission();
     const [filters, setFilters] = useState({
         startDate: '',
         endDate: '',
@@ -184,13 +186,15 @@ const UniqueQrReport = () => {
                             </button>
                         </div>
                         <div className="flex justify-end">
-                            <button
-                                onClick={exportToCSV}
-                                className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
-                            >
-                                <Download className="w-4 h-4 mr-2" />
-                                Export Summary
-                            </button>
+                            {hasExportPermission && (
+                                <button
+                                    onClick={exportToCSV}
+                                    className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                                >
+                                    <Download className="w-4 h-4 mr-2" />
+                                    Export Summary
+                                </button>
+                            )}
                         </div>
                     </div>
                 </div>

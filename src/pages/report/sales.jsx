@@ -32,16 +32,32 @@ const SalesReport = () => {
   const [hasUpdatePermission, setHasUpdatePermission] = useState(false);
   const [hasDeletePermission, setHasDeletePermission] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [hasExportPermission, setHasExportPermission] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState({
     startDate: '',
     endDate: '',
+    state: 'All',
     outlet: 'All',
     orderMethod: 'All',
     reportMode: 'total',
     year: new Date().getFullYear().toString()
   });
   const [outletOptions, setOutletOptions] = useState([]);
+
+  // Derive unique states from loaded outlet options
+  const stateOptions = useMemo(() => {
+    const states = outletOptions
+      .map(o => o.state)
+      .filter(s => s && s.trim() !== '');
+    return ['All', ...Array.from(new Set(states)).sort()];
+  }, [outletOptions]);
+
+  // Outlets filtered to selected state
+  const filteredOutletOptions = useMemo(() => {
+    if (filters.state === 'All') return outletOptions;
+    return outletOptions.filter(o => o.state === filters.state);
+  }, [outletOptions, filters.state]);
 
   const userData = useMemo(() => {
     try {
@@ -74,7 +90,7 @@ const SalesReport = () => {
   const fetchUserPermissions = async () => {
     try {
       if (!user_id) return;
-      
+
       const userDataRes = await UserService.getUser(user_id);
       const userData = userDataRes?.data;
       if (!userData) return;
@@ -84,6 +100,7 @@ const SalesReport = () => {
         setHasCreatePermission(true);
         setHasUpdatePermission(true);
         setHasDeletePermission(true);
+        setHasExportPermission(true);
         return;
       }
 
@@ -104,6 +121,10 @@ const SalesReport = () => {
               setHasDeletePermission(true);
             }
           }
+
+          if (permissions['Excel Report'] && permissions['Excel Report'].read === true) {
+            setHasExportPermission(true);
+          }
         } catch (e) {
           console.error("Error parsing user permissions:", e);
         }
@@ -115,7 +136,7 @@ const SalesReport = () => {
 
   const buildSearchParams = (f) => {
     const params = {};
-    
+
     // Handle date parameters based on report mode
     if (f.reportMode === 'daily') {
       if (f.startDate) params.start_date = f.startDate;
@@ -127,7 +148,8 @@ const SalesReport = () => {
       }
     }
     // For yearly and total modes, no date parameters needed
-    
+
+    if (f.state && f.state !== 'All') params.state = f.state;
     if (f.outlet && f.outlet !== 'All') params.outlet_id = f.outlet;
     if (f.orderMethod && f.orderMethod !== 'All') params.order_type = f.orderMethod;
     if (f.reportMode) params.report_mode = f.reportMode;
@@ -141,7 +163,7 @@ const SalesReport = () => {
     setError(null);
     try {
       const response = await reportService.getSalesReport(searchParams);
-      if(response.status == 200){
+      if (response.status == 200) {
         const sales_report_data = response.data.outlets;
         const summary_data = response.data.summary;
         const hourly_data = response.data.hourly;
@@ -160,7 +182,7 @@ const SalesReport = () => {
     try {
       if (!user_id) return;
       const response = await outletService.getOutlets(user_id);
-      if(response.status == 200){
+      if (response.status == 200) {
         const outlet_data = response.result;
         setOutletOptions(outlet_data);
       }
@@ -170,7 +192,7 @@ const SalesReport = () => {
   };
 
   useEffect(() => {
-    if(user_id){
+    if (user_id) {
       fetchSalesData();
       fetchUserPermissions();
       fetchOutletData();
@@ -258,16 +280,16 @@ const SalesReport = () => {
     // For comparative modes (daily, monthly, yearly)
     if (outletData.length > 0 && outletData[0].comparative_data) {
       const periods = Object.keys(outletData[0].comparative_data).sort();
-      
+
       // Create grouped columns for each period
       periods.forEach(period => {
         let headerName = period;
-        
+
         // Format monthly headers (01 -> Jan, 02 -> Feb, etc.)
         if (filters.reportMode === 'monthly' && monthNames[period]) {
           headerName = monthNames[period];
         }
-        
+
         // Create a group column for this period
         baseColumns.push({
           Header: headerName,
@@ -454,7 +476,7 @@ const SalesReport = () => {
     }
   };
 
-  const exportToCSV = async() => {
+  const exportToCSV = async () => {
     let searchParams = buildSearchParams(filters);
     searchParams = {
       ...searchParams,
@@ -464,7 +486,7 @@ const SalesReport = () => {
     setError(null);
     try {
       const response = await reportService.getExportExcel(searchParams);
-      if(response.status == 200){
+      if (response.status == 200) {
         toast.success(response.message);
       }
       setLoading(false);
@@ -476,13 +498,14 @@ const SalesReport = () => {
 
   const handleApplyFilters = () => {
     gotoPage(0);
-    fetchSalesData(filters); 
+    fetchSalesData(filters);
   };
 
   const handleResetFilters = () => {
     const resetFilters = {
       startDate: '',
       endDate: '',
+      state: 'All',
       outlet: 'All',
       orderMethod: 'All',
       reportMode: 'total',
@@ -528,7 +551,7 @@ const SalesReport = () => {
               </div>
               <div className="ml-3">
                 <p className="text-red-800">{error}</p>
-                  <button 
+                <button
                   onClick={fetchSalesData}
                   className="mt-2 text-red-600 hover:text-red-800 underline font-medium"
                 >
@@ -656,11 +679,11 @@ const SalesReport = () => {
                 </div>
                 <div>
                   <h2 className="text-xl font-semibold text-gray-900">
-                    {filters.reportMode === 'total' 
-                      ? 'Sales Report - Total' 
+                    {filters.reportMode === 'total'
+                      ? 'Sales Report - Total'
                       : filters.reportMode === 'monthly'
-                      ? `Sales Report - Monthly ${filters.year}`
-                      : `Sales Report - ${filters.reportMode.charAt(0).toUpperCase() + filters.reportMode.slice(1)} `
+                        ? `Sales Report - Monthly ${filters.year}`
+                        : `Sales Report - ${filters.reportMode.charAt(0).toUpperCase() + filters.reportMode.slice(1)} `
                     }
                   </h2>
                 </div>
@@ -672,14 +695,16 @@ const SalesReport = () => {
                 >
                   Filter
                 </button>
-                <button
-                  className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
-                  onClick={exportToCSV}
-                  disabled={outletData.length === 0}
-                >
-                  <Download className="mr-2 h-4 w-4" />
-                  Export Report
-                </button>
+                {hasExportPermission && (
+                  <button
+                    className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                    onClick={exportToCSV}
+                    disabled={outletData.length === 0}
+                  >
+                    <Download className="mr-2 h-4 w-4" />
+                    Export Report
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -689,9 +714,9 @@ const SalesReport = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-5">
                 <div className="space-y-1.5">
                   <label className="block text-xs font-semibold uppercase tracking-wide text-gray-600">Report Mode</label>
-                  <select 
+                  <select
                     className="block w-full h-10 rounded-md border border-gray-300 bg-white shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm px-3"
-                    value={filters.reportMode} 
+                    value={filters.reportMode}
                     onChange={e => handleReportModeChange(e.target.value)}
                   >
                     {reportModeOptions.map((mode, i) => (
@@ -699,14 +724,14 @@ const SalesReport = () => {
                     ))}
                   </select>
                 </div>
-                
+
                 {/* Show year selector for monthly mode */}
                 {filters.reportMode === 'monthly' && (
                   <div className="space-y-1.5">
                     <label className="block text-xs font-semibold uppercase tracking-wide text-gray-600">Year</label>
-                    <select 
+                    <select
                       className="block w-full h-10 rounded-md border border-gray-300 bg-white shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm px-3"
-                      value={filters.year} 
+                      value={filters.year}
                       onChange={e => setFilters(prev => ({ ...prev, year: e.target.value }))}
                     >
                       {yearOptions.map((year) => (
@@ -715,38 +740,38 @@ const SalesReport = () => {
                     </select>
                   </div>
                 )}
-                
+
                 {/* Show date range only for daily mode */}
                 {filters.reportMode === 'daily' && (
                   <>
                     <div className="space-y-1.5">
                       <label className="block text-xs font-semibold uppercase tracking-wide text-gray-600">Start Date</label>
-                      <input 
-                        type="date" 
+                      <input
+                        type="date"
                         className="block w-full h-10 rounded-md border border-gray-300 bg-white shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm px-3"
-                        value={filters.startDate} 
-                        onChange={e => setFilters(prev => ({ ...prev, startDate: e.target.value }))} 
+                        value={filters.startDate}
+                        onChange={e => setFilters(prev => ({ ...prev, startDate: e.target.value }))}
                       />
                     </div>
                     <div className="space-y-1.5">
                       <label className="block text-xs font-semibold uppercase tracking-wide text-gray-600">End Date</label>
-                      <input 
-                        type="date" 
+                      <input
+                        type="date"
                         className="block w-full h-10 rounded-md border border-gray-300 bg-white shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm px-3"
-                        value={filters.endDate} 
-                        onChange={e => setFilters(prev => ({ ...prev, endDate: e.target.value }))} 
+                        value={filters.endDate}
+                        onChange={e => setFilters(prev => ({ ...prev, endDate: e.target.value }))}
                       />
                     </div>
                   </>
                 )}
-                
+
                 {/* Show empty space when inputs are hidden to maintain layout */}
                 {filters.reportMode !== 'daily' && filters.reportMode !== 'monthly' && (
                   <>
                     <div className="space-y-1.5 opacity-50">
                       <label className="block text-xs font-semibold uppercase tracking-wide text-gray-600">Start Date</label>
-                      <input 
-                        type="date" 
+                      <input
+                        type="date"
                         className="block w-full h-10 rounded-md border border-gray-300 bg-gray-100 shadow-sm text-sm px-3"
                         disabled
                         placeholder="Not applicable"
@@ -754,8 +779,8 @@ const SalesReport = () => {
                     </div>
                     <div className="space-y-1.5 opacity-50">
                       <label className="block text-xs font-semibold uppercase tracking-wide text-gray-600">End Date</label>
-                      <input 
-                        type="date" 
+                      <input
+                        type="date"
                         className="block w-full h-10 rounded-md border border-gray-300 bg-gray-100 shadow-sm text-sm px-3"
                         disabled
                         placeholder="Not applicable"
@@ -763,7 +788,19 @@ const SalesReport = () => {
                     </div>
                   </>
                 )}
-                
+
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-semibold uppercase tracking-wide text-gray-600">State</label>
+                  <select
+                    className="block w-full h-10 rounded-md border border-gray-300 bg-white shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm px-3"
+                    value={filters.state}
+                    onChange={e => setFilters(prev => ({ ...prev, state: e.target.value, outlet: 'All' }))}
+                  >
+                    {stateOptions.map(s => (
+                      <option key={s} value={s}>{s}</option>
+                    ))}
+                  </select>
+                </div>
                 <div className="space-y-1.5">
                   <label className="block text-xs font-semibold uppercase tracking-wide text-gray-600">Outlet</label>
                   <select
@@ -772,7 +809,7 @@ const SalesReport = () => {
                     onChange={e => setFilters(prev => ({ ...prev, outlet: e.target.value }))}
                   >
                     <option value={'All'}> All</option>
-                    {outletOptions.map(opt => (
+                    {filteredOutletOptions.map(opt => (
                       <option key={opt.id} value={opt.id}>{opt.title}</option>
                     ))}
                   </select>

@@ -16,6 +16,7 @@ import { orderService } from "../../../store/api/orderService";
 import "react-toastify/dist/ReactToastify.css";
 import { VITE_API_BASE_URL } from "../../../constant/config";
 import { ToastContainer, toast } from "react-toastify";
+import useExportPermission from '@/hooks/useExportPermission';
 // import { cu } from "@fullcalendar/core/internal-common";
 
 const SingleDateInput = ({
@@ -64,9 +65,8 @@ const SelectDropdown = ({
               : placeholder}
           </span>
           <ChevronDown
-            className={`h-4 w-4 text-gray-400 transition-transform ${
-              isOpen ? "rotate-180" : ""
-            }`}
+            className={`h-4 w-4 text-gray-400 transition-transform ${isOpen ? "rotate-180" : ""
+              }`}
           />
         </button>
 
@@ -216,7 +216,7 @@ const InlineFilterComponent = ({
             onChange={(value) => handleFilterChange("dateFrom", value)}
           />
 
-           <SingleDateInput
+          <SingleDateInput
             label="Date To"
             value={filters.dateTo || ""}
             onChange={(value) => handleFilterChange("dateTo", value)}
@@ -300,6 +300,7 @@ const OrderList = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [isDisabled, setIsDisabled] = useState(false);
+  const hasExportPermission = useExportPermission();
   const [activeFilters, setActiveFilters] = useState({});
   const [pagination, setPagination] = useState({
     page: 1,
@@ -319,37 +320,37 @@ const OrderList = () => {
   const user_id = userData?.user?.user_id || null;
   const outlet_id = userData?.user?.outlet_id || null;
 
-    const exportToCSV = async () => {
-      if (isDisabled) return;
-      setIsDisabled(true);
+  const exportToCSV = async () => {
+    if (isDisabled) return;
+    setIsDisabled(true);
 
-      try {
-        const response = await fetch(`${VITE_API_BASE_URL}outlets/export-excel`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/x-www-form-urlencoded",
-            Authorization: `Bearer ${sessionStorage.getItem("token")}`,
-          },
-          body: new URLSearchParams({
-            user_id: user_id,
-            type: "order",
-            start_date: activeFilters.start_date || "",
-            end_date: activeFilters.end_date || "",
-          }),
-        });
+    try {
+      const response = await fetch(`${VITE_API_BASE_URL}outlets/export-excel`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+        },
+        body: new URLSearchParams({
+          user_id: user_id,
+          type: "order",
+          start_date: activeFilters.start_date || "",
+          end_date: activeFilters.end_date || "",
+        }),
+      });
 
-        const result = await response.json();
-        if (result.status === 200) {
-          toast.success("Export file has been processed, this may take a while! You can find it in the Excel Report tab.");
-        } else {
-          toast.error("Failed to export file.");
-        }
-      } catch (err) {
-        toast.error("Something went wrong.");
-      } finally {
-        setTimeout(() => setIsDisabled(false), 1000);
+      const result = await response.json();
+      if (result.status === 200) {
+        toast.success("Export file has been processed, this may take a while! You can find it in the Excel Report tab.");
+      } else {
+        toast.error("Failed to export file.");
       }
-    };
+    } catch (err) {
+      toast.error("Something went wrong.");
+    } finally {
+      setTimeout(() => setIsDisabled(false), 1000);
+    }
+  };
   // Load initial data
   useEffect(() => {
     if (user_id) {
@@ -358,10 +359,10 @@ const OrderList = () => {
   }, [user_id]);
 
   const loadOrders = async (filters = {}, page = pagination.page, perPage = pagination.perPage) => {
-  setLoading(true);
-  setError(null);
+    setLoading(true);
+    setError(null);
 
-  const startTime = Date.now();
+    const startTime = Date.now();
 
     try {
       const filtersWithOutlet = { ...filters, outlet_id };
@@ -607,11 +608,10 @@ const OrderList = () => {
       width: "120px",
       cell: (row) => (
         <span
-          className={`px-2 py-1 capitalize rounded-full text-xs ${
-            row.paymentStatus === "paid"
-              ? "bg-green-100 text-green-800"
-              : "bg-red-100 text-red-800"
-          }`}
+          className={`px-2 py-1 capitalize rounded-full text-xs ${row.paymentStatus === "paid"
+            ? "bg-green-100 text-green-800"
+            : "bg-red-100 text-red-800"
+            }`}
         >
           {row.paymentStatus}
         </span>
@@ -809,16 +809,17 @@ const OrderList = () => {
               <Filter className="h-4 w-4" />
               <span>Filters</span>
             </button>
-            <button
-              onClick={exportToCSV}
-              disabled={isDisabled}
-              className={`bg-white border border-gray-300 px-4 py-2 rounded-md flex items-center gap-2 transition ${
-                isDisabled ? "opacity-60 cursor-not-allowed" : "hover:bg-gray-50"
-              }`}
-            >
-              <Download size={18} />
-              Export Report
-            </button>
+            {hasExportPermission && (
+              <button
+                onClick={exportToCSV}
+                disabled={isDisabled}
+                className={`bg-white border border-gray-300 px-4 py-2 rounded-md flex items-center gap-2 transition ${isDisabled ? "opacity-60 cursor-not-allowed" : "hover:bg-gray-50"
+                  }`}
+              >
+                <Download size={18} />
+                Export Report
+              </button>
+            )}
           </div>
         </div>
 

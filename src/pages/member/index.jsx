@@ -18,6 +18,7 @@ import { CSVLink } from "react-csv";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import UserService from "../../store/api/userService";
+import useExportPermission from '@/hooks/useExportPermission';
 
 const MemberPage = () => {
   const authToken = sessionStorage.getItem("token");
@@ -30,6 +31,7 @@ const MemberPage = () => {
   const [hasUpdatePermission, setHasUpdatePermission] = useState(false);
   const [hasDeletePermission, setHasDeletePermission] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const hasExportPermission = useExportPermission();
   const [loading, setLoading] = useState(true);
   const [isDisabled, setIsDisabled] = useState(false);
 
@@ -225,44 +227,44 @@ const MemberPage = () => {
   // };
 
   const fetchCustomers = async (page = 1, limit = 20) => {
-  try {
-    setLoading(true);
+    try {
+      setLoading(true);
 
-    const params = new URLSearchParams({
-      page: page.toString(),
-      limit: limit.toString(),
-    });
+      const params = new URLSearchParams({
+        page: page.toString(),
+        limit: limit.toString(),
+      });
 
-    if (nameFilter) params.append("name", nameFilter);
-    if (emailFilter) params.append("email", emailFilter);
-    if (phoneFilter) params.append("phone", phoneFilter);
-    if (tierFilter) params.append("tier", tierFilter);
-    if (referralFilter) params.append("referral", referralFilter);
+      if (nameFilter) params.append("name", nameFilter);
+      if (emailFilter) params.append("email", emailFilter);
+      if (phoneFilter) params.append("phone", phoneFilter);
+      if (tierFilter) params.append("tier", tierFilter);
+      if (referralFilter) params.append("referral", referralFilter);
 
-    const response = await fetch(`${VITE_API_BASE_URL}customers?${params}`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${authToken}`,
-      },
-    });
+      const response = await fetch(`${VITE_API_BASE_URL}customers?${params}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${authToken}`,
+        },
+      });
 
-    if (!response.ok) throw new Error("Failed to fetch customers");
+      if (!response.ok) throw new Error("Failed to fetch customers");
 
-    const result = await response.json();
+      const result = await response.json();
 
-    setCustomerData(result.data || []);
-    setFilteredCustomerData(result.data || []);
-    setTotalRows(result.total || 0);
-    setPage(result.page || 1);
-    setLimit(result.limit || 20);
-  } catch (error) {
-    console.error("Error fetching customers:", error);
-    toast.error("Failed to load customer list");
-  } finally {
-    setLoading(false);
-  }
-};
+      setCustomerData(result.data || []);
+      setFilteredCustomerData(result.data || []);
+      setTotalRows(result.total || 0);
+      setPage(result.page || 1);
+      setLimit(result.limit || 20);
+    } catch (error) {
+      console.error("Error fetching customers:", error);
+      toast.error("Failed to load customer list");
+    } finally {
+      setLoading(false);
+    }
+  };
 
 
 
@@ -639,18 +641,19 @@ const MemberPage = () => {
                   Add New Member
                 </button>
               )}
-              <button
-                onClick={exportToCSV}
-                disabled={isDisabled}
-                className={`bg-[#312e81] text-white border border-gray-300 px-4 py-2 rounded-md flex items-center gap-2 transition ${
-                  isDisabled
-                    ? "opacity-60 cursor-not-allowed"
-                    : "hover:bg-[#312e81]"
-                }`}
-              >
-                <Download size={18} />
-                Export Report
-              </button>
+              {hasExportPermission && (
+                <button
+                  onClick={exportToCSV}
+                  disabled={isDisabled}
+                  className={`bg-[#312e81] text-white border border-gray-300 px-4 py-2 rounded-md flex items-center gap-2 transition ${isDisabled
+                      ? "opacity-60 cursor-not-allowed"
+                      : "hover:bg-[#312e81]"
+                    }`}
+                >
+                  <Download size={18} />
+                  Export Report
+                </button>
+              )}
               <button
                 className="bg-[#312e81] text-white px-6 py-3 rounded-lg flex items-center gap-2 text-sm font-medium"
                 onClick={() => setShowFilters(!showFilters)}

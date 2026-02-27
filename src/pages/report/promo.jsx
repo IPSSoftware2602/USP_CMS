@@ -4,8 +4,8 @@ import { Edit, Download, Trash2, Plus, PenLine, ChevronDown, ChevronUp, Loader2,
 import { useNavigate } from 'react-router-dom';
 import DeleteConfirmationModal from '../../components/ui/DeletePopUp';
 import OutletApiService from '../../store/api/outletService';
-import UserService from '../../store/api/userService';
 import reportService from '@/store/api/reportService';
+import useExportPermission from '@/hooks/useExportPermission';
 import { set } from 'react-hook-form';
 import { toast } from 'react-toastify';
 import outletService from '../../store/api/outletService';
@@ -24,12 +24,13 @@ const PromoReport = () => {
   const [hasUpdatePermission, setHasUpdatePermission] = useState(false);
   const [hasDeletePermission, setHasDeletePermission] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const hasExportPermission = useExportPermission();
   const [reportData, setReportData] = useState([]);
   const [filteredReportData, setFilteredReportData] = useState([]);
   const [summaryData, setSummaryData] = useState([]);
-  const [filters, setFilters] = useState({ 
-    startDate: '', 
-    endDate: '', 
+  const [filters, setFilters] = useState({
+    startDate: '',
+    endDate: '',
     outlet: 'All',
     reportMode: 'total',
     year: new Date().getFullYear().toString()
@@ -75,7 +76,7 @@ const PromoReport = () => {
   const fetchUserPermissions = async () => {
     try {
       if (!user_id) return;
-      
+
       const userDataRes = await UserService.getUser(user_id);
       const userData = userDataRes?.data;
       if (!userData) return;
@@ -121,12 +122,12 @@ const PromoReport = () => {
       if (res.status === 200) {
         const list = res.result;
         setOutletOptions(list);
-      } 
+      }
     } catch (e) {
       console.error('Failed to fetch outlets', e);
     }
   };
-  
+
   useEffect(() => {
     if (user_id) {
       fetchOutlets();
@@ -142,7 +143,7 @@ const PromoReport = () => {
 
   const buildSearchParams = (f) => {
     const params = {};
-    
+
     // Handle date parameters based on report mode
     if (f.reportMode === 'daily') {
       if (f.startDate) params.start_date = f.startDate;
@@ -154,7 +155,7 @@ const PromoReport = () => {
       }
     }
     // For yearly and total modes, no date parameters needed
-    
+
     if (f.outlet && f.outlet !== 'All') params.outlet_id = f.outlet;
     if (f.reportMode) params.report_mode = f.reportMode;
     if (user_id) params.user_id = user_id;
@@ -166,7 +167,7 @@ const PromoReport = () => {
       setLoading(true);
       setError(null);
       const response = await reportService.getPromoReport(buildSearchParams(applied));
-      if(response.status == 200){
+      if (response.status == 200) {
         console.log(response.data)
         const report_data = response.data.promos;
         const summary_data = response.data.summary;
@@ -183,7 +184,7 @@ const PromoReport = () => {
     }
   };
 
-  const exportToCSV = async() => {
+  const exportToCSV = async () => {
     let searchParams = buildSearchParams(filters);
     searchParams = {
       ...searchParams,
@@ -194,7 +195,7 @@ const PromoReport = () => {
     setError(null);
     try {
       const response = await reportService.getExportExcel(searchParams);
-      if(response.status == 200){
+      if (response.status == 200) {
         toast.success(response.message);
       }
       setLoading(false);
@@ -247,16 +248,16 @@ const PromoReport = () => {
     // For comparative modes (daily, monthly, yearly)
     if (reportData.length > 0 && reportData[0].comparative_data) {
       const periods = Object.keys(reportData[0].comparative_data).sort();
-      
+
       // Create grouped columns for each period
       periods.forEach(period => {
         let headerName = period;
-        
+
         // Format monthly headers (01 -> Jan, 02 -> Feb, etc.)
         if (filters.reportMode === 'monthly' && monthNames[period]) {
           headerName = monthNames[period];
         }
-        
+
         // Create a group column for this period
         baseColumns.push({
           Header: headerName,
@@ -421,7 +422,7 @@ const PromoReport = () => {
               </div>
               <div className="ml-3">
                 <p className="text-red-800">{error}</p>
-                <button 
+                <button
                   onClick={fetchReport}
                   className="mt-2 text-red-600 hover:text-red-800 underline font-medium"
                 >
@@ -444,11 +445,11 @@ const PromoReport = () => {
                 </div>
                 <div>
                   <h2 className="text-xl font-semibold text-gray-900">
-                    {filters.reportMode === 'total' 
-                      ? 'Promo Usage - Total' 
+                    {filters.reportMode === 'total'
+                      ? 'Promo Usage - Total'
                       : filters.reportMode === 'monthly'
-                      ? `Promo Usage - Monthly ${filters.year}`
-                      : `Promo Usage - ${filters.reportMode.charAt(0).toUpperCase() + filters.reportMode.slice(1)}`
+                        ? `Promo Usage - Monthly ${filters.year}`
+                        : `Promo Usage - ${filters.reportMode.charAt(0).toUpperCase() + filters.reportMode.slice(1)}`
                     }
                   </h2>
                 </div>
@@ -458,26 +459,28 @@ const PromoReport = () => {
                   className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                   onClick={() => setShowFilters(v => !v)}
                 >Filter</button>
-                <button 
-                  className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
-                  onClick={exportToCSV}
-                  disabled={reportData.length === 0}
-                >
-                  <Download className="mr-2 h-4 w-4" />
-                  Export Report
-                </button>
+                {hasExportPermission && (
+                  <button
+                    className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                    onClick={exportToCSV}
+                    disabled={reportData.length === 0}
+                  >
+                    <Download className="mr-2 h-4 w-4" />
+                    Export Report
+                  </button>
+                )}
               </div>
             </div>
           </div>
-          
+
           {showFilters && (
             <div className="px-6 py-5 border-b border-gray-200 bg-gray-50">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-5">
                 <div className="space-y-1.5">
                   <label className="block text-xs font-semibold uppercase tracking-wide text-gray-600">Report Mode</label>
-                  <select 
+                  <select
                     className="block w-full h-10 rounded-md border border-gray-300 bg-white shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm px-3"
-                    value={filters.reportMode} 
+                    value={filters.reportMode}
                     onChange={e => handleReportModeChange(e.target.value)}
                   >
                     {reportModeOptions.map((mode, i) => (
@@ -485,14 +488,14 @@ const PromoReport = () => {
                     ))}
                   </select>
                 </div>
-                
+
                 {/* Show year selector for monthly mode */}
                 {filters.reportMode === 'monthly' && (
                   <div className="space-y-1.5">
                     <label className="block text-xs font-semibold uppercase tracking-wide text-gray-600">Year</label>
-                    <select 
+                    <select
                       className="block w-full h-10 rounded-md border border-gray-300 bg-white shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm px-3"
-                      value={filters.year} 
+                      value={filters.year}
                       onChange={e => setFilters(prev => ({ ...prev, year: e.target.value }))}
                     >
                       {yearOptions.map((year) => (
@@ -501,7 +504,7 @@ const PromoReport = () => {
                     </select>
                   </div>
                 )}
-                
+
                 {/* Show date range only for daily mode */}
                 {filters.reportMode === 'daily' && (
                   <>
@@ -517,14 +520,14 @@ const PromoReport = () => {
                     </div>
                   </>
                 )}
-                
+
                 {/* Show empty space when inputs are hidden to maintain layout */}
                 {filters.reportMode !== 'daily' && filters.reportMode !== 'monthly' && (
                   <>
                     <div className="space-y-1.5 opacity-50">
                       <label className="block text-xs font-semibold uppercase tracking-wide text-gray-600">Start Date</label>
-                      <input 
-                        type="date" 
+                      <input
+                        type="date"
                         className="block w-full h-10 rounded-md border border-gray-300 bg-gray-100 shadow-sm text-sm px-3"
                         disabled
                         placeholder="Not applicable"
@@ -532,8 +535,8 @@ const PromoReport = () => {
                     </div>
                     <div className="space-y-1.5 opacity-50">
                       <label className="block text-xs font-semibold uppercase tracking-wide text-gray-600">End Date</label>
-                      <input 
-                        type="date" 
+                      <input
+                        type="date"
                         className="block w-full h-10 rounded-md border border-gray-300 bg-gray-100 shadow-sm text-sm px-3"
                         disabled
                         placeholder="Not applicable"
@@ -541,7 +544,7 @@ const PromoReport = () => {
                     </div>
                   </>
                 )}
-                
+
                 <div className="space-y-1.5">
                   <label className="block text-xs font-semibold uppercase tracking-wide text-gray-600">Outlet</label>
                   <select className="block w-full h-10 rounded-md border border-gray-300 bg-white shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm px-3"

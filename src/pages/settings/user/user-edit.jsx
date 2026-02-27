@@ -86,7 +86,8 @@ const UserEdit = () => {
         Delivery: { read: false, create: false, update: false, delete: false },
         'App Settings': { read: false, create: false, update: false, delete: false }
       }
-    }
+    },
+    'Excel Report': { read: false, create: false, update: false, delete: false }
   };
 
   const [menuPermissions, setMenuPermissions] = useState(defaultMenuPermissions);
@@ -98,7 +99,7 @@ const UserEdit = () => {
         const parsedUser = JSON.parse(userData);
         const role = parsedUser.user.role;
         const userId = parsedUser.user.user_id; // Get the current user ID
-        
+
         setCurrentUserRole(role);
         setCurrentUserId(userId); // Set the current user ID
       } catch (e) {
@@ -112,7 +113,7 @@ const UserEdit = () => {
         setError(null);
         const userData = await UserService.getUser(id);
         setUser(userData);
-        
+
         setFormData({
           username: userData.data.username || '',
           name: userData.data.name || '',
@@ -122,7 +123,7 @@ const UserEdit = () => {
           activeStatus: userData.data.status || '',
           outlet: userData.data.outlet_id || ''
         });
-        
+
         if (userData.data.user_permissions) {
           try {
             const parsedPermissions = JSON.parse(userData.data.user_permissions);
@@ -139,16 +140,16 @@ const UserEdit = () => {
         } else {
           setMenuPermissions(defaultMenuPermissions);
         }
-        
+
         // Fetch outlets using current user's ID from localStorage
         setLoadingOutlets(true);
         const outletsResponse = await OutletApiService.getOutlets(currentUserId); // Use currentUserId instead of id
-        const outletsData = Array.isArray(outletsResponse) 
-          ? outletsResponse 
-          : Array.isArray(outletsResponse.result) 
-            ? outletsResponse.result 
-            : Array.isArray(outletsResponse.data) 
-              ? outletsResponse.data 
+        const outletsData = Array.isArray(outletsResponse)
+          ? outletsResponse
+          : Array.isArray(outletsResponse.result)
+            ? outletsResponse.result
+            : Array.isArray(outletsResponse.data)
+              ? outletsResponse.data
               : [];
         setOutlets(outletsData);
       } catch (err) {
@@ -174,91 +175,91 @@ const UserEdit = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (formData.password && formData.password !== formData.confirmPassword) {
       toast.error('Passwords do not match!', {
-      position: "top-right",
-      autoClose: 3000,
-      hideProgressBar: false,
-      closeOnClick: true,
-      pauseOnHover: true,
-      draggable: true,
-      progress: undefined,
-      theme: "light",
-    });
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: "light",
+      });
       return;
     }
 
     if (!formData.username.trim()) {
-       toast.error('Username is required!', {
-      position: "top-right",
-      autoClose: 3000,
-      hideProgressBar: false,
-      closeOnClick: true,
-      pauseOnHover: true,
-      draggable: true,
-      progress: undefined,
-      theme: "light",
-    });
+      toast.error('Username is required!', {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: "light",
+      });
       return;
     }
-    
+
     if (!formData.name.trim()) {
       toast.error('Name is required!', {
-      position: "top-right",
-      autoClose: 3000,
-      hideProgressBar: false,
-      closeOnClick: true,
-      pauseOnHover: true,
-      draggable: true,
-      progress: undefined,
-      theme: "light",
-    });
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: "light",
+      });
       return;
     }
-    
+
     if (!formData.userRoles) {
       toast.error('User role is required!', {
-      position: "top-right",
-      autoClose: 3000,
-      hideProgressBar: false,
-      closeOnClick: true,
-      pauseOnHover: true,
-      draggable: true,
-      progress: undefined,
-      theme: "light",
-    });
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: "light",
+      });
       return;
     }
-    
+
     if (!formData.activeStatus) {
       toast.error('Active status is required!', {
-      position: "top-right",
-      autoClose: 3000,
-      hideProgressBar: false,
-      closeOnClick: true,
-      pauseOnHover: true,
-      draggable: true,
-      progress: undefined,
-      theme: "light",
-    });
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: "light",
+      });
       return;
     }
 
     if (formData.userRoles === 'outlet' && !formData.outlet) {
       toast.error('Outlet selection is required for Outlet role', {
-      position: "top-right",
-      autoClose: 3000,
-      hideProgressBar: false,
-      closeOnClick: true,
-      pauseOnHover: true,
-      draggable: true,
-      progress: undefined,
-      theme: "light",
-    });
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: "light",
+      });
       return;
     }
-    
+
     try {
       setLoading(true);
 
@@ -268,13 +269,13 @@ const UserEdit = () => {
         userRoles: formData.userRoles,
         activeStatus: formData.activeStatus,
         outlet: formData.userRoles === 'outlet' ? formData.outlet : null,
-        menuPermissions: menuPermissions 
+        menuPermissions: menuPermissions
       };
-      
+
       if (formData.password && formData.password.trim()) {
         updateData.password = formData.password;
       }
-      
+
       await UserService.updateUser(id, updateData);
       toast.success("User updated successfully!", {
         position: "top-right",
@@ -306,18 +307,18 @@ const UserEdit = () => {
     }
   };
 
-    const handleChange = (e) => {
+  const handleChange = (e) => {
     const { name, value } = e.target;
-    
+
     setFormData(prev => ({
-        ...prev,
-        [name]: value
+      ...prev,
+      [name]: value
     }));
-    
+
     if (name === 'userRoles' && value !== 'outlet') {
-        setFormData(prev => ({ ...prev, outlet: '' }));
+      setFormData(prev => ({ ...prev, outlet: '' }));
     }
-    };
+  };
 
   if (!user) {
     return (
@@ -331,7 +332,7 @@ const UserEdit = () => {
     <div className="pt-4">
       <div className="bg-white rounded-lg shadow-sm overflow-hidden p-6">
         <h2 className="text-xl font-semibold text-gray-900 mb-6">Edit User</h2>
-        
+
         <form onSubmit={handleSubmit}>
           <div className="space-y-4">
             <div>
@@ -344,7 +345,7 @@ const UserEdit = () => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
               <input
@@ -372,7 +373,7 @@ const UserEdit = () => {
                 <option value="outlet">Outlet</option>
               </select>
             </div>
-            
+
             {formData.userRoles === 'outlet' && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -400,7 +401,7 @@ const UserEdit = () => {
                 )}
               </div>
             )}
-            
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Active Status</label>
               <select
@@ -415,7 +416,7 @@ const UserEdit = () => {
                 <option value="suspended">Suspended</option>
               </select>
             </div>
-            
+
             <div>
               <div className="flex items-center justify-between mb-1">
                 <label className="block text-sm font-medium text-gray-700">New Password (optional)</label>
@@ -445,7 +446,7 @@ const UserEdit = () => {
                 </button>
               </div>
             </div>
-            
+
             {formData.password && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
@@ -470,117 +471,117 @@ const UserEdit = () => {
           </div>
 
           {currentUserRole === 'admin' && (
-          <div className="mt-8">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">Menu Permissions</h3>
-            <div className="overflow-x-auto">
-              <table className="min-w-full border border-gray-200">
-                <thead>
-                  <tr>
-                    <th className="border-b border-gray-200 bg-gray-50 px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Menu</th>
-                    <th className="border-b border-gray-200 bg-gray-50 px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Read</th>
-                    <th className="border-b border-gray-200 bg-gray-50 px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Create</th>
-                    <th className="border-b border-gray-200 bg-gray-50 px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Update</th>
-                    <th className="border-b border-gray-200 bg-gray-50 px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Delete</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {Object.entries(menuPermissions).map(([parent, value]) => {
-                    if (value.subItems) {
-                      return (
-                        <React.Fragment key={parent}>
-                          {/* Parent row with single checkbox for itself only */}
-                          <tr>
+            <div className="mt-8">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Menu Permissions</h3>
+              <div className="overflow-x-auto">
+                <table className="min-w-full border border-gray-200">
+                  <thead>
+                    <tr>
+                      <th className="border-b border-gray-200 bg-gray-50 px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Menu</th>
+                      <th className="border-b border-gray-200 bg-gray-50 px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Read</th>
+                      <th className="border-b border-gray-200 bg-gray-50 px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Create</th>
+                      <th className="border-b border-gray-200 bg-gray-50 px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Update</th>
+                      <th className="border-b border-gray-200 bg-gray-50 px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Delete</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {Object.entries(menuPermissions).map(([parent, value]) => {
+                      if (value.subItems) {
+                        return (
+                          <React.Fragment key={parent}>
+                            {/* Parent row with single checkbox for itself only */}
+                            <tr>
+                              <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
+                                {parent}
+                              </td>
+                              <td className="px-4 py-3 text-center">
+                                <input
+                                  type="checkbox"
+                                  checked={value.read || false}
+                                  onChange={() => {
+                                    setMenuPermissions(prev => ({
+                                      ...prev,
+                                      [parent]: {
+                                        ...prev[parent],
+                                        read: !prev[parent].read,
+                                        // Don't modify subItems here
+                                      }
+                                    }));
+                                  }}
+                                  className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                                />
+                              </td>
+                            </tr>
+
+                            {Object.entries(value.subItems).map(([subItem, permissions]) => (
+                              <tr key={`${parent}-${subItem}`}>
+                                <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900 pl-8">
+                                  - {subItem}
+                                </td>
+                                {['read', 'create', 'update', 'delete'].map((permission) => (
+                                  <td key={`${parent}-${subItem}-${permission}`} className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 text-center">
+                                    <input
+                                      type="checkbox"
+                                      checked={permissions[permission]}
+                                      onChange={() => {
+                                        setMenuPermissions(prev => {
+                                          const newState = { ...prev };
+                                          newState[parent] = {
+                                            ...newState[parent],
+                                            subItems: {
+                                              ...newState[parent].subItems,
+                                              [subItem]: {
+                                                ...newState[parent].subItems[subItem],
+                                                [permission]: !newState[parent].subItems[subItem][permission]
+                                              }
+                                            }
+                                          };
+                                          return newState;
+                                        });
+                                      }}
+                                      className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                                    />
+                                  </td>
+                                ))}
+                              </tr>
+                            ))}
+                          </React.Fragment>
+                        );
+                      } else {
+                        // No subItems: show four checkboxes at parent row
+                        return (
+                          <tr key={parent}>
                             <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
                               {parent}
                             </td>
-                            <td className="px-4 py-3 text-center">
-                              <input
-                                type="checkbox"
-                                checked={value.read || false}
-                                onChange={() => {
-                                  setMenuPermissions(prev => ({
-                                    ...prev,
-                                    [parent]: {
-                                      ...prev[parent],
-                                      read: !prev[parent].read,
-                                      // Don't modify subItems here
-                                    }
-                                  }));
-                                }}
-                                className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-                              />
-                            </td>
-                          </tr>
-                          
-                          {Object.entries(value.subItems).map(([subItem, permissions]) => (
-                            <tr key={`${parent}-${subItem}`}>
-                              <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900 pl-8">
-                                - {subItem}
+                            {['read', 'create', 'update', 'delete'].map((permission) => (
+                              <td key={`${parent}-${permission}`} className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 text-center">
+                                <input
+                                  type="checkbox"
+                                  checked={value[permission]}
+                                  onChange={() => {
+                                    setMenuPermissions(prev => ({
+                                      ...prev,
+                                      [parent]: {
+                                        ...prev[parent],
+                                        [permission]: !prev[parent][permission]
+                                      }
+                                    }));
+                                  }}
+                                  className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                                />
                               </td>
-                              {['read', 'create', 'update', 'delete'].map((permission) => (
-                                <td key={`${parent}-${subItem}-${permission}`} className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 text-center">
-                                  <input
-                                    type="checkbox"
-                                    checked={permissions[permission]}
-                                    onChange={() => {
-                                      setMenuPermissions(prev => {
-                                        const newState = { ...prev };
-                                        newState[parent] = {
-                                          ...newState[parent],
-                                          subItems: {
-                                            ...newState[parent].subItems,
-                                            [subItem]: {
-                                              ...newState[parent].subItems[subItem],
-                                              [permission]: !newState[parent].subItems[subItem][permission]
-                                            }
-                                          }
-                                        };
-                                        return newState;
-                                      });
-                                    }}
-                                    className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-                                  />
-                                </td>
-                              ))}
-                            </tr>
-                          ))}
-                        </React.Fragment>
-                      );
-                    } else {
-                      // No subItems: show four checkboxes at parent row
-                      return (
-                        <tr key={parent}>
-                          <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
-                            {parent}
-                          </td>
-                          {['read', 'create', 'update', 'delete'].map((permission) => (
-                            <td key={`${parent}-${permission}`} className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 text-center">
-                              <input
-                                type="checkbox"
-                                checked={value[permission]}
-                                onChange={() => {
-                                  setMenuPermissions(prev => ({
-                                    ...prev,
-                                    [parent]: {
-                                      ...prev[parent],
-                                      [permission]: !prev[parent][permission]
-                                    }
-                                  }));
-                                }}
-                                className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-                              />
-                            </td>
-                          ))}
-                        </tr>
-                      );
-                    }
-                  })}
-                </tbody>
-              </table>
+                            ))}
+                          </tr>
+                        );
+                      }
+                    })}
+                  </tbody>
+                </table>
+              </div>
             </div>
-          </div>
           )}
-          
+
           <div className="flex justify-end space-x-3 mt-6">
             <button
               type="button"

@@ -26,68 +26,69 @@ const AddNewUser = () => {
   const navigate = useNavigate();
 
   const [menuPermissions, setMenuPermissions] = useState({
-  'Outlet Dashboard': { read: false, create: false, update: false, delete: false },
-  Orders: {
-    read: false,
-    subItems: {
-      Lists: { read: false, create: false, update: false, delete: false },
-      Pending: { read: false, create: false, update: false, delete: false },
-      Confirmed: { read: false, create: false, update: false, delete: false }
-    }
-  },
-  Topup: {
-    read: false,
-    subItems: {
-      Lists: { read: false, create: false, update: false, delete: false },
-      Settings: { read: false, create: false, update: false, delete: false }
-    }
-  },
-  Outlets: {
-   read: false,
-    subItems: {
-      Lists: { read: false, create: false, update: false, delete: false },
-      'Outlets Menu': { read: false, create: false, update: false, delete: false }
-    }
-  },
-  Menu: {
-    read: false,
-    subItems: {
-      Item: { read: false, create: false, update: false, delete: false },
-      Category: { read: false, create: false, update: false, delete: false }
-    }
-  },
-  Voucher: {
-    read: false,
-    subItems: {
-      List: { read: false, create: false, update: false, delete: false },
-      'Send Voucher': { read: false, create: false, update: false, delete: false },
-      Schedule: { read: false, create: false, update: false, delete: false }
-    }
-  },
-  Promo: {
-    read: false,
-    subItems: {
-      'Promo Lists': { read: false, create: false, update: false, delete: false },
-      PWP: { read: false, create: false, update: false, delete: false },
-      'Discount List': { read: false, create: false, update: false, delete: false }
-    }
-  },
-  Member: { read: false, create: false, update: false, delete: false },
-  'Student Card': { read: false, create: false, update: false, delete: false },
-  Settings: {
-    read: false,
-    subItems: {
-      User: { read: false, create: false, update: false, delete: false },
-      Tax: { read: false, create: false, update: false, delete: false },
-      'Membership Tier': { read: false, create: false, update: false, delete: false },
-      'Customer Types': { read: false, create: false, update: false, delete: false },
-      Delivery: { read: false, create: false, update: false, delete: false },
-      'App Settings': { read: false, create: false, update: false, delete: false }
-    }
-  }
-});
+    'Outlet Dashboard': { read: false, create: false, update: false, delete: false },
+    Orders: {
+      read: false,
+      subItems: {
+        Lists: { read: false, create: false, update: false, delete: false },
+        Pending: { read: false, create: false, update: false, delete: false },
+        Confirmed: { read: false, create: false, update: false, delete: false }
+      }
+    },
+    Topup: {
+      read: false,
+      subItems: {
+        Lists: { read: false, create: false, update: false, delete: false },
+        Settings: { read: false, create: false, update: false, delete: false }
+      }
+    },
+    Outlets: {
+      read: false,
+      subItems: {
+        Lists: { read: false, create: false, update: false, delete: false },
+        'Outlets Menu': { read: false, create: false, update: false, delete: false }
+      }
+    },
+    Menu: {
+      read: false,
+      subItems: {
+        Item: { read: false, create: false, update: false, delete: false },
+        Category: { read: false, create: false, update: false, delete: false }
+      }
+    },
+    Voucher: {
+      read: false,
+      subItems: {
+        List: { read: false, create: false, update: false, delete: false },
+        'Send Voucher': { read: false, create: false, update: false, delete: false },
+        Schedule: { read: false, create: false, update: false, delete: false }
+      }
+    },
+    Promo: {
+      read: false,
+      subItems: {
+        'Promo Lists': { read: false, create: false, update: false, delete: false },
+        PWP: { read: false, create: false, update: false, delete: false },
+        'Discount List': { read: false, create: false, update: false, delete: false }
+      }
+    },
+    Member: { read: false, create: false, update: false, delete: false },
+    'Student Card': { read: false, create: false, update: false, delete: false },
+    Settings: {
+      read: false,
+      subItems: {
+        User: { read: false, create: false, update: false, delete: false },
+        Tax: { read: false, create: false, update: false, delete: false },
+        'Membership Tier': { read: false, create: false, update: false, delete: false },
+        'Customer Types': { read: false, create: false, update: false, delete: false },
+        Delivery: { read: false, create: false, update: false, delete: false },
+        'App Settings': { read: false, create: false, update: false, delete: false }
+      }
+    },
+    'Excel Report': { read: false, create: false, update: false, delete: false }
+  });
 
-useEffect(() => {
+  useEffect(() => {
     // Get user ID from localStorage on component mount
     const userStr = localStorage.getItem("user");
     if (userStr) {
@@ -107,21 +108,21 @@ useEffect(() => {
   useEffect(() => {
     const fetchOutlets = async () => {
       if (!currentUserId) return; // Don't fetch if no user ID
-      
+
       try {
         setLoadingOutlets(true);
         // Pass the user ID to your outlet service
         const outletsResponse = await OutletApiService.getOutlets(currentUserId);
-        
+
         // Handle different response structures
-        const outletsData = Array.isArray(outletsResponse) 
-          ? outletsResponse 
-          : Array.isArray(outletsResponse.result) 
-            ? outletsResponse.result 
-            : Array.isArray(outletsResponse.data) 
-              ? outletsResponse.data 
+        const outletsData = Array.isArray(outletsResponse)
+          ? outletsResponse
+          : Array.isArray(outletsResponse.result)
+            ? outletsResponse.result
+            : Array.isArray(outletsResponse.data)
+              ? outletsResponse.data
               : [];
-              
+
         setOutlets(outletsData);
       } catch (err) {
         console.error('Error fetching outlets:', err);
@@ -132,7 +133,7 @@ useEffect(() => {
     };
 
     fetchOutlets();
-  }, [currentUserId]); 
+  }, [currentUserId]);
 
   const validateForm = () => {
     const newErrors = {};
@@ -179,7 +180,7 @@ useEffect(() => {
     if (errors[field]) {
       setErrors({ ...errors, [field]: '' });
     }
-    
+
     // Clear outlet selection if role changes from Outlet to something else
     if (field === 'userRoles' && value !== 'Outlet') {
       setFormData(prev => ({ ...prev, outlet: '' }));
@@ -188,13 +189,13 @@ useEffect(() => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
 
     setIsSubmitting(true);
-    
+
     try {
       // Prepare user data
       const userData = {
@@ -203,18 +204,18 @@ useEffect(() => {
         outlet: formData.userRoles === 'Outlet' ? formData.outlet : undefined,
         menuPermissions
       };
-      
+
       // Call the API to create user
       const response = await UserService.createUser(userData);
-      
+
       console.log('User created successfully:', response);
-      
+
       // Show success message
       toast.success('User created successfully!');
-      
+
       // Navigate back to user list
       navigate('/settings/user');
-      
+
     } catch (error) {
       console.error('Error creating user:', error);
       toast.error(`Error creating user: ${error.message}`);
@@ -237,192 +238,186 @@ useEffect(() => {
     <div className='rounded-lg shadow-lg bg-white max-w-3xl mx-auto mt-10'>
       <div className="mx-auto py-3 px-4 sm:px-6 lg:px-8">
         <div className="p-3 pb-2 pt-5 flex justify-between items-center">
-            <h2 className="text-xl font-medium text-gray-800">Add new user</h2>
-            <button className="text-gray-400 hover:text-gray-600" onClick={handleBack}> 
+          <h2 className="text-xl font-medium text-gray-800">Add new user</h2>
+          <button className="text-gray-400 hover:text-gray-600" onClick={handleBack}>
             <X size={24} />
-            </button>
+          </button>
         </div>
         <form onSubmit={handleSubmit}>
           <div className="bg-white rounded-lg shadow-sm pt-5">
             <div className="bg-indigo-900 text-white text-center py-2 text-sm font-medium mb-4">
-                Account Information
+              Account Information
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-2">
-                <div>
+              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Username <span className="text-red-500">*</span>
+                  Username <span className="text-red-500">*</span>
                 </label>
                 <input
-                    type="text"
-                    value={formData.username}
-                    onChange={(e) => handleInputChange('username', e.target.value)}
-                    className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors ${
-                    errors.username ? 'border-red-500' : 'border-gray-300'
+                  type="text"
+                  value={formData.username}
+                  onChange={(e) => handleInputChange('username', e.target.value)}
+                  className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors ${errors.username ? 'border-red-500' : 'border-gray-300'
                     }`}
-                    placeholder="Enter username"
+                  placeholder="Enter username"
                 />
                 {errors.username && <p className="mt-1 text-sm text-red-600">{errors.username}</p>}
-                </div>
+              </div>
 
-                <div>
+              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Name <span className="text-red-500">*</span>
+                  Name <span className="text-red-500">*</span>
                 </label>
                 <input
-                    type="text"
-                    value={formData.name}
-                    onChange={(e) => handleInputChange('name', e.target.value)}
-                    className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors ${
-                    errors.name ? 'border-red-500' : 'border-gray-300'
+                  type="text"
+                  value={formData.name}
+                  onChange={(e) => handleInputChange('name', e.target.value)}
+                  className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors ${errors.name ? 'border-red-500' : 'border-gray-300'
                     }`}
-                    placeholder="Enter name"
+                  placeholder="Enter name"
                 />
                 {errors.name && <p className="mt-1 text-sm text-red-600">{errors.name}</p>}
-                </div>
+              </div>
 
-                <div>
+              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                    User Role <span className="text-red-500">*</span>
+                  User Role <span className="text-red-500">*</span>
                 </label>
                 <select
-                    value={formData.userRoles}
-                    onChange={(e) => handleInputChange('userRoles', e.target.value)}
-                    className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors ${
-                    errors.userRoles ? 'border-red-500' : 'border-gray-300'
+                  value={formData.userRoles}
+                  onChange={(e) => handleInputChange('userRoles', e.target.value)}
+                  className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors ${errors.userRoles ? 'border-red-500' : 'border-gray-300'
                     }`}
                 >
-                    <option value="">Select user role</option>
-                    <option value="Admin">Admin</option>
-                    <option value="Editor">Editor</option>
-                    <option value="Moderator">Moderator</option>
-                    <option value="Viewer">Viewer</option>
-                    <option value="Account">Account</option>
-                    <option value="Outlet">Outlet</option>
+                  <option value="">Select user role</option>
+                  <option value="Admin">Admin</option>
+                  <option value="Editor">Editor</option>
+                  <option value="Moderator">Moderator</option>
+                  <option value="Viewer">Viewer</option>
+                  <option value="Account">Account</option>
+                  <option value="Outlet">Outlet</option>
                 </select>
                 {errors.userRoles && <p className="mt-1 text-sm text-red-600">{errors.userRoles}</p>}
-                </div>
+              </div>
 
-                <div>
+              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Active Status
+                  Active Status
                 </label>
                 <select
-                    value={formData.activeStatus}
-                    onChange={(e) => handleInputChange('activeStatus', e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
+                  value={formData.activeStatus}
+                  onChange={(e) => handleInputChange('activeStatus', e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
                 >
-                    <option value="Active">Active</option>
-                    <option value="Inactive">Inactive</option>
-                    <option value="Suspended">Suspended</option>
+                  <option value="Active">Active</option>
+                  <option value="Inactive">Inactive</option>
+                  <option value="Suspended">Suspended</option>
                 </select>
-                </div>
+              </div>
 
-                {/* Conditional outlet dropdown */}
-                {formData.userRoles === 'Outlet' && (
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Outlet <span className="text-red-500">*</span>
-                    </label>
-                    {loadingOutlets ? (
-                      <div className="flex items-center justify-center py-3 border border-gray-300 rounded-lg">
-                        <span className="animate-spin mr-2">🌀</span>
-                        Loading outlets...
-                      </div>
-                    ) : (
-                      <select
-                        value={formData.outlet}
-                        onChange={(e) => handleInputChange('outlet', e.target.value)}
-                        className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors ${
-                          errors.outlet ? 'border-red-500' : 'border-gray-300'
+              {/* Conditional outlet dropdown */}
+              {formData.userRoles === 'Outlet' && (
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Outlet <span className="text-red-500">*</span>
+                  </label>
+                  {loadingOutlets ? (
+                    <div className="flex items-center justify-center py-3 border border-gray-300 rounded-lg">
+                      <span className="animate-spin mr-2">🌀</span>
+                      Loading outlets...
+                    </div>
+                  ) : (
+                    <select
+                      value={formData.outlet}
+                      onChange={(e) => handleInputChange('outlet', e.target.value)}
+                      className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors ${errors.outlet ? 'border-red-500' : 'border-gray-300'
                         }`}
-                        disabled={loadingOutlets}
-                      >
-                        <option value="">Select outlet</option>
-                        {outlets.map(outlet => (
-                          <option key={outlet.id} value={outlet.id}>
-                            {outlet.title || outlet.name || `Outlet ${outlet.id}`}
-                          </option>
-                        ))}
-                      </select>
-                    )}
-                    {errors.outlet && <p className="mt-1 text-sm text-red-600">{errors.outlet}</p>}
-                  </div>
-                )}
+                      disabled={loadingOutlets}
+                    >
+                      <option value="">Select outlet</option>
+                      {outlets.map(outlet => (
+                        <option key={outlet.id} value={outlet.id}>
+                          {outlet.title || outlet.name || `Outlet ${outlet.id}`}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                  {errors.outlet && <p className="mt-1 text-sm text-red-600">{errors.outlet}</p>}
+                </div>
+              )}
             </div>
           </div>
 
           <div className="bg-white rounded-lg shadow-sm pt-8">
-              <div className="bg-white rounded-lg shadow-sm ">
-                  <div className="bg-indigo-900 text-white text-center py-2 text-sm font-medium mb-4">
-                  Password Setup
-                  </div>
+            <div className="bg-white rounded-lg shadow-sm ">
+              <div className="bg-indigo-900 text-white text-center py-2 text-sm font-medium mb-4">
+                Password Setup
               </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Password <span className="text-red-500">*</span>
-                  </label>
-                  <div className="relative">
-                      <input
-                      type={showPassword ? "text" : "password"}
-                      value={formData.password}
-                      onChange={(e) => handleInputChange('password', e.target.value)}
-                      className={`w-full px-4 py-3 pr-20 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors ${
-                          errors.password ? 'border-red-500' : 'border-gray-300'
-                      }`}
-                      placeholder="Enter password"
-                      />
-                      <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex space-x-1">
-                      <button
-                          type="button"
-                          onClick={() => setShowPassword(!showPassword)}
-                          className="p-2 text-gray-500 hover:text-gray-700 transition-colors"
-                          title={showPassword ? "Hide password" : "Show password"}
-                      >
-                          {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                      </button>
-                      <button
-                          type="button"
-                          onClick={generateRandomPassword}
-                          className="p-2 text-gray-500 hover:text-gray-700 transition-colors"
-                          title="Generate random password"
-                      >
-                          <RefreshCw size={16} />
-                      </button>
-                      </div>
-                  </div>
-                  {errors.password && <p className="mt-1 text-sm text-red-600">{errors.password}</p>}
-                  <p className="mt-1 text-sm text-gray-500">Password must be at least 8 characters long</p>
-                  </div>
+            </div>
 
-                  <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Confirm Password <span className="text-red-500">*</span>
-                  </label>
-                  <div className="relative">
-                      <input
-                      type={showConfirmPassword ? "text" : "password"}
-                      value={formData.confirmPassword}
-                      onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
-                      className={`w-full px-4 py-3 pr-12 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors ${
-                          errors.confirmPassword ? 'border-red-500' : 'border-gray-300'
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Password <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    value={formData.password}
+                    onChange={(e) => handleInputChange('password', e.target.value)}
+                    className={`w-full px-4 py-3 pr-20 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors ${errors.password ? 'border-red-500' : 'border-gray-300'
                       }`}
-                      placeholder="Confirm password"
-                      />
-                      <button
+                    placeholder="Enter password"
+                  />
+                  <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex space-x-1">
+                    <button
                       type="button"
-                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1 text-gray-500 hover:text-gray-700 transition-colors"
-                      title={showConfirmPassword ? "Hide password" : "Show password"}
-                      >
-                      {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                      </button>
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="p-2 text-gray-500 hover:text-gray-700 transition-colors"
+                      title={showPassword ? "Hide password" : "Show password"}
+                    >
+                      {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={generateRandomPassword}
+                      className="p-2 text-gray-500 hover:text-gray-700 transition-colors"
+                      title="Generate random password"
+                    >
+                      <RefreshCw size={16} />
+                    </button>
                   </div>
-                  {errors.confirmPassword && <p className="mt-1 text-sm text-red-600">{errors.confirmPassword}</p>}
-                  </div>
+                </div>
+                {errors.password && <p className="mt-1 text-sm text-red-600">{errors.password}</p>}
+                <p className="mt-1 text-sm text-gray-500">Password must be at least 8 characters long</p>
               </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Confirm Password <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <input
+                    type={showConfirmPassword ? "text" : "password"}
+                    value={formData.confirmPassword}
+                    onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
+                    className={`w-full px-4 py-3 pr-12 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors ${errors.confirmPassword ? 'border-red-500' : 'border-gray-300'
+                      }`}
+                    placeholder="Confirm password"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1 text-gray-500 hover:text-gray-700 transition-colors"
+                    title={showConfirmPassword ? "Hide password" : "Show password"}
+                  >
+                    {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
+                {errors.confirmPassword && <p className="mt-1 text-sm text-red-600">{errors.confirmPassword}</p>}
+              </div>
+            </div>
           </div>
           <div className="mt-8">
             <h3 className="text-lg font-medium text-gray-900 mb-4">Menu Permissions</h3>
@@ -465,7 +460,7 @@ useEffect(() => {
                               />
                             </td>
                           </tr>
-                          
+
                           {/* Child rows with their own checkboxes */}
                           {Object.entries(value.subItems).map(([subItem, permissions]) => (
                             <tr key={`${parent}-${subItem}`}>
@@ -537,24 +532,23 @@ useEffect(() => {
 
           {/* Action Buttons */}
           <div className="flex bg-white p-6 justify-end space-x-4 pt-6">
-          <button
+            <button
               type="button"
               onClick={handleCancel}
               className="flex items-center px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
-          >
+            >
               <X size={20} className="mr-2" />
               Cancel
-          </button>
-          <button
+            </button>
+            <button
               type="submit"
               disabled={isSubmitting}
-              className={`flex items-center px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium ${
-              isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
-              }`}
-          >
+              className={`flex items-center px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
+            >
               <Save size={20} className="mr-2" />
               {isSubmitting ? 'Creating User...' : 'Create User'}
-          </button>
+            </button>
           </div>
         </form>
       </div>

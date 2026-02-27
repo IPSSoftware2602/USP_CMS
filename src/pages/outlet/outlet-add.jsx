@@ -15,6 +15,7 @@ const AddOutletForm = () => {
   const [items, setItems] = useState([]);
   const [expandedCategories, setExpandedCategories] = useState({});
   const [loadingCategories, setLoadingCategories] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedMenuItems, setSelectedMenuItems] = useState([]);
   const [popupState, setPopupState] = useState({
     isOpen: false,
@@ -782,9 +783,7 @@ const AddOutletForm = () => {
       newErrors.outletEmail = "Please enter a valid email address";
     }
 
-    if (!formData.outletContact.trim()) {
-      newErrors.outletContact = "Contact number is required";
-    } else if (!/^[0-9+\-\s()]{8,15}$/.test(formData.outletContact)) {
+    if (formData.outletContact.trim() && !/^[0-9+\-\s()]{8,15}$/.test(formData.outletContact)) {
       newErrors.outletContact = "Please enter a valid contact number";
     }
 
@@ -886,6 +885,8 @@ const AddOutletForm = () => {
 
   const handleSubmit = async () => {
     if (!validateForm()) return;
+    if (isSubmitting) return;
+    setIsSubmitting(true);
 
     try {
       // Prepare tax data (already correct)
@@ -941,16 +942,9 @@ const AddOutletForm = () => {
       }
     } catch (error) {
       console.error("Error:", error);
-      toast.error(err.message, {
-        position: "top-right",
-        autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-        theme: "light",
-      });
+      toast.error(error.message || "Failed to create outlet.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -1661,9 +1655,11 @@ const AddOutletForm = () => {
           <button
             type="button"
             onClick={handleSubmit}
-            className="px-8 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium"
+            disabled={isSubmitting}
+            className={`px-8 py-3 bg-indigo-600 text-white rounded-lg transition-colors font-medium ${isSubmitting ? "opacity-60 cursor-not-allowed" : "hover:bg-indigo-700"
+              }`}
           >
-            Create Outlet
+            {isSubmitting ? "Saving..." : "Create Outlet"}
           </button>
         </div>
       </div>

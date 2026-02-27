@@ -14,6 +14,7 @@ import DeleteConfirmationModal from "../../components/ui/DeletePopUp";
 import OutletApiService from "../../store/api/outletService";
 import UserService from "../../store/api/userService";
 import { VITE_API_BASE_URL } from "../../constant/config";
+import useExportPermission from '@/hooks/useExportPermission';
 import "react-toastify/dist/ReactToastify.css";
 import { ToastContainer, toast } from "react-toastify";
 
@@ -33,6 +34,7 @@ const Outlet = () => {
   const [hasUpdatePermission, setHasUpdatePermission] = useState(false);
   const [hasDeletePermission, setHasDeletePermission] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const hasExportPermission = useExportPermission();
   const [isDisabled, setIsDisabled] = useState(false);
   const [searchTitle, setSearchTitle] = useState("");
   const [searchAddress, setSearchAddress] = useState("");
@@ -300,9 +302,8 @@ const Outlet = () => {
                 {day}:
               </td>
               <td
-                className={`${
-                  time === "Closed" ? "text-gray-400" : "text-gray-600"
-                }`}
+                className={`${time === "Closed" ? "text-gray-400" : "text-gray-600"
+                  }`}
               >
                 {time}
               </td>
@@ -612,18 +613,19 @@ const Outlet = () => {
                     Add New Outlet
                   </button>
                 )}
-                <button
-                  onClick={exportToCSV}
-                  disabled={isDisabled}
-                  className={`bg-white border border-gray-300 px-4 py-2 rounded-md flex items-center gap-2 transition ${
-                    isDisabled
-                      ? "opacity-60 cursor-not-allowed"
-                      : "hover:bg-gray-50"
-                  }`}
-                >
-                  <Download size={18} />
-                  Export Report
-                </button>
+                {hasExportPermission && (
+                  <button
+                    onClick={exportToCSV}
+                    disabled={isDisabled}
+                    className={`bg-white border border-gray-300 px-4 py-2 rounded-md flex items-center gap-2 transition ${isDisabled
+                        ? "opacity-60 cursor-not-allowed"
+                        : "hover:bg-gray-50"
+                      }`}
+                  >
+                    <Download size={18} />
+                    Export Report
+                  </button>
+                )}
               </div>
             </div>
           </div>

@@ -16,6 +16,7 @@ import topupLists from "../../../store/api/topuplistsService";
 import { VITE_API_BASE_URL } from "../../../constant/config";
 import UserService from "../../../store/api/userService";
 import "react-toastify/dist/ReactToastify.css";
+import useExportPermission from '@/hooks/useExportPermission';
 import { ToastContainer, toast } from "react-toastify";
 
 const SingleDateInput = ({
@@ -64,9 +65,8 @@ const SelectDropdown = ({
               : placeholder}
           </span>
           <ChevronDown
-            className={`h-4 w-4 text-gray-400 transition-transform ${
-              isOpen ? "rotate-180" : ""
-            }`}
+            className={`h-4 w-4 text-gray-400 transition-transform ${isOpen ? "rotate-180" : ""
+              }`}
           />
         </button>
 
@@ -422,6 +422,7 @@ const TopUpPage = () => {
   const [userPermissions, setUserPermissions] = useState({});
   const [hasDeletePermission, setHasDeletePermission] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const hasExportPermission = useExportPermission();
   const [isDisabled, setIsDisabled] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
@@ -463,7 +464,7 @@ const TopUpPage = () => {
           user_id: user_id,
           type: "topup",
           start_date: filters.start_date || "",
-           end_date: filters.end_date || "",
+          end_date: filters.end_date || "",
         }),
       });
 
@@ -576,13 +577,13 @@ const TopUpPage = () => {
           status: item.status || "-",
           topUpDate: item.created_at
             ? new Date(item.created_at).toLocaleString("en-GB", {
-                day: "2-digit",
-                month: "short",
-                year: "numeric",
-                hour: "2-digit",
-                minute: "2-digit",
-                hour12: true,
-              })
+              day: "2-digit",
+              month: "short",
+              year: "numeric",
+              hour: "2-digit",
+              minute: "2-digit",
+              hour12: true,
+            })
             : "-",
         };
       });
@@ -888,18 +889,19 @@ const TopUpPage = () => {
               <span>Filters</span>
             </button>
 
-            <button
-              onClick={exportToCSV}
-              disabled={isDisabled}
-              className={`bg-white border border-gray-300 px-4 py-2 rounded-md flex items-center gap-2 transition ${
-                isDisabled
+            {hasExportPermission && (
+              <button
+                onClick={exportToCSV}
+                disabled={isDisabled}
+                className={`bg-white border border-gray-300 px-4 py-2 rounded-md flex items-center gap-2 transition ${isDisabled
                   ? "opacity-60 cursor-not-allowed"
                   : "hover:bg-gray-50"
-              }`}
-            >
-              <Download size={18} />
-              Export Report
-            </button>
+                  }`}
+              >
+                <Download size={18} />
+                Export Report
+              </button>
+            )}
           </div>
         </div>
 

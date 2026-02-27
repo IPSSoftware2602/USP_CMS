@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { ToastContainer, toast } from "react-toastify";
 import reportService from "@/store/api/reportService";
+import useExportPermission from "@/hooks/useExportPermission";
 import "react-toastify/dist/ReactToastify.css";
 
 const SingleDateInput = ({
@@ -56,6 +57,8 @@ const PointReport = () => {
     dateTo: null,
   });
   const [showFilters, setShowFilters] = useState(false);
+  const [isDisabled, setIsDisabled] = useState(false);
+  const hasExportPermission = useExportPermission();
 
   useEffect(() => {
     fetchPointReport();
@@ -105,33 +108,33 @@ const PointReport = () => {
     }
   };
 
- const handleExport = async () => {
-  if (isDisabled) return;
-  setIsDisabled(true);
+  const handleExport = async () => {
+    if (isDisabled) return;
+    setIsDisabled(true);
 
-  try {  
-    const params = {
-      type: "point-transaction",
-      start_date: filters.dateFrom,
-      end_date: filters.dateTo,
-    };
+    try {
+      const params = {
+        type: "point-transaction",
+        start_date: filters.dateFrom,
+        end_date: filters.dateTo,
+      };
 
-    const response = await reportService.exportReport(params);
+      const response = await reportService.exportReport(params);
 
-    if (response.status === 200) {
-      toast.success(
-        "Export file has been processed, this may take a while! You can find it in the Excel Report tab."
-      );
-    } else {
-      toast.error("Failed to export file.");
+      if (response.status === 200) {
+        toast.success(
+          "Export file has been processed, this may take a while! You can find it in the Excel Report tab."
+        );
+      } else {
+        toast.error("Failed to export file.");
+      }
+    } catch (error) {
+      console.error("Export error:", error);
+      toast.error("Something went wrong.");
+    } finally {
+      setTimeout(() => setIsDisabled(false), 1000);
     }
-  } catch (error) {
-    console.error("Export error:", error);
-    toast.error("Something went wrong.");
-  } finally {
-    setTimeout(() => setIsDisabled(false), 1000);
-  }
-};
+  };
 
 
   const handleFilterChange = (name, value) => {
@@ -299,13 +302,15 @@ const PointReport = () => {
       <div className="flex justify-between items-center mb-6">
         <h3 className="text-2xl font-semibold text-gray-900">Point Report</h3>
         <div className="flex space-x-3">
-          <button
-             onClick={handleExport}
-            className="px-4 py-2 bg-indigo-600 text-white font-medium rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors flex items-center space-x-2"
-          >
-            <Download className="h-4 w-4" />
-            <span>Export Report</span>
-          </button>
+          {hasExportPermission && (
+            <button
+              onClick={handleExport}
+              className="px-4 py-2 bg-indigo-600 text-white font-medium rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors flex items-center space-x-2"
+            >
+              <Download className="h-4 w-4" />
+              <span>Export Report</span>
+            </button>
+          )}
           <button
             onClick={() => setShowFilters(!showFilters)}
             className="px-4 py-2 bg-indigo-600 text-white font-medium rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors flex items-center space-x-2"

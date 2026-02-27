@@ -159,6 +159,7 @@ const EditOutletForm = () => {
       setItems(transformedItems);
     } catch (error) {
       console.error("Error loading categories and items:", error);
+    } finally {
       setLoadingCategories(false);
     }
   };
@@ -448,11 +449,6 @@ const EditOutletForm = () => {
           );
           // console.log(outlet);
           // console.log(outlet.outlet_menu);
-          // Initialize selected menu items from outlet data
-          const initialSelectedItems = outlet.outlet_menu || [];
-          setSelectedMenuItems(
-            initialSelectedItems.map((item) => Number(item.menu_item_id))
-          );
 
           // console.log(outlet);
           setFormData({
@@ -495,6 +491,12 @@ const EditOutletForm = () => {
             geocodeAddress(outlet.address, outlet.state, outlet.postal_code);
           }
         }
+
+        // Always set selected menu items unconditionally
+        const outletMenuItems = outlet.outlet_menu || [];
+        setSelectedMenuItems(
+          outletMenuItems.map((item) => Number(item.menu_item_id))
+        );
 
         setFormData({
           outletName: outlet.title || "",
@@ -573,24 +575,24 @@ const EditOutletForm = () => {
   const getUncategorizedItems = () => {
     return items.filter((item) => {
       // Check all possible category fields to determine if item is uncategorized
-      return (
-        !item.categoryId &&
-        (!item.category || item.category.length === 0) &&
-        (!item.categories || item.categories.length === 0)
-      );
+      const hasCategoryId = item.categoryId !== null && item.categoryId !== undefined;
+      const hasCategory = item.category && Array.isArray(item.category) && item.category.length > 0;
+      const hasCategories = item.categories && Array.isArray(item.categories) && item.categories.length > 0;
+      return !hasCategoryId && !hasCategory && !hasCategories;
     });
   };
 
   const getItemsForCategory = (categoryId) => {
+    const catId = Number(categoryId);
     return items.filter((item) => {
       return (
-        item.categoryId === categoryId ||
+        Number(item.categoryId) === catId ||
         (item.category &&
           Array.isArray(item.category) &&
-          item.category.some((cat) => cat.id === categoryId)) ||
+          item.category.some((cat) => Number(cat.id) === catId)) ||
         (item.categories &&
           Array.isArray(item.categories) &&
-          item.categories.some((cat) => cat.id === categoryId))
+          item.categories.some((cat) => Number(cat.id) === catId))
       );
     });
   };
@@ -900,7 +902,7 @@ const EditOutletForm = () => {
 
     if (!formData.outletName?.trim()) return setError("Outlet name is required");
     if (!formData.outletEmail?.trim()) return setError("Outlet email is required");
-    if (!formData.outletContact?.trim()) return setError("Outlet contact is required");
+    // Contact is optional — skip required check
     if (formData.outletPassword && formData.outletPassword !== formData.outletPasswordConfirmation) {
       return setError("Passwords do not match");
     }
@@ -1983,8 +1985,13 @@ const EditOutletForm = () => {
           </div>
         </div>
         <div className="flex justify-end">
-          <button className="px-8 py-3 bg-indigo-900 text-white rounded-lg hover:bg-indigo-800 transition-colors">
-            Save Changes
+          <button
+            type="submit"
+            disabled={loading}
+            className={`px-8 py-3 bg-indigo-900 text-white rounded-lg transition-colors ${loading ? "opacity-60 cursor-not-allowed" : "hover:bg-indigo-800"
+              }`}
+          >
+            {loading ? "Saving..." : "Save Changes"}
           </button>
         </div>
       </form>

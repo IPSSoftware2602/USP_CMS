@@ -5,6 +5,7 @@ import DeleteConfirmationModal from '@/components/ui/DeletePopUp';
 import { useNavigate } from 'react-router-dom';
 import UserService from '../../../store/api/userService';
 import OutletApiService from '../../../store/api/outletService';
+import useExportPermission from '@/hooks/useExportPermission';
 
 const UserDataTable = () => {
   const [users, setUsers] = useState([]);
@@ -28,13 +29,14 @@ const UserDataTable = () => {
   const [hasUpdatePermission, setHasUpdatePermission] = useState(false);
   const [hasDeletePermission, setHasDeletePermission] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const hasExportPermission = useExportPermission();
   const [currentUserId, setCurrentUserId] = useState(null);
 
   const fetchUserPermissions = async () => {
     try {
       const userStr = localStorage.getItem("user");
       if (!userStr) return;
-      
+
       const userObj = JSON.parse(userStr);
       const userId = userObj?.user.user_id;
       if (!userId) return;
@@ -61,9 +63,9 @@ const UserDataTable = () => {
           permissions = JSON.parse(userData.user_permissions);
           setUserPermissions(permissions);
 
-          if (permissions.Settings && 
-              permissions.Settings.subItems && 
-              permissions.Settings.subItems.User) {
+          if (permissions.Settings &&
+            permissions.Settings.subItems &&
+            permissions.Settings.subItems.User) {
             if (permissions.Settings.subItems.User.create === true) {
               setHasCreatePermission(true);
             }
@@ -96,31 +98,31 @@ const UserDataTable = () => {
   }, [currentUserId, isAdmin]);
 
   const fetchUsers = async () => {
-  try {
-    setLoading(true);
-    setError(null);
-    
-    // Always fetch all users for both admin and non-admin
-    const allUsers = await UserService.getAllUsers(currentUserId);
-    
-    // Transform the data to match expected property names
-    const transformedUsers = allUsers.map(user => ({
-      id: user.id,
-      username: user.username,
-      name: user.name,
-      role: user.userRoles || user.role,  // Handle both userRoles and role
-      status: user.activeStatus || user.status,  // Handle both activeStatus and status
-      created_at: user.createTime || user.created_at  // Handle both createTime and created_at
-    }));
-    
-    setUsers(transformedUsers);
-  } catch (err) {
-    console.error('Error fetching users:', err);
-    setError(err.message);
-  } finally {
-    setLoading(false);
-  }
-};
+    try {
+      setLoading(true);
+      setError(null);
+
+      // Always fetch all users for both admin and non-admin
+      const allUsers = await UserService.getAllUsers(currentUserId);
+
+      // Transform the data to match expected property names
+      const transformedUsers = allUsers.map(user => ({
+        id: user.id,
+        username: user.username,
+        name: user.name,
+        role: user.userRoles || user.role,  // Handle both userRoles and role
+        status: user.activeStatus || user.status,  // Handle both activeStatus and status
+        created_at: user.createTime || user.created_at  // Handle both createTime and created_at
+      }));
+
+      setUsers(transformedUsers);
+    } catch (err) {
+      console.error('Error fetching users:', err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleDelete = (user) => {
     // Prevent admin from deleting themselves
@@ -128,7 +130,7 @@ const UserDataTable = () => {
       alert('You cannot delete your own account!');
       return;
     }
-    
+
     setItemToDelete({ ...user, name: user.username });
     setShowDeleteModal(true);
   };
@@ -138,13 +140,13 @@ const UserDataTable = () => {
       try {
         setLoading(true);
         await UserService.deleteUser(itemToDelete.id);
-        
+
         // Refresh the user list after deletion
         await fetchUsers();
-        
+
         setShowDeleteModal(false);
         setItemToDelete(null);
-        
+
         alert('User deleted successfully!');
       } catch (error) {
         console.error('Error deleting user:', error);
@@ -164,7 +166,7 @@ const UserDataTable = () => {
       ['Username', 'Name', 'User Roles', 'Active Status', 'Create Time'],
       ...users.map(user => [user.username, user.name, user.role, user.status, user.created_at])
     ].map(row => row.join(',')).join('\n');
-    
+
     const blob = new Blob([csvContent], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -230,16 +232,15 @@ const UserDataTable = () => {
       cell: row => {
         // Get the role value from either property and convert to lowercase for consistent comparison
         const roleValue = (row.role || row.userRoles || '').toString().toLowerCase();
-        
+
         return (
-          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-            roleValue === 'admin' ? 'bg-red-100 text-red-800' :
-            roleValue === 'editor' ? 'bg-blue-100 text-blue-800' :
-            roleValue === 'moderator' ? 'bg-purple-100 text-purple-800' :
-            roleValue === 'outlet' ? 'bg-green-100 text-green-800' :
-            roleValue === 'account' ? 'bg-yellow-100 text-yellow-800' :
-            'bg-gray-100 text-gray-800'
-          }`}>
+          <span className={`px-2 py-1 rounded-full text-xs font-medium ${roleValue === 'admin' ? 'bg-red-100 text-red-800' :
+              roleValue === 'editor' ? 'bg-blue-100 text-blue-800' :
+                roleValue === 'moderator' ? 'bg-purple-100 text-purple-800' :
+                  roleValue === 'outlet' ? 'bg-green-100 text-green-800' :
+                    roleValue === 'account' ? 'bg-yellow-100 text-yellow-800' :
+                      'bg-gray-100 text-gray-800'
+            }`}>
             {/* Display the original value, not the lowercase version */}
             {row.role || row.userRoles || 'N/A'}
           </span>
@@ -254,13 +255,12 @@ const UserDataTable = () => {
       cell: row => {
         // Get the status value from either property and convert to lowercase for consistent comparison
         const statusValue = (row.status || row.activeStatus || '').toString().toLowerCase();
-        
+
         return (
-          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-            statusValue === 'active' ? 'bg-green-100 text-green-800' :
-            statusValue === 'inactive' ? 'bg-gray-100 text-gray-800' :
-            'bg-yellow-100 text-yellow-800'
-          }`}>
+          <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusValue === 'active' ? 'bg-green-100 text-green-800' :
+              statusValue === 'inactive' ? 'bg-gray-100 text-gray-800' :
+                'bg-yellow-100 text-yellow-800'
+            }`}>
             {/* Display the original value, not the lowercase version */}
             {row.status || row.activeStatus || 'N/A'}
           </span>
@@ -386,15 +386,17 @@ const UserDataTable = () => {
             {isAdmin ? 'User Management' : 'User Profile'}
           </h2>
           <div className="flex space-x-3">
-            <button
-              onClick={handleExportCSV}
-              className="flex items-center px-4 py-2 text-gray-600 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
-              title="Export Report"
-              disabled={loading || users.length === 0}
-            >
-              <Download size={16} className="mr-2" />
-              Export Report
-            </button>
+            {hasExportPermission && (
+              <button
+                onClick={handleExportCSV}
+                className="flex items-center px-4 py-2 text-gray-600 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                title="Export Report"
+                disabled={loading || users.length === 0}
+              >
+                <Download size={16} className="mr-2" />
+                Export Report
+              </button>
+            )}
             {(isAdmin || hasCreatePermission) && (
               <button
                 onClick={handleAddUser}

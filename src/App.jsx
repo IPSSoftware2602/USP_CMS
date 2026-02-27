@@ -59,6 +59,7 @@ import ItemEditMenu from "./pages/menu/item/item-edit-menu";
 import OptionGroupManager from "./pages/menu/item/option-group";
 import AddCategory from "./pages/menu/category/category-add";
 import EditCategory from "./pages/menu/category/category-edit";
+import PushNotification from "./pages/notification";
 import MemberPage from "./pages/member";
 import AddMember from "./pages/member/member-add";
 import MemberEditOverview from "./pages/member/member-edit-overview";
@@ -314,6 +315,9 @@ function App() {
               <Route path="membership/birthday_bonus" element={< BirthdayBonus />} />
               <Route path="membership/referral_first_purchase" element={< ReferralFirstPurchase />} />
             </Route>
+
+            {/* Push Notifications */}
+            <Route path="push-notifications" element={<PushNotification />} />
 
             {/* Member routes */}
             <Route path="member">

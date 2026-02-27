@@ -4,8 +4,8 @@ import DataTable from "react-data-table-component";
 import { useNavigate } from "react-router-dom";
 import DeleteConfirmationModal from "@/components/ui/DeletePopUp";
 import promoService from "../../../store/api/promoService";
-import UserService from "../../../store/api/userService";
 import { toast } from "react-toastify";
+import useExportPermission from '@/hooks/useExportPermission';
 import { VITE_API_BASE_URL } from "../../../constant/config";
 import "react-toastify/dist/ReactToastify.css";
 import { ToastContainer } from "react-toastify";
@@ -26,6 +26,7 @@ const PromoList = () => {
   const [hasUpdatePermission, setHasUpdatePermission] = useState(false);
   const [hasDeletePermission, setHasDeletePermission] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const hasExportPermission = useExportPermission();
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
 
@@ -584,18 +585,19 @@ const PromoList = () => {
                 + Add Promotion
               </button>
             )}
-            <button
-              onClick={exportToCSV}
-              disabled={isDisabled}
-              className={`bg-white border border-gray-300 px-4 py-2 rounded-md flex items-center gap-2 transition ${
-                isDisabled
-                  ? "opacity-60 cursor-not-allowed"
-                  : "hover:bg-gray-50"
-              }`}
-            >
-              <Download size={18} />
-              Export Report
-            </button>
+            {hasExportPermission && (
+              <button
+                onClick={exportToCSV}
+                disabled={isDisabled}
+                className={`bg-white border border-gray-300 px-4 py-2 rounded-md flex items-center gap-2 transition ${isDisabled
+                    ? "opacity-60 cursor-not-allowed"
+                    : "hover:bg-gray-50"
+                  }`}
+              >
+                <Download size={18} />
+                Export Report
+              </button>
+            )}
           </div>
 
           {/* Table body */}

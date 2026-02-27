@@ -4,6 +4,7 @@ import { toast } from 'react-toastify';
 import { ArrowLeft, Download, Loader2 } from 'lucide-react';
 import { useParams, useNavigate } from 'react-router-dom';
 import reportService from '@/store/api/reportService';
+import useExportPermission from '@/hooks/useExportPermission';
 
 const UniqueQrDetailReport = () => {
     const { id } = useParams();
@@ -11,6 +12,7 @@ const UniqueQrDetailReport = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [data, setData] = useState([]);
+    const hasExportPermission = useExportPermission();
     const [filters, setFilters] = useState({
         startDate: '',
         endDate: '',
@@ -83,8 +85,8 @@ const UniqueQrDetailReport = () => {
             accessor: 'status',
             Cell: ({ value }) => (
                 <span className={`px-2 py-1 rounded-full text-xs font-semibold ${value === 'completed' ? 'bg-green-100 text-green-800' :
-                        value === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                            'bg-gray-100 text-gray-800'
+                    value === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                        'bg-gray-100 text-gray-800'
                     }`}>
                     {value}
                 </span>
@@ -189,13 +191,15 @@ const UniqueQrDetailReport = () => {
                             </button>
                         </div>
                         <div className="flex justify-end">
-                            <button
-                                onClick={exportToCSV}
-                                className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
-                            >
-                                <Download className="w-4 h-4 mr-2" />
-                                Export Details
-                            </button>
+                            {hasExportPermission && (
+                                <button
+                                    onClick={exportToCSV}
+                                    className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                                >
+                                    <Download className="w-4 h-4 mr-2" />
+                                    Export Details
+                                </button>
+                            )}
                         </div>
                     </div>
                 </div>
