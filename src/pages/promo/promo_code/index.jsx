@@ -7,6 +7,7 @@ import { ToastContainer, toast } from "react-toastify";
 import promoCodeService from "../../../store/api/promoCodeService";
 import { VITE_API_BASE_URL } from "../../../constant/config";
 import useExportPermission from '@/hooks/useExportPermission';
+import UserService from '../../../store/api/userService';
 import "react-toastify/dist/ReactToastify.css";
 
 const PromoCodeLists = () => {
@@ -117,6 +118,7 @@ const PromoCodeLists = () => {
 
       const userDataRes = await UserService.getUser(userId);
       const userData = userDataRes?.data;
+      console.log(userData);
       if (!userData) return;
 
       // Check if user is admin

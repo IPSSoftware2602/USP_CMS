@@ -7,6 +7,7 @@ import { toast } from "react-toastify";
 import { VITE_API_BASE_URL } from "../../../constant/config";
 import useExportPermission from '@/hooks/useExportPermission';
 import "react-toastify/dist/ReactToastify.css";
+import UserService from '../../../store/api/userService';
 import { ToastContainer } from "react-toastify";
 
 const DiscountList = () => {
@@ -560,8 +561,8 @@ const DiscountList = () => {
             >
               <span
                 className={`${isAdmin || hasUpdatePermission
-                    ? "group-hover:text-indigo-600"
-                    : ""
+                  ? "group-hover:text-indigo-600"
+                  : ""
                   }`}
               >
                 {row.sortable || 0}
@@ -703,8 +704,8 @@ const DiscountList = () => {
                 onClick={exportToCSV}
                 disabled={isDisabled}
                 className={`bg-white border border-gray-300 px-4 py-2 rounded-md flex items-center gap-2 transition ${isDisabled
-                    ? "opacity-60 cursor-not-allowed"
-                    : "hover:bg-gray-50"
+                  ? "opacity-60 cursor-not-allowed"
+                  : "hover:bg-gray-50"
                   }`}
               >
                 <Download size={18} />

@@ -8,6 +8,7 @@ import { toast } from "react-toastify";
 import useExportPermission from '@/hooks/useExportPermission';
 import { VITE_API_BASE_URL } from "../../../constant/config";
 import "react-toastify/dist/ReactToastify.css";
+import UserService from '../../../store/api/userService';
 import { ToastContainer } from "react-toastify";
 
 const PromoList = () => {
@@ -590,8 +591,8 @@ const PromoList = () => {
                 onClick={exportToCSV}
                 disabled={isDisabled}
                 className={`bg-white border border-gray-300 px-4 py-2 rounded-md flex items-center gap-2 transition ${isDisabled
-                    ? "opacity-60 cursor-not-allowed"
-                    : "hover:bg-gray-50"
+                  ? "opacity-60 cursor-not-allowed"
+                  : "hover:bg-gray-50"
                   }`}
               >
                 <Download size={18} />
