@@ -98,8 +98,8 @@ const handleSessionExpiry = useCallback(() => {
   setShowWarning(false);
   setDismissed(false);
   setIsInitialized(false);
-  toast.error('Your session has expired. Please log in again.');
-  navigate('/login');
+  // Redundant toast removed as it's now handled by AuthInterceptor
+  navigate('/');
 }, [dispatch, navigate]);
 
 
@@ -194,7 +194,7 @@ const handleSessionExpiry = useCallback(() => {
     setDismissed(false);
     setIsInitialized(false);
     toast.info('Logged out successfully');
-    navigate('/login');
+    navigate('/');
   }, [dispatch, navigate]);
 
   const dismissWarning = useCallback(() => {

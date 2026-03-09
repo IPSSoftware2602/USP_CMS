@@ -9,19 +9,26 @@ const getAuthHeaders = () => {
   };
 };
 
+const buildQueryString = (params) => {
+  const queryParams = new URLSearchParams();
+  Object.keys(params).forEach(key => {
+    const value = params[key];
+    if (value !== undefined && value !== null && value !== '') {
+      if (Array.isArray(value)) {
+        value.forEach(val => queryParams.append(`${key}[]`, val));
+      } else {
+        queryParams.append(key, value);
+      }
+    }
+  });
+  const queryString = queryParams.toString();
+  return queryString ? `?${queryString}` : '';
+};
+
 const reportService = {
   getPromoReport: async (searchParams = {}) => {
     try {
-      const queryParams = new URLSearchParams();
-
-      Object.keys(searchParams).forEach(key => {
-        if (searchParams[key]) {
-          queryParams.append(key, searchParams[key]);
-        }
-      });
-
-      const queryString = queryParams.toString();
-      const url = `${BASE_URL}report/promo${queryString ? `?${queryString}` : ''}`;
+      const url = `${BASE_URL}report/promo${buildQueryString(searchParams)}`;
 
       // console.log('Making request to:', url);
 
@@ -39,28 +46,19 @@ const reportService = {
         throw new Error('Authentication failed. Please login again.');
       }
       if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: Failed to fetch promo settings`);
+        throw new Error(`HTTP ${response.status}: Failed to fetch promo report`);
       }
 
       return await response.json();
     } catch (error) {
-      console.error('Error fetching promo settings:', error);
+      console.error('Error fetching promo report:', error);
       throw error;
     }
   },
 
   getSalesReport: async (searchParams = {}) => {
     try {
-      const queryParams = new URLSearchParams();
-
-      Object.keys(searchParams).forEach(key => {
-        if (searchParams[key]) {
-          queryParams.append(key, searchParams[key]);
-        }
-      });
-
-      const queryString = queryParams.toString();
-      const url = `${BASE_URL}report/sales${queryString ? `?${queryString}` : ''}`;
+      const url = `${BASE_URL}report/sales${buildQueryString(searchParams)}`;
 
       // console.log('Making request to:', url);
 
@@ -78,28 +76,19 @@ const reportService = {
         throw new Error('Authentication failed. Please login again.');
       }
       if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: Failed to fetch promo settings`);
+        throw new Error(`HTTP ${response.status}: Failed to fetch sales report`);
       }
 
       return await response.json();
     } catch (error) {
-      console.error('Error fetching promo settings:', error);
+      console.error('Error fetching sales report:', error);
       throw error;
     }
   },
 
   getProductReport: async (searchParams = {}) => {
     try {
-      const queryParams = new URLSearchParams();
-
-      Object.keys(searchParams).forEach(key => {
-        if (searchParams[key]) {
-          queryParams.append(key, searchParams[key]);
-        }
-      });
-
-      const queryString = queryParams.toString();
-      const url = `${BASE_URL}report/product${queryString ? `?${queryString}` : ''}`;
+      const url = `${BASE_URL}report/product${buildQueryString(searchParams)}`;
 
       // console.log('Making request to:', url);
 
@@ -129,16 +118,7 @@ const reportService = {
 
   getExportExcel: async (searchParams = {}) => {
     try {
-      const queryParams = new URLSearchParams();
-
-      Object.keys(searchParams).forEach(key => {
-        if (searchParams[key]) {
-          queryParams.append(key, searchParams[key]);
-        }
-      });
-
-      const queryString = queryParams.toString();
-      const url = `${BASE_URL}report/export${queryString ? `?${queryString}` : ''}`;
+      const url = `${BASE_URL}report/export${buildQueryString(searchParams)}`;
 
       // console.log('Making request to:', url);
 
@@ -156,12 +136,12 @@ const reportService = {
         throw new Error('Authentication failed. Please login again.');
       }
       if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: Failed to fetch product report`);
+        throw new Error(`HTTP ${response.status}: Failed to fetch export excel`);
       }
 
       return await response.json();
     } catch (error) {
-      console.error('Error fetching product report:', error);
+      console.error('Error fetching export excel:', error);
       throw error;
     }
   },
@@ -190,16 +170,7 @@ const reportService = {
 
   getOrderReport: async (searchParams = {}) => {
     try {
-      const queryParams = new URLSearchParams();
-
-      Object.keys(searchParams).forEach(key => {
-        if (searchParams[key]) {
-          queryParams.append(key, searchParams[key]);
-        }
-      });
-
-      const queryString = queryParams.toString();
-      const url = `${BASE_URL}report/order${queryString ? `?${queryString}` : ''}`;
+      const url = `${BASE_URL}report/order${buildQueryString(searchParams)}`;
 
       // console.log('Making request to:', url);
 
@@ -217,28 +188,19 @@ const reportService = {
         throw new Error('Authentication failed. Please login again.');
       }
       if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: Failed to fetch order sales report`);
+        throw new Error(`HTTP ${response.status}: Failed to fetch order report`);
       }
 
       return await response.json();
     } catch (error) {
-      console.error('Error fetching order sales report:', error);
+      console.error('Error fetching order report:', error);
       throw error;
     }
   },
 
   getWalletReport: async (searchParams = {}) => {
     try {
-      const queryParams = new URLSearchParams();
-
-      Object.keys(searchParams).forEach(key => {
-        if (searchParams[key]) {
-          queryParams.append(key, searchParams[key]);
-        }
-      });
-
-      const queryString = queryParams.toString();
-      const url = `${BASE_URL}report/wallet${queryString ? `?${queryString}` : ''}`;
+      const url = `${BASE_URL}report/wallet${buildQueryString(searchParams)}`;
 
       // console.log('Making request to:', url);
 
@@ -256,28 +218,19 @@ const reportService = {
         throw new Error('Authentication failed. Please login again.');
       }
       if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: Failed to fetch order sales report`);
+        throw new Error(`HTTP ${response.status}: Failed to fetch wallet report`);
       }
 
       return await response.json();
     } catch (error) {
-      console.error('Error fetching order sales report:', error);
+      console.error('Error fetching wallet report:', error);
       throw error;
     }
   },
 
   getPointReport: async (searchParams = {}) => {
     try {
-      const queryParams = new URLSearchParams();
-
-      Object.keys(searchParams).forEach(key => {
-        if (searchParams[key]) {
-          queryParams.append(key, searchParams[key]);
-        }
-      });
-
-      const queryString = queryParams.toString();
-      const url = `${BASE_URL}report/point${queryString ? `?${queryString}` : ''}`;
+      const url = `${BASE_URL}report/point${buildQueryString(searchParams)}`;
 
       // console.log('Making request to:', url);
 
@@ -295,27 +248,18 @@ const reportService = {
         throw new Error('Authentication failed. Please login again.');
       }
       if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: Failed to fetch order sales report`);
+        throw new Error(`HTTP ${response.status}: Failed to fetch point report`);
       }
 
       return await response.json();
     } catch (error) {
-      console.error('Error fetching order sales report:', error);
+      console.error('Error fetching point report:', error);
       throw error;
     }
   },
   getUnutilizedReport: async (searchParams = {}) => {
     try {
-      const queryParams = new URLSearchParams();
-
-      Object.keys(searchParams).forEach(key => {
-        if (searchParams[key]) {
-          queryParams.append(key, searchParams[key]);
-        }
-      });
-
-      const queryString = queryParams.toString();
-      const url = `${BASE_URL}report/unutilizedvoucher${queryString ? `?${queryString}` : ''}`;
+      const url = `${BASE_URL}report/unutilizedvoucher${buildQueryString(searchParams)}`;
 
       // console.log('Making request to:', url);
 
@@ -333,24 +277,19 @@ const reportService = {
         throw new Error('Authentication failed. Please login again.');
       }
       if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: Failed to fetch order sales report`);
+        throw new Error(`HTTP ${response.status}: Failed to fetch unutilized report`);
       }
 
       return await response.json();
     } catch (error) {
-      console.error('Error fetching order sales report:', error);
+      console.error('Error fetching unutilized report:', error);
       throw error;
     }
   },
 
   getUniqueQrSummary: async (searchParams = {}) => {
     try {
-      const queryParams = new URLSearchParams();
-      Object.keys(searchParams).forEach(key => {
-        if (searchParams[key]) queryParams.append(key, searchParams[key]);
-      });
-      const queryString = queryParams.toString();
-      const url = `${BASE_URL}unique-qr-report/summary${queryString ? `?${queryString}` : ''}`;
+      const url = `${BASE_URL}unique-qr-report/summary${buildQueryString(searchParams)}`;
 
       const response = await fetch(url, {
         headers: { 'Content-Type': 'application/json', ...getAuthHeaders() }
@@ -366,12 +305,7 @@ const reportService = {
 
   getUniqueQrDetails: async (uniqueCode, searchParams = {}) => {
     try {
-      const queryParams = new URLSearchParams();
-      Object.keys(searchParams).forEach(key => {
-        if (searchParams[key]) queryParams.append(key, searchParams[key]);
-      });
-      const queryString = queryParams.toString();
-      const url = `${BASE_URL}unique-qr-report/details/${uniqueCode}${queryString ? `?${queryString}` : ''}`;
+      const url = `${BASE_URL}unique-qr-report/details/${uniqueCode}${buildQueryString(searchParams)}`;
 
       const response = await fetch(url, {
         headers: { 'Content-Type': 'application/json', ...getAuthHeaders() }
@@ -387,12 +321,7 @@ const reportService = {
 
   exportUniqueQrSummary: async (searchParams = {}) => {
     try {
-      const queryParams = new URLSearchParams();
-      Object.keys(searchParams).forEach(key => {
-        if (searchParams[key]) queryParams.append(key, searchParams[key]);
-      });
-      const queryString = queryParams.toString();
-      const url = `${BASE_URL}unique-qr-report/export-summary${queryString ? `?${queryString}` : ''}`;
+      const url = `${BASE_URL}unique-qr-report/export-summary${buildQueryString(searchParams)}`;
 
       const response = await fetch(url, {
         headers: { 'Content-Type': 'application/json', ...getAuthHeaders() }
@@ -408,12 +337,7 @@ const reportService = {
 
   exportUniqueQrDetails: async (uniqueCode, searchParams = {}) => {
     try {
-      const queryParams = new URLSearchParams();
-      Object.keys(searchParams).forEach(key => {
-        if (searchParams[key]) queryParams.append(key, searchParams[key]);
-      });
-      const queryString = queryParams.toString();
-      const url = `${BASE_URL}unique-qr-report/export-details/${uniqueCode}${queryString ? `?${queryString}` : ''}`;
+      const url = `${BASE_URL}unique-qr-report/export-details/${uniqueCode}${buildQueryString(searchParams)}`;
 
       const response = await fetch(url, {
         headers: { 'Content-Type': 'application/json', ...getAuthHeaders() }

@@ -33,7 +33,7 @@ const Profile = () => {
       label: "Logout",
       icon: "heroicons-outline:arrow-right-on-rectangle",
       action: () => {
-        dispatch(handleLogout);
+        handleLogout();
       },
     },
   ];

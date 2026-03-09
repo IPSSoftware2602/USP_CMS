@@ -47,7 +47,6 @@ const Layout = () => {
 
   return (
     <>
-      <ToastContainer />
       <Header className={width > breakpoints.xl ? switchHeaderClass() : ""} />
       {menuType === "vertical" && width > breakpoints.xl && !menuHidden && (
         <Sidebar />

@@ -163,26 +163,26 @@ const UniqueQrList = () => {
             cell: (row) => {
                 const qrImageUrl = row.qr_image_url || `${BASE_URL}backend/uploads/unique_qr/${row.qr_image}`;
                 return (
-                row.qr_image ? (
-                    <div className="flex items-center gap-2">
-                        <img
-                            src={qrImageUrl}
-                            alt="QR"
-                            className="w-12 h-12 object-contain"
-                        />
-                        <a
-                            href={qrImageUrl}
-                            download={`qr-${row.unique_code || row.id}.png`}
-                            className="text-green-600 hover:text-green-800"
-                            title="Download QR"
-                        >
-                            <Download size={16} />
-                        </a>
-                    </div>
-                ) : (
-                    <QrCode size={24} className="text-gray-300" />
-                )
-            );
+                    row.qr_image ? (
+                        <div className="flex items-center gap-2">
+                            <img
+                                src={qrImageUrl}
+                                alt="QR"
+                                className="w-12 h-12 object-contain"
+                            />
+                            <a
+                                href={qrImageUrl}
+                                download={`qr-${row.unique_code || row.id}.png`}
+                                className="text-green-600 hover:text-green-800"
+                                title="Download QR"
+                            >
+                                <Download size={16} />
+                            </a>
+                        </div>
+                    ) : (
+                        <QrCode size={24} className="text-gray-300" />
+                    )
+                );
             },
         },
     ];

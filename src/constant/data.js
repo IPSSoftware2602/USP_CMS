@@ -76,6 +76,11 @@ export const menuItems = [
         childtitle: "Outlets Menu",
         childlink: "outlets/menu", // or just "menu" depending on your routing structure
         permissionKey: "Outlets Menu",
+      },
+      {
+        childtitle: "Outlets Menu Control",
+        childlink: "outlets/menu_control",
+        permissionKey: "Outlets Menu Control",
       }
     ],
   },

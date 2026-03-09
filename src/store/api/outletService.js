@@ -1,4 +1,5 @@
 import { VITE_API_BASE_URL } from "../../constant/config";
+import { checkAuthExpired } from "@/utils/authFetch";
 
 const BASE_URL = VITE_API_BASE_URL;
 
@@ -8,6 +9,7 @@ class OutletService {
   }
 
   async handleResponse(response) {
+    checkAuthExpired(response);
     if (!response.ok) {
       const error = await response.text();
       throw new Error(`HTTP ${response.status}: ${error}`);
@@ -126,6 +128,9 @@ class OutletService {
       formData.append('outlet_menu[]', id);
     });
 
+    if (outletData.outlet_menu_detail) {
+      formData.append('outlet_menu_detail', typeof outletData.outlet_menu_detail === 'string' ? outletData.outlet_menu_detail : JSON.stringify(outletData.outlet_menu_detail));
+    }
 
     // Image handling
     if (outletData.images && Array.isArray(outletData.images)) {
@@ -403,6 +408,45 @@ class OutletService {
       throw error;
     }
   }
+  
+  async bulkUpdateVariationsAndOptions(data) {
+    const token = this.getToken();
+    try {
+      const response = await fetch(`${BASE_URL}outlets/variations-options/update`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(data),
+      });
+
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.error('Error in bulk updating variations and options:', error);
+      throw error;
+    }
+  }
+
+  async bulkDeleteVariationsAndOptions(data) {
+    const token = this.getToken();
+    try {
+      const response = await fetch(`${BASE_URL}outlets/variations-options/delete`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(data),
+      });
+
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.error('Error in bulk deleting variations and options:', error);
+      throw error;
+    }
+  }
+
 }
 
 

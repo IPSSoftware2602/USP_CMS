@@ -59,24 +59,7 @@ const LoginForm = () => {
     if (autoLoginAttempted) return;
 
     const urlParams = new URLSearchParams(location.search);
-    const sessionExpired = urlParams.get('sessionExpired');
-    const returnUrl = urlParams.get('returnUrl');
-
-    if (sessionExpired === 'true') {
-      setSessionExpiredMessage("Your session has expired. Please log in again to continue.");
-      toast.warn("Session expired. Please log in again.", {
-        position: "top-right",
-        autoClose: 4000,
-      });
-      
-      handleSessionExpiry();
-      sessionStorage.clear();
-      localStorage.removeItem('user');
-      dispatch(logOut());
-      navigate('/login', { replace: true , state: { sessionExpired: true } });
-      return;
-    }
-
+    const returnUrl = urlParams.get('returnUrl') || '/dashboard';
     const autoLoginSuccess = checkAutoLogin();
     setAutoLoginAttempted(true);
 
@@ -86,8 +69,7 @@ const LoginForm = () => {
         autoClose: 2000,
       });
       
-      const redirectUrl = returnUrl || '/dashboard';
-      navigate(redirectUrl, { replace: true });
+      navigate(returnUrl, { replace: true });
     }
   }, [location.search, navigate, checkAutoLogin, autoLoginAttempted]);
 
@@ -100,9 +82,6 @@ const LoginForm = () => {
   }, [isAuth, navigate, location.search, autoLoginAttempted]);
 
   const handleInputChange = () => {
-    if (sessionExpiredMessage) {
-      setSessionExpiredMessage("");
-    }
   };
 
   const onSubmit = async (data) => {
@@ -129,8 +108,6 @@ const LoginForm = () => {
         };
         
         initSession(userDataToStore);
-        
-        setSessionExpiredMessage("");
         
         toast.success(response.message || "Login Successful", {
           position: "top-right",
@@ -203,18 +180,6 @@ const LoginForm = () => {
 
   return (
     <div className="space-y-4">
-      {sessionExpiredMessage && (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4 mb-4">
-          <div className="flex">
-            <Icon icon="heroicons:exclamation-triangle" className="w-5 h-5 text-yellow-400 mt-0.5 mr-3" />
-            <div>
-              <h3 className="text-sm font-medium text-yellow-800">Session Expired</h3>
-              <p className="text-sm text-yellow-700 mt-1">{sessionExpiredMessage}</p>
-            </div>
-          </div>
-        </div>
-      )}
-
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <Textinput
           autoComplete="username"

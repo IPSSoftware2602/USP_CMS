@@ -10,7 +10,7 @@ const useLogout = () => {
     dispatch(logOut());
     sessionStorage.clear();
     localStorage.clear();
-    navigate("/login");
+    navigate("/");
   };
 
   return handleLogout;

@@ -1,4 +1,5 @@
 import { VITE_API_BASE_URL } from "../../constant/config";
+import { checkAuthExpired } from "@/utils/authFetch";
 
 const BASE_URL = VITE_API_BASE_URL;
 
@@ -15,6 +16,7 @@ class PromoCodeService {
   }
 
   async handleResponse(response) {
+    checkAuthExpired(response);
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       throw new Error(

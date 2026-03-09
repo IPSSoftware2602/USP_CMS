@@ -41,6 +41,8 @@ const PushNotificationPage = () => {
     const [content, setContent] = useState("");
     const [image, setImage] = useState(null);
     const [isSending, setIsSending] = useState(false);
+    const [isScheduled, setIsScheduled] = useState(false);
+    const [scheduledAt, setScheduledAt] = useState("");
 
     const fetchCustomers = async (page = 1, limit = 50) => {
         setLoading(true);
@@ -144,6 +146,7 @@ const PushNotificationPage = () => {
         if (!title) return toast.error("Title is required");
         if (!message) return toast.error("Message is required");
         if (selectedRows.length === 0) return toast.error("Please select at least one customer");
+        if (isScheduled && !scheduledAt) return toast.error("Please select a schedule date and time");
 
         setIsSending(true);
         try {
@@ -151,6 +154,10 @@ const PushNotificationPage = () => {
             formData.append("title", title);
             formData.append("message", message);
             formData.append("link_type", linkType);
+
+            if (isScheduled && scheduledAt) {
+                formData.append("scheduled_at", scheduledAt);
+            }
 
             // Send as JSON string for array
             formData.append("customer_ids", JSON.stringify(selectedRows));
@@ -176,6 +183,8 @@ const PushNotificationPage = () => {
                 setContent("");
                 setImage(null);
                 setSelectedRows([]);
+                setScheduledAt("");
+                setIsScheduled(false);
             }
         } catch (error) {
             toast.error("Failed to queue notification: " + error.message);
@@ -317,7 +326,7 @@ const PushNotificationPage = () => {
                             ></textarea>
                         </FormGroup>
 
-                        <FormGroup label="Link Type">
+                        {/* <FormGroup label="Link Type">
                             <div className="flex space-x-4">
                                 <Radio
                                     label="External URL"
@@ -334,9 +343,9 @@ const PushNotificationPage = () => {
                                     onChange={(e) => setLinkType(e.target.value)}
                                 />
                             </div>
-                        </FormGroup>
+                        </FormGroup> */}
 
-                        {linkType === "url" && (
+                        {/* {linkType === "url" && (
                             <div>
                                 <label className="block capitalize form-label">Destination URL</label>
                                 <input
@@ -369,7 +378,39 @@ const PushNotificationPage = () => {
                                     ></textarea>
                                 </FormGroup>
                             </div>
-                        )}
+                        )} */}
+
+                        <div className="space-y-4 border p-4 rounded-md border-slate-200">
+                            <div className="flex items-center justify-between">
+                                <label className="text-sm font-semibold text-slate-700">Schedule Deployment</label>
+                                <div className="flex items-center">
+                                    <input
+                                        type="checkbox"
+                                        id="schedule-toggle"
+                                        checked={isScheduled}
+                                        onChange={(e) => setIsScheduled(e.target.checked)}
+                                        className="w-4 h-4 text-primary-600 bg-gray-100 border-gray-300 rounded focus:ring-primary-500"
+                                    />
+                                    <label htmlFor="schedule-toggle" className="ml-2 text-sm text-slate-600">Plan for later</label>
+                                </div>
+                            </div>
+
+                            {isScheduled && (
+                                <div className="mt-4">
+                                    <label className="block capitalize form-label">Deployment Time</label>
+                                    <input
+                                        type="datetime-local"
+                                        value={scheduledAt}
+                                        onChange={(e) => setScheduledAt(e.target.value)}
+                                        className="form-control py-2 w-full"
+                                        min={new Date().toISOString().slice(0, 16)}
+                                    />
+                                    <p className="text-[10px] text-slate-500 mt-1">
+                                        Select the date and time when this notification should be sent.
+                                    </p>
+                                </div>
+                            )}
+                        </div>
 
                         <div className="pt-4 border-t border-slate-200 dark:border-slate-700">
                             <Button

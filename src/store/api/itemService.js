@@ -1,4 +1,5 @@
 import { VITE_API_BASE_URL } from "../../constant/config";
+import { checkAuthExpired } from "@/utils/authFetch";
 
 const BASE_URL = VITE_API_BASE_URL;
 
@@ -8,6 +9,7 @@ class ItemService {
   }
 
   async handleResponse(response) {
+    checkAuthExpired(response);
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       throw new Error(
@@ -60,6 +62,12 @@ class ItemService {
   // Get all menu items
   async getMenuItems() {
     const url = `${BASE_URL}menu-item/list`;
+    return this.makeJsonRequest(url, "GET");
+  }
+
+  // Get all menu items full list
+  async getMenuItemsFullList() {
+    const url = `${BASE_URL}menu-item/full-list`;
     return this.makeJsonRequest(url, "GET");
   }
 
@@ -401,6 +409,7 @@ class ItemService {
 
   transformApiItemToComponent(apiItem) {
     return {
+      ...apiItem,
       id: apiItem.id,
       name: apiItem.title,
       optionGroups: apiItem.menu_option_group || [],

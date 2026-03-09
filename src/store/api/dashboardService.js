@@ -1,4 +1,5 @@
 import { VITE_API_BASE_URL } from "../../constant/config";
+import { checkAuthExpired } from "@/utils/authFetch";
 
 const BASE_URL = VITE_API_BASE_URL;
 
@@ -24,6 +25,7 @@ class DashboardService {
   }
 
   async handleResponse(response) {
+    checkAuthExpired(response);
     if (!response.ok) {
       const error = await response.text();
       throw new Error(`HTTP ${response.status}: ${error}`);

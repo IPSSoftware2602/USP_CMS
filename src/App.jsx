@@ -5,6 +5,9 @@ import { useSelector } from 'react-redux';
 // import { useSessionManager } from "./hooks/useSessionManager";
 // import SessionWarningModal from "./pages/components/sessionWarningModal";
 import AuthInterceptor from "./components/authinterceptor";
+import "@/utils/authFetch"; // Global fetch 401 interceptor
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 // home pages & dashboard
 const Dashboard = lazy(() => import("./pages/dashboard"));
@@ -78,6 +81,7 @@ import OrgChart from "./pages/member/member-chart";
 import MemberAdjustWallet from "./pages/member/member-edit-adjustwallet";
 import Outlet from "./pages/outlet";
 import OutletMenuPage from "./pages/outlet/menu";
+import OutletMenuControlPage from "./pages/outlet/menu_control";
 import AddOutletForm from "./pages/outlet/outlet-add";
 import EditOutletForm from "./pages/outlet/outlet-edit";
 import EditPasswordOutlet from "./pages/outlet/outlet-password";
@@ -193,6 +197,7 @@ function App() {
   return (
     <main className="App relative">
       <AuthInterceptor />
+      <ToastContainer hideProgressBar={false} autoClose={4000} />
       <APIProvider apiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}>
         <Routes>
           <Route path="/" element={<AuthLayout />}>
@@ -239,6 +244,7 @@ function App() {
               <Route path="list/edit_outlet/:id" element={<EditOutletForm />} />
               <Route path="list/edit_password/:id" element={<EditPasswordOutlet />} />
               <Route path="menu" element={<OutletMenuPage />} />
+              <Route path="menu_control" element={<OutletMenuControlPage />} />
               {/* If you need nested menu routes, you can add them here */}
             </Route>
 

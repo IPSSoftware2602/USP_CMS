@@ -8,7 +8,6 @@ const AuthLayout = () => {
   return (
     <>
       <Suspense fallback={<Loading />}>
-        <ToastContainer />
         {<Outlet />}
       </Suspense>
     </>

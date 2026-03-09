@@ -7,6 +7,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useTable, useSortBy, usePagination } from 'react-table';
 import { Line } from 'react-chartjs-2';
 import { toast } from 'react-toastify';
+import Select from 'react-select';
 
 ChartJS.register(
   CategoryScale,
@@ -37,7 +38,7 @@ const SalesReport = () => {
   const [filters, setFilters] = useState({
     startDate: '',
     endDate: '',
-    state: 'All',
+    state: [],
     outlet: 'All',
     orderMethod: 'All',
     reportMode: 'total',
@@ -50,13 +51,15 @@ const SalesReport = () => {
     const states = outletOptions
       .map(o => o.state)
       .filter(s => s && s.trim() !== '');
-    return ['All', ...Array.from(new Set(states)).sort()];
+    const uniqueStates = Array.from(new Set(states)).sort();
+    return uniqueStates.map(s => ({ value: s, label: s }));
   }, [outletOptions]);
 
   // Outlets filtered to selected state
   const filteredOutletOptions = useMemo(() => {
-    if (filters.state === 'All') return outletOptions;
-    return outletOptions.filter(o => o.state === filters.state);
+    if (!filters.state || filters.state.length === 0) return outletOptions;
+    const selectedStateValues = filters.state.map(s => s.value);
+    return outletOptions.filter(o => selectedStateValues.includes(o.state));
   }, [outletOptions, filters.state]);
 
   const userData = useMemo(() => {
@@ -149,7 +152,9 @@ const SalesReport = () => {
     }
     // For yearly and total modes, no date parameters needed
 
-    if (f.state && f.state !== 'All') params.state = f.state;
+    if (f.state && f.state.length > 0) {
+      params.state = f.state.map(s => s.value);
+    }
     if (f.outlet && f.outlet !== 'All') params.outlet_id = f.outlet;
     if (f.orderMethod && f.orderMethod !== 'All') params.order_type = f.orderMethod;
     if (f.reportMode) params.report_mode = f.reportMode;
@@ -505,7 +510,7 @@ const SalesReport = () => {
     const resetFilters = {
       startDate: '',
       endDate: '',
-      state: 'All',
+      state: [],
       outlet: 'All',
       orderMethod: 'All',
       reportMode: 'total',
@@ -791,15 +796,16 @@ const SalesReport = () => {
 
                 <div className="space-y-1.5">
                   <label className="block text-xs font-semibold uppercase tracking-wide text-gray-600">State</label>
-                  <select
-                    className="block w-full h-10 rounded-md border border-gray-300 bg-white shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm px-3"
+                  <Select
+                    isMulti
+                    name="states"
+                    options={stateOptions}
+                    className="basic-multi-select"
+                    classNamePrefix="select"
                     value={filters.state}
-                    onChange={e => setFilters(prev => ({ ...prev, state: e.target.value, outlet: 'All' }))}
-                  >
-                    {stateOptions.map(s => (
-                      <option key={s} value={s}>{s}</option>
-                    ))}
-                  </select>
+                    onChange={selectedOptions => setFilters(prev => ({ ...prev, state: selectedOptions || [], outlet: 'All' }))}
+                    placeholder="Select States..."
+                  />
                 </div>
                 <div className="space-y-1.5">
                   <label className="block text-xs font-semibold uppercase tracking-wide text-gray-600">Outlet</label>

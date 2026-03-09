@@ -1,4 +1,5 @@
 import {VITE_API_BASE_URL} from "../../constant/config";
+import { checkAuthExpired } from "@/utils/authFetch";
 
 const BASE_URL =  VITE_API_BASE_URL;
 
@@ -12,6 +13,7 @@ class TagService {
   }
 
   async handleResponse(response) {
+    checkAuthExpired(response);
     if (!response.ok) {
       const errorData = await response.text();
       throw new Error(`API Error: ${response.status} - ${errorData}`);

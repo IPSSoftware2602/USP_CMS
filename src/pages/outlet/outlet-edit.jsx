@@ -32,6 +32,10 @@ const EditOutletForm = () => {
   const [expandedCategories, setExpandedCategories] = useState({});
   const [loadingCategories, setLoadingCategories] = useState(false);
   const [selectedMenuItems, setSelectedMenuItems] = useState([]);
+  const [selectedVariations, setSelectedVariations] = useState([]);
+  const [selectedOptionGroups, setSelectedOptionGroups] = useState([]);
+  const [selectedOptions, setSelectedOptions] = useState([]);
+  const [expandedItems, setExpandedItems] = useState({});
   const [removedImages, setRemovedImages] = useState([]);
   const [popupState, setPopupState] = useState({
     isOpen: false,
@@ -100,7 +104,6 @@ const EditOutletForm = () => {
     lng: parseFloat(formData.outletLongitude),
   });
   const [isGeocoding, setIsGeocoding] = useState(false);
-  const [geocodeTimeout, setGeocodeTimeout] = useState(null);
   const [hasDineIn, setHasDineIn] = useState(false);
 
   const auth = JSON.parse(localStorage.getItem("user"));
@@ -140,7 +143,7 @@ const EditOutletForm = () => {
         categoriesData = categoriesResponse.categories;
       }
 
-      const itemsResponse = await itemService.getMenuItems();
+      const itemsResponse = await itemService.getMenuItemsFullList();
       let itemsData = [];
 
       if (Array.isArray(itemsResponse)) {
@@ -447,57 +450,49 @@ const EditOutletForm = () => {
               }
             }
           );
-          // console.log(outlet);
-          // console.log(outlet.outlet_menu);
-
-          // console.log(outlet);
-          setFormData({
-            outletName: outlet.title || "",
-            outletEmail: outlet.email || "",
-            outletContact: outlet.phone || "",
-            outletPassword: "",
-            outletPasswordConfirmation: "",
-            outletAddress: outlet.address || "",
-            outletState: outlet.state || "",
-            outletPostcode: outlet.postal_code || "",
-            outletLatitude: outlet.latitude || "3.1390",
-            outletLongitude: outlet.longitude || "101.6869",
-            outletZeoniqCode: outlet.zeoniq_loc_code || "",
-            operationHours: convertedOperationHours,
-            outletImage: outlet.outlet_image || "",
-            serveMethods: outlet.serve_method
-              ? outlet.serve_method.split(",").map((s) => s.trim())
-              : [],
-            deliveryOptions: outlet.delivery_options
-              ? outlet.delivery_options.split(",").map((s) => s.trim())
-              : [],
-            deliveryRange: outlet.outlet_delivery_coverage || "",
-            reservationSlots: "",
-            orderSlots: outlet.order_max_per_hour || "",
-            pizzaSlots: outlet.item_max_per_hour || "",
-            eventSlots: "",
-            applySst: outlet.outlet_tax?.sst ? "Yes" : "No",
-            applyServiceTax: outlet.outlet_tax?.service_tax ? "Yes" : "No",
-            status: outlet.status || "active",
-            deliverySettings: parseDeliverySettingsFromApi(outlet),
-          });
-
-          setMarkerLocation({
-            lat: parseFloat(outlet.latitude || "3.1390"),
-            lng: parseFloat(outlet.longitude || "101.6869"),
-          });
-
-          if (outlet.address && outlet.state && outlet.postal_code) {
-            geocodeAddress(outlet.address, outlet.state, outlet.postal_code);
-          }
         }
 
-        // Always set selected menu items unconditionally
-        const outletMenuItems = outlet.outlet_menu || [];
-        setSelectedMenuItems(
-          outletMenuItems.map((item) => Number(item.menu_item_id))
-        );
+        // Initialize from outlet_menu_detail
+        const menuDetail = outlet.outlet_menu_detail || [];
+        const initMenuItems = [];
+        const initVariations = [];
+        const initOptionGroups = new Set();
+        const initOptions = [];
+        const initExpandedItems = {};
 
+        menuDetail.forEach(entry => {
+          const menuItemId = Number(entry.menu_item_id);
+          initMenuItems.push(menuItemId);
+          initExpandedItems[menuItemId] = true;
+
+          // Variations
+          (entry.variations || []).forEach(v => {
+            const varId = v.variation_id;
+            initVariations.push(`v-${menuItemId}-${varId}`);
+
+            // Variation option groups & options
+            (v.options || []).forEach(opt => {
+              const ogKey = `vog-${menuItemId}-${varId}-${opt.option_group_id}`;
+              initOptionGroups.add(ogKey);
+              initOptions.push(`vo-${menuItemId}-${varId}-${opt.option_group_id}-${opt.option_id}`);
+            });
+          });
+
+          // Item options (menu option groups)
+          (entry.item_options || []).forEach(io => {
+            const ogKey = `mog-${menuItemId}-${io.option_group_id}`;
+            initOptionGroups.add(ogKey);
+            initOptions.push(`mo-${menuItemId}-${io.option_group_id}-${io.option_id}`);
+          });
+        });
+
+        setSelectedMenuItems(initMenuItems);
+        setSelectedVariations(initVariations);
+        setSelectedOptionGroups(Array.from(initOptionGroups));
+        setSelectedOptions(initOptions);
+        setExpandedItems(initExpandedItems);
+
+        // Set form data
         setFormData({
           outletName: outlet.title || "",
           outletEmail: outlet.email || "",
@@ -604,19 +599,124 @@ const EditOutletForm = () => {
     }));
   };
 
-  const handleItemChange = (itemId, isChecked) => {
-    const id = Number(itemId);
-    setSelectedMenuItems((prev) => {
-      // console.log("Item change - itemId:", id, "isChecked:", isChecked);
-      // console.log("Previous selected items:", prev);
-
-      const result = isChecked
-        ? [...prev, id]
-        : prev.filter((selectedId) => selectedId !== id);
-
-      // console.log("New selected items:", result);
-      return result;
+  const toggleCheckboxArray = (setter, keys, isChecked) => {
+    setter(prev => {
+      let next = [...prev];
+      if (isChecked) {
+        keys.forEach(k => { if (!next.includes(k)) next.push(k); });
+      } else {
+        next = next.filter(k => !keys.includes(k));
+      }
+      return next;
     });
+  };
+
+  const handleItemChange = (itemId, isChecked, item) => {
+    const id = Number(itemId);
+
+    setSelectedMenuItems((prev) =>
+      isChecked ? [...prev, id] : prev.filter((selectedId) => selectedId !== id)
+    );
+
+    // If checking an item, auto-select all its variations and options
+    if (item) {
+      const varKeys = [];
+      const ogKeys = [];
+      const optKeys = [];
+
+      if (item.variation_group) {
+        item.variation_group.forEach(vg => {
+          const v = vg.variation || vg;
+          const varId = v.id;
+          varKeys.push(`v-${id}-${varId}`);
+          
+          const optionGroups = vg.option_groups || v.option_groups || v.variation_options_groups || [];
+          if (optionGroups) {
+            optionGroups.forEach(og => {
+              const ogId = og.id || og.option_group_id || og.option_group?.id;
+              ogKeys.push(`vog-${id}-${varId}-${ogId}`);
+              const optionsList = og.options || og.option_group?.options || [];
+              if (optionsList) {
+                optionsList.forEach(opt => optKeys.push(`vo-${id}-${varId}-${ogId}-${opt.id}`));
+              }
+            });
+          }
+        });
+      }
+
+      if (item.menu_option_group) {
+        item.menu_option_group.forEach(mog => {
+          const mogId = mog.option_group?.id || mog.id;
+          ogKeys.push(`mog-${id}-${mogId}`);
+          const optionsList = mog.options || mog.option_group?.options || [];
+          if (optionsList) {
+            optionsList.forEach(opt => optKeys.push(`mo-${id}-${mogId}-${opt.id}`));
+          }
+        });
+      }
+
+      toggleCheckboxArray(setSelectedVariations, varKeys, isChecked);
+      toggleCheckboxArray(setSelectedOptionGroups, ogKeys, isChecked);
+      toggleCheckboxArray(setSelectedOptions, optKeys, isChecked);
+    }
+  };
+
+  const handleVariationToggle = (menuItemId, variationId, isChecked, variation) => {
+    const varKey = `v-${menuItemId}-${variationId}`;
+    setSelectedVariations(prev =>
+      isChecked ? [...prev, varKey] : prev.filter(k => k !== varKey)
+    );
+
+    // If variation checked, auto-select all its option groups and options
+    if (variation && isChecked) {
+      const ogKeys = [];
+      const optKeys = [];
+      if (variation.option_groups) {
+        variation.option_groups.forEach(og => {
+          const ogId = og.id || og.option_group_id;
+          ogKeys.push(`vog-${menuItemId}-${variationId}-${ogId}`);
+          if (og.options) {
+            og.options.forEach(opt => optKeys.push(`vo-${menuItemId}-${variationId}-${ogId}-${opt.id}`));
+          }
+        });
+      }
+      toggleCheckboxArray(setSelectedOptionGroups, ogKeys, true);
+      toggleCheckboxArray(setSelectedOptions, optKeys, true);
+    }
+  };
+
+  const handleVariationOptionGroupToggle = (menuItemId, variationId, ogId, isChecked, options) => {
+    const ogKey = `vog-${menuItemId}-${variationId}-${ogId}`;
+    setSelectedOptionGroups(prev =>
+      isChecked ? [...prev, ogKey] : prev.filter(k => k !== ogKey)
+    );
+
+    const optKeys = (options || []).map(opt => `vo-${menuItemId}-${variationId}-${ogId}-${opt.id}`);
+    toggleCheckboxArray(setSelectedOptions, optKeys, isChecked);
+  };
+
+  const handleVariationOptionToggle = (menuItemId, variationId, ogId, optionId, isChecked) => {
+    const optKey = `vo-${menuItemId}-${variationId}-${ogId}-${optionId}`;
+    setSelectedOptions(prev =>
+      isChecked ? [...prev, optKey] : prev.filter(k => k !== optKey)
+    );
+  };
+
+  const handleMenuOptionGroupToggle = (menuItemId, mogId, isChecked, options) => {
+    const ogKey = `mog-${menuItemId}-${mogId}`;
+    setSelectedOptionGroups(prev =>
+      isChecked ? [...prev, ogKey] : prev.filter(k => k !== ogKey)
+    );
+
+    const optKeys = (options || []).map(opt => `mo-${menuItemId}-${mogId}-${opt.id}`);
+    toggleCheckboxArray(setSelectedOptions, optKeys, isChecked);
+  };
+
+  const handleMenuOptionToggle = (menuItemId, mogId, optionId, isChecked) => {
+    const optKey = `mo-${menuItemId}-${mogId}-${optionId}`;
+    setSelectedOptions(prev =>
+      isChecked ? [...prev, optKey] : prev.filter(k => k !== optKey)
+    );
   };
 
   const handleCategoryItemsChange = (categoryId, checked) => {
@@ -628,20 +728,84 @@ const EditOutletForm = () => {
     const categoryItemIds = categoryItems.map((item) => Number(item.id));
 
     setSelectedMenuItems((prev) => {
+      let nextMenuItems = [...prev];
       if (checked) {
-        // Add all category items that aren't already selected
-        const newItems = [...prev];
         categoryItemIds.forEach((itemId) => {
-          if (!newItems.includes(itemId)) {
-            newItems.push(itemId);
+          if (!nextMenuItems.includes(itemId)) nextMenuItems.push(itemId);
+        });
+      } else {
+        nextMenuItems = prev.filter((id) => !categoryItemIds.includes(id));
+      }
+      return nextMenuItems;
+    });
+
+    // Cascade to variations, groups, and options for each item in the category
+    const allVarKeys = [];
+    const allOgKeys = [];
+    const allOptKeys = [];
+
+    categoryItems.forEach(item => {
+      const id = Number(item.id);
+      if (item.variation_group) {
+        item.variation_group.forEach(vg => {
+          const v = vg.variation || vg;
+          const varId = v.id;
+          allVarKeys.push(`v-${id}-${varId}`);
+          
+          const optionGroups = vg.option_groups || v.option_groups || v.variation_options_groups || [];
+          if (optionGroups) {
+            optionGroups.forEach(og => {
+              const ogId = og.id || og.option_group_id || og.option_group?.id;
+              allOgKeys.push(`vog-${id}-${varId}-${ogId}`);
+              const optionsList = og.options || og.option_group?.options || [];
+              if (optionsList) {
+                optionsList.forEach(opt => allOptKeys.push(`vo-${id}-${varId}-${ogId}-${opt.id}`));
+              }
+            });
           }
         });
-        return newItems;
-      } else {
-        // Remove all category items
-        return prev.filter((id) => !categoryItemIds.includes(id));
+      }
+
+      if (item.menu_option_group) {
+        item.menu_option_group.forEach(mog => {
+          const mogId = mog.option_group?.id || mog.id;
+          allOgKeys.push(`mog-${id}-${mogId}`);
+          const optionsList = mog.options || mog.option_group?.options || [];
+          if (optionsList) {
+            optionsList.forEach(opt => allOptKeys.push(`mo-${id}-${mogId}-${opt.id}`));
+          }
+        });
       }
     });
+
+    toggleCheckboxArray(setSelectedVariations, allVarKeys, checked);
+    toggleCheckboxArray(setSelectedOptionGroups, allOgKeys, checked);
+    toggleCheckboxArray(setSelectedOptions, allOptKeys, checked);
+  };
+
+  const isOptionGroupFullySelected = (og, menuItemId, type, variationId = null) => {
+    if (!og || !og.options || og.options.length === 0) return false;
+
+    return og.options.every(opt => {
+      const key = type === 'variation'
+        ? `vo-${menuItemId}-${variationId}-${og.id || og.option_group_id}-${opt.id}`
+        : `mo-${menuItemId}-${og.id}-${opt.id}`;
+      return selectedOptions.includes(key);
+    });
+  };
+
+  const isVariationFullySelected = (v, menuItemId) => {
+    if (!v) return false;
+    const varId = v.variation.id;
+    const varKey = `v-${menuItemId}-${varId}`;
+
+    if (!selectedVariations.includes(varKey)) return false;
+
+    if (v.option_groups && v.option_groups.length > 0) {
+      return v.option_groups.every(og => isOptionGroupFullySelected(og, menuItemId, 'variation', varId));
+    }
+
+    return true;
   };
 
   const areAllCategoryItemsSelected = (categoryId) => {
@@ -696,39 +860,87 @@ const EditOutletForm = () => {
   const renderPopup = () => {
     if (!popupState.isOpen) return null;
 
-    const handleRemoveImage = (idx, img) => {
-      setImages((prev) => prev.filter((_, i) => i !== idx));
-      if (img.existing && img.id) {
-        setRemovedImages((prev) => [...prev, img.id]);
-      }
-    };
+    const allSelected = items.length > 0 && items.every(item => selectedMenuItems.includes(Number(item.id)));
 
     return (
       <div className="fixed inset-0 bg-gray-800 backdrop-blur-sm bg-opacity-50 flex items-center justify-center p-4 z-50">
-        <div className="bg-white rounded-lg w-full max-w-2xl max-h-96 overflow-hidden">
-          <div className="p-4 border-b flex justify-between items-center">
-            <h3 className="text-lg font-medium">Select Menu Items</h3>
-            <button
-              onClick={closePopup}
-              className="text-gray-400 hover:text-gray-600"
-            >
-              <X size={20} />
-            </button>
+        <div className="bg-white rounded-lg w-full max-w-4xl h-[80vh] flex flex-col overflow-hidden shadow-2xl">
+          <div className="p-4 border-b flex justify-between items-center bg-slate-50">
+            <h3 className="text-xl font-bold text-slate-800">Select Menu Items</h3>
+            <div className="flex items-center space-x-6">
+              <button
+                onClick={() => {
+                  if (allSelected) {
+                    setSelectedMenuItems([]);
+                    setSelectedVariations([]);
+                    setSelectedOptionGroups([]);
+                    setSelectedOptions([]);
+                  } else {
+                    const allItemIds = items.map(item => Number(item.id));
+                    setSelectedMenuItems(allItemIds);
+
+                    const varKeys = [];
+                    const ogKeys = [];
+                    const optKeys = [];
+
+                    items.forEach(item => {
+                      const id = Number(item.id);
+                      if (item.variation_group) {
+                        item.variation_group.forEach(vg => {
+                          const varId = vg.variation.id;
+                          varKeys.push(`v-${id}-${varId}`);
+                          if (vg.option_groups) {
+                            vg.option_groups.forEach(og => {
+                              const ogId = og.id || og.option_group_id;
+                              ogKeys.push(`vog-${id}-${varId}-${ogId}`);
+                              if (og.options) {
+                                og.options.forEach(opt => optKeys.push(`vo-${id}-${varId}-${ogId}-${opt.id}`));
+                              }
+                            });
+                          }
+                        });
+                      }
+                      if (item.menu_option_group) {
+                        item.menu_option_group.forEach(mog => {
+                          ogKeys.push(`mog-${id}-${mog.id}`);
+                          if (mog.options) {
+                            mog.options.forEach(opt => optKeys.push(`mo-${id}-${mog.id}-${opt.id}`));
+                          }
+                        });
+                      }
+                    });
+
+                    setSelectedVariations(varKeys);
+                    setSelectedOptionGroups(ogKeys);
+                    setSelectedOptions(optKeys);
+                  }
+                }}
+                className={`text-sm font-semibold ${allSelected ? 'text-indigo-600' : 'text-indigo-500'} underline hover:text-indigo-700`}
+              >
+                {allSelected ? 'Deselect All' : 'Select All'}
+              </button>
+              <button
+                onClick={closePopup}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <X size={24} />
+              </button>
+            </div>
           </div>
 
-          <div className="max-h-64 overflow-y-auto p-4">
+          <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-slate-50/30">
             {loadingCategories ? (
-              <div className="text-center py-4">
-                <div className="text-gray-500">Loading items...</div>
+              <div className="flex flex-col items-center justify-center py-12">
+                <Loader2 className="animate-spin h-10 w-10 text-indigo-600 mb-4" />
+                <p className="text-slate-500 font-medium">Loading items...</p>
               </div>
             ) : categories.length === 0 &&
               getUncategorizedItems().length === 0 ? (
-              <div className="text-center py-4">
-                <div className="text-gray-500">No items available</div>
+              <div className="text-center py-12 bg-white rounded-xl border border-dashed border-slate-300">
+                <p className="text-slate-500">No items available</p>
               </div>
             ) : (
               <>
-                {/* Existing categories rendering */}
                 {categories.map((category) => {
                   const categoryItems = getItemsForCategory(category.id);
                   const isExpanded = expandedCategories[category.id] || false;
@@ -736,144 +948,284 @@ const EditOutletForm = () => {
                   if (categoryItems.length === 0) return null;
 
                   return (
-                    <div key={category.id} className="border rounded-lg mb-3">
+                    <div key={category.id} className="border border-slate-200 rounded-xl overflow-hidden bg-white shadow-sm">
                       <div
-                        className="p-3 bg-gray-50 flex items-center justify-between cursor-pointer hover:bg-gray-100"
+                        className="p-4 bg-slate-50 flex items-center justify-between cursor-pointer hover:bg-slate-100 transition-colors group"
                         onClick={() => toggleCategoryExpansion(category.id)}
                       >
                         <div className="flex items-center flex-1">
-                          <input
-                            type="checkbox"
-                            checked={areAllCategoryItemsSelected(category.id)}
-                            onChange={(e) => {
-                              e.stopPropagation();
-                              handleCategoryItemsChange(
-                                category.id,
-                                e.target.checked
-                              );
-                            }}
-                            className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded mr-3"
-                          />
-                          <span className="font-medium text-gray-900 flex-1">
-                            {category.name || category.title} (
-                            {categoryItems.length} items)
+                          <label className="flex items-center cursor-pointer" onClick={e => e.stopPropagation()}>
+                            <input
+                              type="checkbox"
+                              checked={areAllCategoryItemsSelected(category.id)}
+                              onChange={(e) => handleCategoryItemsChange(category.id, e.target.checked)}
+                              className="w-5 h-5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 transition-all cursor-pointer"
+                            />
+                            <span className="ml-3 font-bold text-slate-700 group-hover:text-indigo-600 transition-colors capitalize">
+                              {category.name || category.title}
+                            </span>
+                          </label>
+                          <span className="ml-3 px-2 py-0.5 bg-slate-200 text-slate-600 text-xs font-bold rounded-full">
+                            {categoryItems.length}
                           </span>
                         </div>
-                        <div>
-                          {isExpanded ? (
-                            <ChevronDown size={20} />
-                          ) : (
-                            <ChevronRight size={20} />
-                          )}
-                        </div>
+                        {isExpanded ? <ChevronDown size={20} className="text-slate-400" /> : <ChevronRight size={20} className="text-slate-400" />}
                       </div>
 
                       {isExpanded && (
-                        <div className="border-t">
-                          <div className="p-3 space-y-2">
-                            {categoryItems.map((item) => (
-                              <label
-                                key={item.id}
-                                className="flex items-center p-2 hover:bg-gray-50 rounded cursor-pointer"
-                              >
+                        <div className="p-4 grid grid-cols-1 md:grid-cols-1 gap-4 bg-white">
+                          {categoryItems.map((item) => (
+                            <div key={item.id} className={`flex flex-col border rounded-xl overflow-hidden transition-all ${selectedMenuItems.includes(Number(item.id)) ? 'border-indigo-200 bg-indigo-50/30' : 'border-slate-100'}`}>
+                              <div className="p-4 flex items-start space-x-3">
                                 <input
                                   type="checkbox"
-                                  checked={selectedMenuItems.includes(
-                                    Number(item.id)
-                                  )}
-                                  onChange={(e) =>
-                                    handleItemChange(item.id, e.target.checked)
-                                  }
-                                  className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded mr-3"
+                                  checked={selectedMenuItems.includes(Number(item.id))}
+                                  onChange={(e) => handleItemChange(item.id, e.target.checked, item)}
+                                  className="mt-1 w-5 h-5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 transition-all cursor-pointer"
                                 />
-                                <div className="flex-1">
-                                  <div className="text-sm font-medium text-gray-900">
-                                    {item.name || item.title}
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center justify-between">
+                                    <span className="font-semibold text-slate-700 truncate">{item.title || item.name}</span>
+                                    {(item.variation_group?.length > 0 || item.menu_option_group?.length > 0) && (
+                                      <button
+                                        onClick={() => setExpandedItems(prev => ({ ...prev, [item.id]: !prev[item.id] }))}
+                                        className="p-1 hover:bg-indigo-100 rounded-lg text-indigo-600 transition-colors"
+                                      >
+                                        {expandedItems[item.id] ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
+                                      </button>
+                                    )}
                                   </div>
-                                  <div className="text-xs text-gray-500">
-                                    Price: RM{item.price || "N/A"} |{" "}
-                                    {item.optionGroups?.length || 0} Option
-                                    Group
-                                    {(item.optionGroups?.length || 0) !== 1
-                                      ? "s"
-                                      : ""}
-                                  </div>
+                                  <p className="text-xs text-slate-500 mt-0.5 truncate">{item.price ? `RM ${parseFloat(item.price).toFixed(2)}` : 'No price'}</p>
                                 </div>
-                              </label>
-                            ))}
-                          </div>
+                              </div>
+
+                              {expandedItems[item.id] && (
+                                <div className="px-4 pb-4 space-y-4 border-t border-indigo-100/50 mt-1 pt-4 bg-white/50">
+                                  {/* Variations */}
+                                  {item.variation_group?.map(vg => (
+                                    <div key={vg.variation.id} className="pl-4 border-l-2 border-indigo-100">
+                                      <label className="flex items-center group/var cursor-pointer">
+                                        <input
+                                          type="checkbox"
+                                          checked={selectedVariations.includes(`v-${item.id}-${vg.variation.id}`)}
+                                          onChange={(e) => handleVariationToggle(item.id, vg.variation.id, e.target.checked, vg)}
+                                          className="w-4 h-4 rounded border-slate-300 text-indigo-500 focus:ring-indigo-400"
+                                        />
+                                        <span className="ml-2 text-sm font-semibold text-slate-600 group-hover/var:text-indigo-600 transition-colors">
+                                          {vg.variation.title}
+                                        </span>
+                                      </label>
+
+                                      {vg.option_groups?.map(og => (
+                                        <div key={og.id || og.option_group_id} className="mt-3 ml-6">
+                                          <label className="flex items-center group/og cursor-pointer">
+                                            <input
+                                              type="checkbox"
+                                              checked={selectedOptionGroups.includes(`vog-${item.id}-${vg.variation.id}-${og.id || og.option_group_id}`)}
+                                              onChange={(e) => handleVariationOptionGroupToggle(item.id, vg.variation.id, og.id || og.option_group_id, e.target.checked, og.options)}
+                                              className="w-3.5 h-3.5 rounded-sm border-slate-300 text-amber-500 focus:ring-amber-400"
+                                            />
+                                            <span className="ml-2 text-xs font-bold text-slate-500 uppercase tracking-wider group-hover/og:text-amber-600">
+                                              {og.title}
+                                            </span>
+                                          </label>
+                                          <div className="mt-2 grid grid-cols-1 gap-1.5 ml-1">
+                                            {og.options?.map(opt => (
+                                              <label key={opt.id} className="flex items-center p-1.5 hover:bg-slate-50 rounded-lg group/opt cursor-pointer transition-colors">
+                                                <input
+                                                  type="checkbox"
+                                                  checked={selectedOptions.includes(`vo-${item.id}-${vg.variation.id}-${og.id || og.option_group_id}-${opt.id}`)}
+                                                  onChange={(e) => handleVariationOptionToggle(item.id, vg.variation.id, og.id || og.option_group_id, opt.id, e.target.checked)}
+                                                  className="w-3.5 h-3.5 rounded-full border-slate-300 text-emerald-500 focus:ring-emerald-400"
+                                                />
+                                                <span className="ml-2 text-[13px] text-slate-600 group-hover/opt:text-slate-900">
+                                                  {opt.title}
+                                                </span>
+                                              </label>
+                                            ))}
+                                          </div>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  ))}
+
+                                  {/* Menu Options (Item Options) */}
+                                  {item.menu_option_group?.map(mog => (
+                                    <div key={mog.id} className="pl-4 border-l-2 border-slate-100">
+                                      <label className="flex items-center group/mog cursor-pointer">
+                                        <input
+                                          type="checkbox"
+                                          checked={selectedOptionGroups.includes(`mog-${item.id}-${mog.id}`)}
+                                          onChange={(e) => handleMenuOptionGroupToggle(item.id, mog.id, e.target.checked, mog.options)}
+                                          className="w-4 h-4 rounded border-slate-300 text-indigo-500 focus:ring-indigo-400"
+                                        />
+                                        <span className="ml-2 text-sm font-semibold text-slate-600 group-hover/mog:text-indigo-600 tracking-wide transition-colors">
+                                          {mog.title}
+                                        </span>
+                                      </label>
+                                      <div className="mt-2 grid grid-cols-1 gap-1.5 ml-1">
+                                        {mog.options?.map(opt => (
+                                          <label key={opt.id} className="flex items-center p-1.5 hover:bg-slate-50 rounded-lg group/opt cursor-pointer transition-colors">
+                                            <input
+                                              type="checkbox"
+                                              checked={selectedOptions.includes(`mo-${item.id}-${mog.id}-${opt.id}`)}
+                                              onChange={(e) => handleMenuOptionToggle(item.id, mog.id, opt.id, e.target.checked)}
+                                              className="w-3.5 h-3.5 rounded-full border-slate-300 text-emerald-500 focus:ring-emerald-400"
+                                            />
+                                            <span className="ml-2 text-[13px] text-slate-600 group-hover/opt:text-slate-900">
+                                              {opt.title}
+                                            </span>
+                                          </label>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          ))}
                         </div>
                       )}
                     </div>
                   );
                 })}
 
-                {/* New "Other Items" section */}
+                {/* Uncategorized Items */}
                 {getUncategorizedItems().length > 0 && (
-                  <div className="border rounded-lg mb-3">
+                  <div className="border border-slate-200 rounded-xl overflow-hidden bg-white shadow-sm mt-4">
                     <div
-                      className="p-3 bg-gray-50 flex items-center justify-between cursor-pointer hover:bg-gray-100"
-                      onClick={() => toggleCategoryExpansion("uncategorized")}
+                      className="p-4 bg-slate-50 flex items-center justify-between cursor-pointer hover:bg-slate-100 transition-colors group"
+                      onClick={() => toggleCategoryExpansion('uncategorized')}
                     >
                       <div className="flex items-center flex-1">
-                        <input
-                          type="checkbox"
-                          checked={areAllCategoryItemsSelected("uncategorized")}
-                          onChange={(e) => {
-                            e.stopPropagation();
-                            handleCategoryItemsChange(
-                              "uncategorized",
-                              e.target.checked
-                            );
-                          }}
-                          className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded mr-3"
-                        />
-                        <span className="font-medium text-gray-900 flex-1">
-                          Other Items ({getUncategorizedItems().length})
+                        <label className="flex items-center cursor-pointer" onClick={e => e.stopPropagation()}>
+                          <input
+                            type="checkbox"
+                            checked={areAllCategoryItemsSelected('uncategorized')}
+                            onChange={(e) => handleCategoryItemsChange('uncategorized', e.target.checked)}
+                            className="w-5 h-5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 transition-all cursor-pointer"
+                          />
+                          <span className="ml-3 font-bold text-slate-700 group-hover:text-indigo-600 transition-colors capitalize">
+                            Uncategorized
+                          </span>
+                        </label>
+                        <span className="ml-3 px-2 py-0.5 bg-slate-200 text-slate-600 text-xs font-bold rounded-full">
+                          {getUncategorizedItems().length}
                         </span>
                       </div>
-                      <div>
-                        {expandedCategories["uncategorized"] ? (
-                          <ChevronDown size={20} />
-                        ) : (
-                          <ChevronRight size={20} />
-                        )}
-                      </div>
+                      {expandedCategories['uncategorized'] ? <ChevronDown size={20} className="text-slate-400" /> : <ChevronRight size={20} className="text-slate-400" />}
                     </div>
 
-                    {expandedCategories["uncategorized"] && (
-                      <div className="border-t">
-                        <div className="p-3 space-y-2">
-                          {getUncategorizedItems().map((item) => (
-                            <label
-                              key={item.id}
-                              className="flex items-center p-2 hover:bg-gray-50 rounded cursor-pointer"
-                            >
+                    {expandedCategories['uncategorized'] && (
+                      <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-4 bg-white border-t border-slate-100">
+                        {getUncategorizedItems().map((item) => (
+                          <div key={item.id} className={`flex flex-col border rounded-xl overflow-hidden transition-all ${selectedMenuItems.includes(Number(item.id)) ? 'border-indigo-200 bg-indigo-50/30' : 'border-slate-100'}`}>
+                            <div className="p-4 flex items-start space-x-3">
                               <input
                                 type="checkbox"
-                                checked={selectedMenuItems.includes(
-                                  Number(item.id)
-                                )}
-                                onChange={(e) =>
-                                  handleItemChange(item.id, e.target.checked)
-                                }
-                                className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded mr-3"
+                                checked={selectedMenuItems.includes(Number(item.id))}
+                                onChange={(e) => handleItemChange(item.id, e.target.checked, item)}
+                                className="mt-1 w-5 h-5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 transition-all cursor-pointer"
                               />
-                              <div className="flex-1">
-                                <div className="text-sm font-medium text-gray-900">
-                                  {item.name || item.title}
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center justify-between">
+                                  <span className="font-semibold text-slate-700 truncate">{item.title || item.name}</span>
+                                  {(item.variation_group?.length > 0 || item.menu_option_group?.length > 0) && (
+                                    <button
+                                      onClick={() => setExpandedItems(prev => ({ ...prev, [item.id]: !prev[item.id] }))}
+                                      className="p-1 hover:bg-indigo-100 rounded-lg text-indigo-600 transition-colors"
+                                    >
+                                      {expandedItems[item.id] ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
+                                    </button>
+                                  )}
                                 </div>
-                                <div className="text-xs text-gray-500">
-                                  Price: RM{item.price || "N/A"} |{" "}
-                                  {item.optionGroups?.length || 0} Option Group
-                                  {(item.optionGroups?.length || 0) !== 1
-                                    ? "s"
-                                    : ""}
-                                </div>
+                                <p className="text-xs text-slate-500 mt-0.5 truncate">{item.price ? `RM ${parseFloat(item.price).toFixed(2)}` : 'No price'}</p>
                               </div>
-                            </label>
-                          ))}
-                        </div>
+                            </div>
+                            {/* Expansion content for uncategorized */}
+                            {expandedItems[item.id] && (
+                              <div className="px-4 pb-4 space-y-4 border-t border-indigo-100/50 mt-1 pt-4 bg-white/50">
+                                {/* Variations */}
+                                {item.variation_group?.map(vg => (
+                                  <div key={vg.variation.id} className="pl-4 border-l-2 border-indigo-100">
+                                    <label className="flex items-center group/var cursor-pointer">
+                                      <input
+                                        type="checkbox"
+                                        checked={selectedVariations.includes(`v-${item.id}-${vg.variation.id}`)}
+                                        onChange={(e) => handleVariationToggle(item.id, vg.variation.id, e.target.checked, vg)}
+                                        className="w-4 h-4 rounded border-slate-300 text-indigo-500 focus:ring-indigo-400"
+                                      />
+                                      <span className="ml-2 text-sm font-semibold text-slate-600 group-hover/var:text-indigo-600 transition-colors">
+                                        {vg.variation.title}
+                                      </span>
+                                    </label>
+                                    {vg.option_groups?.map(og => (
+                                      <div key={og.id || og.option_group_id} className="mt-3 ml-6">
+                                        <label className="flex items-center group/og cursor-pointer">
+                                          <input
+                                            type="checkbox"
+                                            checked={selectedOptionGroups.includes(`vog-${item.id}-${vg.variation.id}-${og.id || og.option_group_id}`)}
+                                            onChange={(e) => handleVariationOptionGroupToggle(item.id, vg.variation.id, og.id || og.option_group_id, e.target.checked, og.options)}
+                                            className="w-3.5 h-3.5 rounded-sm border-slate-300 text-amber-500 focus:ring-amber-400"
+                                          />
+                                          <span className="ml-2 text-xs font-bold text-slate-500 uppercase tracking-wider group-hover/og:text-amber-600">
+                                            {og.title}
+                                          </span>
+                                        </label>
+                                        <div className="mt-2 grid grid-cols-1 gap-1.5 ml-1">
+                                          {og.options?.map(opt => (
+                                            <label key={opt.id} className="flex items-center p-1.5 hover:bg-slate-50 rounded-lg group/opt cursor-pointer transition-colors">
+                                              <input
+                                                type="checkbox"
+                                                checked={selectedOptions.includes(`vo-${item.id}-${vg.variation.id}-${og.id || og.option_group_id}-${opt.id}`)}
+                                                onChange={(e) => handleVariationOptionToggle(item.id, vg.variation.id, og.id || og.option_group_id, opt.id, e.target.checked)}
+                                                className="w-3.5 h-3.5 rounded-full border-slate-300 text-emerald-500 focus:ring-emerald-400"
+                                              />
+                                              <span className="ml-2 text-[13px] text-slate-600 group-hover/opt:text-slate-900">
+                                                {opt.title}
+                                              </span>
+                                            </label>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                ))}
+                                {/* Menu Options */}
+                                {item.menu_option_group?.map(mog => (
+                                  <div key={mog.id} className="pl-4 border-l-2 border-slate-100">
+                                    <label className="flex items-center group/mog cursor-pointer">
+                                      <input
+                                        type="checkbox"
+                                        checked={selectedOptionGroups.includes(`mog-${item.id}-${mog.id}`)}
+                                        onChange={(e) => handleMenuOptionGroupToggle(item.id, mog.id, e.target.checked, mog.options)}
+                                        className="w-4 h-4 rounded border-slate-300 text-indigo-500 focus:ring-indigo-400"
+                                      />
+                                      <span className="ml-2 text-sm font-semibold text-slate-600 group-hover/mog:text-indigo-600 tracking-wide transition-colors">
+                                        {mog.title}
+                                      </span>
+                                    </label>
+                                    <div className="mt-2 grid grid-cols-1 gap-1.5 ml-1">
+                                      {mog.options?.map(opt => (
+                                        <label key={opt.id} className="flex items-center p-1.5 hover:bg-slate-50 rounded-lg group/opt cursor-pointer transition-colors">
+                                          <input
+                                            type="checkbox"
+                                            checked={selectedOptions.includes(`mo-${item.id}-${mog.id}-${opt.id}`)}
+                                            onChange={(e) => handleMenuOptionToggle(item.id, mog.id, opt.id, e.target.checked)}
+                                            className="w-3.5 h-3.5 rounded-full border-slate-300 text-emerald-500 focus:ring-emerald-400"
+                                          />
+                                          <span className="ml-2 text-[13px] text-slate-600 group-hover/opt:text-slate-900">
+                                            {opt.title}
+                                          </span>
+                                        </label>
+                                      ))}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        ))}
                       </div>
                     )}
                   </div>
@@ -882,10 +1234,13 @@ const EditOutletForm = () => {
             )}
           </div>
 
-          <div className="p-4 border-t flex justify-end space-x-2">
+          <div className="p-4 border-t bg-slate-50 flex items-center justify-between">
+            <div className="text-slate-600">
+              <span className="font-bold text-indigo-600">{selectedMenuItems.length}</span> items selected
+            </div>
             <button
               onClick={closePopup}
-              className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
+              className="px-8 py-2.5 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 shadow-lg shadow-indigo-200 transition-all active:scale-95"
             >
               Done
             </button>
@@ -967,15 +1322,70 @@ const EditOutletForm = () => {
       fd.append("outlet_operating_hours", JSON.stringify([operatingHours])); // <—
       fd.append("regular_delivery_settings", JSON.stringify(formData.deliverySettings));
 
+      // Granular Menu Detail Construction
+      const outletMenuDetail = selectedMenuItems.map(itemId => {
+        const item = items.find(i => Number(i.id) === Number(itemId));
+        if (!item) return null;
+
+        const variations = (item.variation_group || [])
+          .filter(vg => selectedVariations.includes(`v-${itemId}-${vg.variation.id}`))
+          .map(vg => {
+            const varId = vg.variation.id;
+            const variationOptions = [];
+            (vg.option_groups || [])
+              .filter(og => selectedOptionGroups.includes(`vog-${itemId}-${varId}-${og.id || og.option_group_id}`))
+              .forEach(og => {
+                const ogId = og.id || og.option_group_id;
+                (og.options || [])
+                  .filter(opt => selectedOptions.includes(`vo-${itemId}-${varId}-${ogId}-${opt.id}`))
+                  .forEach(opt => {
+                    variationOptions.push({
+                      option_group_id: String(ogId),
+                      option_id: String(opt.id)
+                    });
+                  });
+              });
+            return {
+              variation_id: String(varId),
+              options: variationOptions
+            };
+          });
+
+        const itemOptions = [];
+        (item.menu_option_group || [])
+          .filter(mog => selectedOptionGroups.includes(`mog-${itemId}-${mog.id}`))
+          .forEach(mog => {
+            (mog.options || [])
+              .filter(opt => selectedOptions.includes(`mo-${itemId}-${mog.id}-${opt.id}`))
+              .forEach(opt => {
+                itemOptions.push({
+                  option_group_id: String(mog.id),
+                  option_id: String(opt.id)
+                });
+              });
+          });
+
+        return {
+          menu_item_id: Number(itemId),
+          variations,
+          item_options: itemOptions
+        };
+      }).filter(Boolean);
+
+      fd.append("outlet_menu_detail", JSON.stringify(outletMenuDetail));
+
       // Menu items — backend expects array, not JSON
       // selectedMenuItems can be ids or objects; normalize to ids:
       const menuIds = (selectedMenuItems || []).map((m) => (typeof m === "object" ? (m.id ?? m) : m)).filter(Boolean);
       if (menuIds.length) {
-        menuIds.forEach((id) => fd.append("outlet_menu[]", String(id)));     // <—
+        menuIds.forEach((id) => fd.append("outlet_menu[]", String(id)));
       } else {
         // optional: if you want "delete all" behavior even when empty
         // fd.append("outlet_menu[]", "");
       }
+
+
+
 
       // Existing image ids (array)
       existingImages.forEach((img) => {
@@ -1077,21 +1487,6 @@ const EditOutletForm = () => {
       ...prev,
       [field]: value,
     }));
-
-    if (geocodeTimeout) {
-      clearTimeout(geocodeTimeout);
-    }
-
-    const newTimeout = setTimeout(() => {
-      const updatedFormData = { ...formData, [field]: value };
-      geocodeAddress(
-        updatedFormData.outletAddress,
-        updatedFormData.outletState,
-        updatedFormData.outletPostcode
-      );
-    }, 1500);
-
-    setGeocodeTimeout(newTimeout);
   };
 
   const handleMapTypeChange = (type) => {
@@ -1395,21 +1790,27 @@ const EditOutletForm = () => {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Outlet Address
-                {isGeocoding && (
-                  <span className="text-blue-500 text-xs ml-2">
-                    (Searching location...)
-                  </span>
-                )}
               </label>
-              <textarea
-                placeholder="Enter address here... (e.g., 123 Jalan Bukit Bintang)"
-                rows="3"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
-                value={formData.outletAddress}
-                onChange={(e) =>
-                  handleAddressChange("outletAddress", e.target.value)
-                }
-              />
+              <div className="flex gap-2">
+                <textarea
+                  placeholder="Enter address here... (e.g., 123 Jalan Bukit Bintang)"
+                  rows="3"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none flex-1"
+                  value={formData.outletAddress}
+                  onChange={(e) =>
+                    handleAddressChange("outletAddress", e.target.value)
+                  }
+                />
+                <button
+                  type="button"
+                  className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 flex flex-col items-center justify-center transition-colors min-w-[120px]"
+                  onClick={() => geocodeAddress(formData.outletAddress, formData.outletState, formData.outletPostcode)}
+                  disabled={isGeocoding}
+                >
+                  <MapPin size={20} className="mb-1" />
+                  <span className="text-xs font-medium">Get Coordinates</span>
+                </button>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

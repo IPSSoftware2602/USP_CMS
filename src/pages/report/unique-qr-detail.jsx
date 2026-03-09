@@ -191,62 +191,65 @@ const UniqueQrDetailReport = () => {
                             </button>
                         </div>
                         <div className="flex justify-end">
-                            {hasExportPermission && (
-                                <button
-                                    onClick={exportToCSV}
-                                    className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
-                                >
-                                    <Download className="w-4 h-4 mr-2" />
-                                    Export Details
-                                </button>
-                            )}
-                        </div>
-                    </div>
-                </div>
+                            {
+                                hasExportPermission && (
+                                    <button
+                                        onClick={exportToCSV}
+                                        className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                                    >
+                                        <Download className="w-4 h-4 mr-2" />
+                                        Export Details
+                                    </button>
+                                )
+                            }
+                        </div >
+                    </div >
+                </div >
 
                 {/* Table */}
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                    {loading ? (
-                        <div className="p-8 text-center">
-                            <Loader2 className="h-8 w-8 animate-spin mx-auto text-blue-600" />
-                            <p className="mt-2 text-gray-500">Loading data...</p>
-                        </div>
-                    ) : error ? (
-                        <div className="p-8 text-center text-red-600">{error}</div>
-                    ) : (
-                        <div className="overflow-x-auto">
-                            <table {...getTableProps()} className="min-w-full divide-y divide-gray-200">
-                                <thead className="bg-gray-50">
-                                    {headerGroups.map(headerGroup => (
-                                        <tr {...headerGroup.getHeaderGroupProps()}>
-                                            {headerGroup.headers.map(column => (
-                                                <th
-                                                    {...column.getHeaderProps(column.getSortByToggleProps())}
-                                                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap"
-                                                >
-                                                    {column.render('Header')}
-                                                </th>
-                                            ))}
-                                        </tr>
-                                    ))}
-                                </thead>
-                                <tbody {...getTableBodyProps()} className="bg-white divide-y divide-gray-200">
-                                    {page.map(row => {
-                                        prepareRow(row);
-                                        return (
-                                            <tr {...row.getRowProps()} className="hover:bg-gray-50">
-                                                {row.cells.map(cell => (
-                                                    <td {...cell.getCellProps()} className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                        {cell.render('Cell')}
-                                                    </td>
+                < div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden" >
+                    {
+                        loading ? (
+                            <div className="p-8 text-center" >
+                                <Loader2 className="h-8 w-8 animate-spin mx-auto text-blue-600" />
+                                <p className="mt-2 text-gray-500">Loading data...</p>
+                            </div>
+                        ) : error ? (
+                            <div className="p-8 text-center text-red-600">{error}</div>
+                        ) : (
+                            <div className="overflow-x-auto">
+                                <table {...getTableProps()} className="min-w-full divide-y divide-gray-200">
+                                    <thead className="bg-gray-50">
+                                        {headerGroups.map(headerGroup => (
+                                            <tr {...headerGroup.getHeaderGroupProps()}>
+                                                {headerGroup.headers.map(column => (
+                                                    <th
+                                                        {...column.getHeaderProps(column.getSortByToggleProps())}
+                                                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap"
+                                                    >
+                                                        {column.render('Header')}
+                                                    </th>
                                                 ))}
                                             </tr>
-                                        );
-                                    })}
-                                </tbody>
-                            </table>
-                        </div>
-                    )}
+                                        ))}
+                                    </thead>
+                                    <tbody {...getTableBodyProps()} className="bg-white divide-y divide-gray-200">
+                                        {page.map(row => {
+                                            prepareRow(row);
+                                            return (
+                                                <tr {...row.getRowProps()} className="hover:bg-gray-50">
+                                                    {row.cells.map(cell => (
+                                                        <td {...cell.getCellProps()} className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                            {cell.render('Cell')}
+                                                        </td>
+                                                    ))}
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
 
                     {/* Pagination */}
                     <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
@@ -262,9 +265,9 @@ const UniqueQrDetailReport = () => {
                             </div>
                         </div>
                     </div>
-                </div>
-            </div>
-        </div>
+                </div >
+            </div >
+        </div >
     );
 };
 

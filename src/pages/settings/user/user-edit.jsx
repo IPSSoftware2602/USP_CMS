@@ -48,7 +48,8 @@ const UserEdit = () => {
       read: false,
       subItems: {
         Lists: { read: false, create: false, update: false, delete: false },
-        'Outlets Menu': { read: false, create: false, update: false, delete: false }
+        'Outlets Menu': { read: false, create: false, update: false, delete: false },
+        'Outlets Menu Control': { read: false, create: false, update: false, delete: false }
       }
     },
     Menu: {
