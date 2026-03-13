@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import DataTable from 'react-data-table-component';
-import { Plus, Download, Edit, Trash2, Eye, EyeOff, RefreshCw, ChevronDown } from 'lucide-react';
+import { Plus, Download, Edit, Trash2, Eye, EyeOff, RefreshCw, ChevronDown, LogIn } from 'lucide-react';
 import DeleteConfirmationModal from '@/components/ui/DeletePopUp';
 import { useNavigate } from 'react-router-dom';
 import UserService from '../../../store/api/userService';
 import OutletApiService from '../../../store/api/outletService';
 import useExportPermission from '@/hooks/useExportPermission';
+import AdminImpersonationService from '@/store/api/adminImpersonationService';
+import { applyImpersonatedCmsSession } from '@/utils/impersonation';
 
 const UserDataTable = () => {
   const [users, setUsers] = useState([]);
@@ -31,6 +33,7 @@ const UserDataTable = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const hasExportPermission = useExportPermission();
   const [currentUserId, setCurrentUserId] = useState(null);
+  const canImpersonate = currentUserId === 1;
 
   const fetchUserPermissions = async () => {
     try {
@@ -180,12 +183,32 @@ const UserDataTable = () => {
     fetchUsers();
   };
 
+  const handleImpersonateUser = async (user) => {
+    try {
+      const result = await AdminImpersonationService.impersonateUser(user.id);
+      applyImpersonatedCmsSession(result);
+      window.location.assign('/dashboard');
+    } catch (error) {
+      alert(error.message || 'Failed to login as selected user.');
+    }
+  };
+
   const columns = [
     {
       name: 'Actions',
-      width: '150px',
+      width: '190px',
       cell: row => (
         <div className="flex space-x-1">
+          {canImpersonate && (
+            <button
+              onClick={() => handleImpersonateUser(row)}
+              className="p-1.5 hover:bg-emerald-50 rounded transition-colors"
+              title="Login As User"
+              disabled={loading}
+            >
+              <LogIn size={14} />
+            </button>
+          )}
           {(isAdmin || hasUpdatePermission) && (
             <button
               onClick={() => navigate(`/settings/user/user-edit/${row.id}`)}

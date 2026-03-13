@@ -21,7 +21,8 @@ class UserService {
         password_hash: md5(userData.password), 
         role: userData.userRoles.toLowerCase(), 
         status: userData.activeStatus.toLowerCase(),
-        menuPermissions: userData.menuPermissions // Add permissions data
+        menuPermissions: userData.menuPermissions, // Add permissions data
+        allowed_unique_qr_ids: userData.allowedUniqueQrIds || [],
       };
 
       // Add outlet_id only if the role is 'outlet'
@@ -197,6 +198,10 @@ static async updateUser(userId, userData) {
       // Add menu permissions if provided
       if (userData.menuPermissions !== undefined) {
         requestData.menuPermissions = userData.menuPermissions;
+      }
+
+      if (userData.allowedUniqueQrIds !== undefined) {
+        requestData.allowed_unique_qr_ids = userData.allowedUniqueQrIds;
       }
 
       console.log('Sending update data:', requestData); // Debug log

@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
 import UserService from '../../../store/api/userService';
 import OutletApiService from '../../../store/api/outletService';
+import UniqueQrService from '../../../store/api/uniqueQrService';
 import { toast } from 'react-toastify';
 
 const UserEdit = () => {
@@ -13,6 +14,7 @@ const UserEdit = () => {
   const [user, setUser] = useState(null);
   const [error, setError] = useState(null);
   const [outlets, setOutlets] = useState([]);
+  const [uniqueQrOptions, setUniqueQrOptions] = useState([]);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [currentUserRole, setCurrentUserRole] = useState('');
@@ -24,7 +26,8 @@ const UserEdit = () => {
     confirmPassword: '',
     userRoles: '',
     activeStatus: '',
-    outlet: ''
+    outlet: '',
+    allowedUniqueQrIds: []
   });
 
   const defaultMenuPermissions = {
@@ -122,7 +125,8 @@ const UserEdit = () => {
           confirmPassword: '',
           userRoles: userData.data.role || '',
           activeStatus: userData.data.status || '',
-          outlet: userData.data.outlet_id || ''
+          outlet: userData.data.outlet_id || '',
+          allowedUniqueQrIds: parseAllowedUniqueQrIds(userData.data.allowed_unique_qr_ids),
         });
 
         if (userData.data.user_permissions) {
@@ -153,6 +157,10 @@ const UserEdit = () => {
               ? outletsResponse.data
               : [];
         setOutlets(outletsData);
+
+        const uniqueQrResponse = await UniqueQrService.getList();
+        const uniqueQrItems = Array.isArray(uniqueQrResponse.result) ? uniqueQrResponse.result : [];
+        setUniqueQrOptions(uniqueQrItems);
       } catch (err) {
         console.error('Error fetching data:', err);
         setError(err.message || 'Failed to load user data');
@@ -270,7 +278,8 @@ const UserEdit = () => {
         userRoles: formData.userRoles,
         activeStatus: formData.activeStatus,
         outlet: formData.userRoles === 'outlet' ? formData.outlet : null,
-        menuPermissions: menuPermissions
+        menuPermissions: menuPermissions,
+        allowedUniqueQrIds: formData.userRoles === 'admin' ? [] : formData.allowedUniqueQrIds,
       };
 
       if (formData.password && formData.password.trim()) {
@@ -318,6 +327,31 @@ const UserEdit = () => {
 
     if (name === 'userRoles' && value !== 'outlet') {
       setFormData(prev => ({ ...prev, outlet: '' }));
+    }
+
+    if (name === 'userRoles' && value === 'admin') {
+      setFormData(prev => ({ ...prev, allowedUniqueQrIds: [] }));
+    }
+  };
+
+  const handleUniqueQrChange = (event) => {
+    const selectedValues = Array.from(event.target.selectedOptions, (option) => option.value);
+    setFormData(prev => ({
+      ...prev,
+      allowedUniqueQrIds: selectedValues
+    }));
+  };
+
+  const parseAllowedUniqueQrIds = (value) => {
+    if (!value) {
+      return [];
+    }
+
+    try {
+      const parsed = JSON.parse(value);
+      return Array.isArray(parsed) ? parsed.map((item) => String(item)) : [];
+    } catch (error) {
+      return [];
     }
   };
 
@@ -400,6 +434,29 @@ const UserEdit = () => {
                     ))}
                   </select>
                 )}
+              </div>
+            )}
+
+            {formData.userRoles && formData.userRoles !== 'admin' && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Unique QR Access
+                </label>
+                <select
+                  multiple
+                  value={formData.allowedUniqueQrIds}
+                  onChange={handleUniqueQrChange}
+                  className="w-full min-h-40 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                >
+                  {uniqueQrOptions.map((qr) => (
+                    <option key={qr.id} value={String(qr.id)}>
+                      {qr.name} ({qr.unique_code})
+                    </option>
+                  ))}
+                </select>
+                <p className="mt-1 text-sm text-gray-500">
+                  This non-admin user will only see the selected Unique QRs in Unique QR Report.
+                </p>
               </div>
             )}
 

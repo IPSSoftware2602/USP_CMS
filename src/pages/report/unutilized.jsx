@@ -2,10 +2,10 @@ import React, { useState, useEffect, useMemo } from "react";
 import DataTable from "react-data-table-component";
 import { ChevronDown, Filter, RotateCcw, Loader } from "lucide-react";
 import { ToastContainer, toast } from "react-toastify";
-import { VITE_API_BASE_URL } from "../../constant/config";
 import useExportPermission from "@/hooks/useExportPermission";
 import "react-toastify/dist/ReactToastify.css";
 import reportService from "@/store/api/reportService";
+import outletService from "@/store/api/outletService";
 
 const SingleDateInput = ({
   label = "Date",
@@ -35,15 +35,45 @@ const UnutilizedReport = () => {
   const hasExportPermission = useExportPermission();
   const [orderData, setOrderData] = useState([]);
   const [summaryData, setSummaryData] = useState([]);
+  const [outlets, setOutlets] = useState([]);
   const [filters, setFilters] = useState({
     dateFrom: null,
     dateTo: null,
+    usedDateFrom: null,
+    usedDateTo: null,
+    outletId: null,
   });
   const [showFilters, setShowFilters] = useState(false);
 
+  const userData = useMemo(() => {
+    try {
+      const userStr = localStorage.getItem('user');
+      return userStr ? JSON.parse(userStr) : null;
+    } catch (error) {
+      console.error('Error parsing user data:', error);
+      return null;
+    }
+  }, []);
+
+  const user_id = userData?.user?.user_id || null;
+
   useEffect(() => {
     fetchOrderSalesReport();
-  }, []);
+    if (user_id) {
+      fetchOutlets();
+    }
+  }, [user_id]);
+
+  const fetchOutlets = async () => {
+    try {
+      const response = await outletService.getOutlets(user_id);
+      if (response.status == 200) {
+        setOutlets(response.result || []);
+      }
+    } catch (error) {
+      console.error("Error fetching outlets:", error);
+    }
+  };
 
   const fetchOrderSalesReport = async () => {
     try {
@@ -52,6 +82,9 @@ const UnutilizedReport = () => {
       const params = {
         start_date: filters.dateFrom,
         end_date: filters.dateTo,
+        used_date_from: filters.usedDateFrom,
+        used_date_to: filters.usedDateTo,
+        outlet_id: filters.outletId,
       };
 
       const response = await reportService.getUnutilizedReport(params);
@@ -96,6 +129,9 @@ const UnutilizedReport = () => {
         type: "unutilized-voucher",
         start_date: filters.dateFrom,
         end_date: filters.dateTo,
+        used_date_from: filters.usedDateFrom,
+        used_date_to: filters.usedDateTo,
+        outlet_id: filters.outletId,
       };
 
       const response = await reportService.exportReport(params);
@@ -131,6 +167,9 @@ const UnutilizedReport = () => {
     setFilters({
       dateFrom: null,
       dateTo: null,
+      usedDateFrom: null,
+      usedDateTo: null,
+      outletId: null,
     });
     fetchOrderSalesReport();
   };
@@ -152,6 +191,12 @@ const UnutilizedReport = () => {
     {
       name: "Redeem Count",
       selector: (row) => row["Redeem Count"],
+      wrap: true,
+    },
+    {
+      name: "Used Count",
+      selector: (row) => row["Used Count"],
+      sortable: true,
       wrap: true,
     },
     {
@@ -266,6 +311,31 @@ const UnutilizedReport = () => {
               value={filters.dateTo || ""}
               onChange={(value) => handleFilterChange("dateTo", value)}
             />
+            <SingleDateInput
+              label="Voucher Used Date From"
+              value={filters.usedDateFrom || ""}
+              onChange={(value) => handleFilterChange("usedDateFrom", value)}
+            />
+            <SingleDateInput
+              label="Voucher Used Date To"
+              value={filters.usedDateTo || ""}
+              onChange={(value) => handleFilterChange("usedDateTo", value)}
+            />
+            <div className="flex flex-col space-y-1">
+              <label className="text-sm font-medium text-gray-700">Outlet</label>
+              <select
+                value={filters.outletId || ""}
+                onChange={(e) => handleFilterChange("outletId", e.target.value || null)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="">All Outlets</option>
+                {outlets.map((outlet) => (
+                  <option key={outlet.id} value={outlet.id}>
+                    {outlet.title}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
           <div className="flex justify-end space-x-3 mt-6">
             <button

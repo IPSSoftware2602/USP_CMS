@@ -3,6 +3,7 @@ import { ArrowLeft, Eye, EyeOff, RefreshCw, Save, X, User, Mail, Phone, MapPin }
 import { useNavigate } from 'react-router-dom';
 import UserService from '../../../store/api/userService';
 import OutletApiService from '../../../store/api/outletService';
+import UniqueQrService from '../../../store/api/uniqueQrService';
 import { toast } from 'react-toastify';
 
 const AddNewUser = () => {
@@ -13,11 +14,14 @@ const AddNewUser = () => {
     activeStatus: 'Active',
     password: '',
     confirmPassword: '',
-    outlet: '' // New field for outlet selection
+    outlet: '', // New field for outlet selection
+    allowedUniqueQrIds: []
   });
 
   const [outlets, setOutlets] = useState([]); // State for outlets
   const [loadingOutlets, setLoadingOutlets] = useState(true); // Loading state for outlets
+  const [uniqueQrOptions, setUniqueQrOptions] = useState([]);
+  const [loadingUniqueQrs, setLoadingUniqueQrs] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errors, setErrors] = useState({});
@@ -135,6 +139,24 @@ const AddNewUser = () => {
     fetchOutlets();
   }, [currentUserId]);
 
+  useEffect(() => {
+    const fetchUniqueQrs = async () => {
+      try {
+        setLoadingUniqueQrs(true);
+        const response = await UniqueQrService.getList();
+        const items = Array.isArray(response.result) ? response.result : [];
+        setUniqueQrOptions(items);
+      } catch (err) {
+        console.error('Error fetching unique QR list:', err);
+        toast.error('Failed to load Unique QR options');
+      } finally {
+        setLoadingUniqueQrs(false);
+      }
+    };
+
+    fetchUniqueQrs();
+  }, []);
+
   const validateForm = () => {
     const newErrors = {};
 
@@ -185,6 +207,15 @@ const AddNewUser = () => {
     if (field === 'userRoles' && value !== 'Outlet') {
       setFormData(prev => ({ ...prev, outlet: '' }));
     }
+
+    if (field === 'userRoles' && value === 'Admin') {
+      setFormData(prev => ({ ...prev, allowedUniqueQrIds: [] }));
+    }
+  };
+
+  const handleUniqueQrChange = (event) => {
+    const selectedValues = Array.from(event.target.selectedOptions, (option) => option.value);
+    setFormData((prev) => ({ ...prev, allowedUniqueQrIds: selectedValues }));
   };
 
   const handleSubmit = async (e) => {
@@ -202,7 +233,8 @@ const AddNewUser = () => {
         ...formData,
         // Only include outlet if role is Outlet
         outlet: formData.userRoles === 'Outlet' ? formData.outlet : undefined,
-        menuPermissions
+        menuPermissions,
+        allowedUniqueQrIds: formData.userRoles === 'Admin' ? [] : formData.allowedUniqueQrIds,
       };
 
       // Call the API to create user
@@ -344,6 +376,36 @@ const AddNewUser = () => {
                     </select>
                   )}
                   {errors.outlet && <p className="mt-1 text-sm text-red-600">{errors.outlet}</p>}
+                </div>
+              )}
+
+              {formData.userRoles && formData.userRoles !== 'Admin' && (
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Unique QR Access
+                  </label>
+                  {loadingUniqueQrs ? (
+                    <div className="flex items-center justify-center py-3 border border-gray-300 rounded-lg">
+                      <span className="animate-spin mr-2">🌀</span>
+                      Loading Unique QRs...
+                    </div>
+                  ) : (
+                    <select
+                      multiple
+                      value={formData.allowedUniqueQrIds}
+                      onChange={handleUniqueQrChange}
+                      className="w-full min-h-40 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
+                    >
+                      {uniqueQrOptions.map((qr) => (
+                        <option key={qr.id} value={String(qr.id)}>
+                          {qr.name} ({qr.unique_code})
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                  <p className="mt-1 text-sm text-gray-500">
+                    Selected Unique QRs are the only ones this non-admin user can see in Unique QR Report.
+                  </p>
                 </div>
               )}
             </div>

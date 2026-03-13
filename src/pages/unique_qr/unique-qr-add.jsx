@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Loader2, Upload, X, Check, MapPin } from "lucide-react";
+import { ArrowLeft, Loader2, Upload, X, Check, Search, MapPin, ChevronDown, ChevronRight } from "lucide-react";
 import UniqueQrService from "../../store/api/uniqueQrService";
 import "react-toastify/dist/ReactToastify.css";
 import { ToastContainer, toast } from "react-toastify";
@@ -17,13 +17,20 @@ const UniqueQrAdd = () => {
     const [loading, setLoading] = useState(false);
     const [outlets, setOutlets] = useState([]);
     const [allMenuItems, setAllMenuItems] = useState([]);
+    const [menuCategories, setMenuCategories] = useState([]);
     const [outletMenuItems, setOutletMenuItems] = useState([]);
+    const [outletMenuDetail, setOutletMenuDetail] = useState([]);
     const [selectedMenuItems, setSelectedMenuItems] = useState([]);
+    const [collapsedCategories, setCollapsedCategories] = useState(new Set());
     const [logoFile, setLogoFile] = useState(null);
     const [logoPreview, setLogoPreview] = useState(null);
     const [showMenuPopup, setShowMenuPopup] = useState(false);
     const [menuSearch, setMenuSearch] = useState("");
     const [isGeocoding, setIsGeocoding] = useState(false);
+    const [storeDiscounts, setStoreDiscounts] = useState([]);
+    const [selectedStoreDiscountIds, setSelectedStoreDiscountIds] = useState([]);
+    const [showDiscountPopup, setShowDiscountPopup] = useState(false);
+    const [discountSearch, setDiscountSearch] = useState("");
 
     const [formData, setFormData] = useState({
         name: "",
@@ -39,6 +46,8 @@ const UniqueQrAdd = () => {
     useEffect(() => {
         loadOutlets();
         loadMenuItems();
+        loadMenuCategories();
+        loadStoreDiscounts();
     }, []);
 
     useEffect(() => {
@@ -65,19 +74,54 @@ const UniqueQrAdd = () => {
             const response = await UniqueQrService.getMenuItems();
             const raw = Array.isArray(response.data) ? response.data : (Array.isArray(response.result) ? response.result : []);
             // Map 'title' to 'name' for consistency
-            const result = raw.map((m) => ({ ...m, name: m.title || m.name }));
+            const result = raw.map((m) => {
+                const category = Array.isArray(m.category) ? m.category[0] : null;
+                return { 
+                    ...m, 
+                    name: m.title || m.name,
+                    category_id: category ? Number(category.id) : null
+                };
+            });
             setAllMenuItems(result);
         } catch (err) {
             console.error("Error loading menu items:", err);
         }
     };
 
+    const loadMenuCategories = async () => {
+        try {
+            const response = await UniqueQrService.getMenuCategories();
+            const result = Array.isArray(response.data) ? response.data : [];
+            setMenuCategories(result);
+        } catch (err) {
+            console.error("Error loading menu categories:", err);
+        }
+    };
+
     const loadOutletMenuItems = async (outletId) => {
         try {
             const response = await UniqueQrService.getMenuItemsByOutlet(outletId);
-            const menuItemIds = Array.isArray(response.result) ? response.result : [];
-            if (menuItemIds.length > 0) {
-                const filtered = allMenuItems.filter((m) => menuItemIds.includes(m.id));
+            const detail = Array.isArray(response.outlet_menu_detail) ? response.outlet_menu_detail : [];
+            
+            setOutletMenuDetail(detail);
+
+            if (detail.length > 0) {
+                // Filter allMenuItems to only those present in detail
+                const activeItemIds = detail.map(d => Number(d.menu_item_id));
+                const filtered = allMenuItems
+                    .filter((m) => m && activeItemIds.includes(Number(m.id)))
+                    .map(m => {
+                        // Also filter variations for this item
+                        const itemDetail = detail.find(d => Number(d.menu_item_id) === Number(m.id));
+                        if (itemDetail && Array.isArray(m.variation_group)) {
+                            const activeVarIds = (itemDetail.variations || []).map(v => Number(v.variation_id));
+                            return {
+                                ...m,
+                                variation_group: m.variation_group.filter(vg => vg && vg.variation && activeVarIds.includes(Number(vg.variation.id)))
+                            };
+                        }
+                        return m;
+                    });
                 setOutletMenuItems(filtered);
             } else {
                 setOutletMenuItems(allMenuItems);
@@ -86,6 +130,16 @@ const UniqueQrAdd = () => {
         } catch (err) {
             console.error("Error loading outlet menu items:", err);
             setOutletMenuItems(allMenuItems);
+        }
+    };
+
+    const loadStoreDiscounts = async () => {
+        try {
+            const response = await UniqueQrService.getStoreDiscounts();
+            const result = Array.isArray(response.data) ? response.data : [];
+            setStoreDiscounts(result);
+        } catch (err) {
+            console.error("Error loading store discounts:", err);
         }
     };
 
@@ -145,28 +199,166 @@ const UniqueQrAdd = () => {
         setLogoPreview(null);
     };
 
-    const toggleMenuItem = (id) => {
-        setSelectedMenuItems((prev) =>
-            prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    const toggleStoreDiscount = (id) => {
+        const numId = Number(id);
+        setSelectedStoreDiscountIds((prev) =>
+            prev.map(Number).includes(numId) 
+                ? prev.filter((x) => Number(x) !== numId) 
+                : [...prev, numId]
         );
     };
 
-    const selectAllMenu = () => {
-        const filteredIds = filteredMenuItems.map((m) => m.id);
+    const toggleMenuItem = (menu_item_id, variation_id = null) => {
+        const mId = Number(menu_item_id);
+        const vId = variation_id ? Number(variation_id) : null;
         setSelectedMenuItems((prev) => {
-            const newSet = new Set([...prev, ...filteredIds]);
-            return Array.from(newSet);
+            const exists = prev.find(
+                (item) => Number(item.menu_item_id) === mId && 
+                         (item.variation_id === null ? vId === null : Number(item.variation_id) === vId)
+            );
+            if (exists) {
+                return prev.filter(
+                    (item) => !(Number(item.menu_item_id) === mId && 
+                               (item.variation_id === null ? vId === null : Number(item.variation_id) === vId))
+                );
+            } else {
+                return [...prev, { menu_item_id: mId, variation_id: vId }];
+            }
+        });
+    };
+
+    const toggleItemWithVariations = (item) => {
+        const itemId = Number(item.id);
+        const hasVariations = item.variation_group && item.variation_group.length > 0;
+        
+        if (!hasVariations) {
+            toggleMenuItem(itemId);
+            return;
+        }
+
+        const variationIds = item.variation_group.map(vg => Number(vg.variation.id));
+        const allVariationsSelected = variationIds.every(vId => 
+            selectedMenuItems.some(sm => Number(sm.menu_item_id) === itemId && Number(sm.variation_id) === vId)
+        );
+
+        setSelectedMenuItems(prev => {
+            if (allVariationsSelected) {
+                // Deselect all variations for this item
+                return prev.filter(sm => !(Number(sm.menu_item_id) === itemId && variationIds.includes(Number(sm.variation_id))));
+            } else {
+                // Select all variations for this item
+                const otherItems = prev.filter(sm => !(Number(sm.menu_item_id) === itemId && variationIds.includes(Number(sm.variation_id))));
+                const newItems = variationIds.map(vId => ({ menu_item_id: itemId, variation_id: vId }));
+                return [...otherItems, ...newItems];
+            }
+        });
+    };
+
+    const toggleCategory = (catId) => {
+        const itemsInCategory = filteredMenuItems.filter(m => Number(m.category_id) === Number(catId));
+        if (itemsInCategory.length === 0) return;
+
+        const allItemsInCatSelected = itemsInCategory.every(item => {
+            const hasVariations = item.variation_group && item.variation_group.length > 0;
+            if (hasVariations) {
+                return item.variation_group.every(vg => 
+                    selectedMenuItems.some(sm => Number(sm.menu_item_id) === Number(item.id) && Number(sm.variation_id) === Number(vg.variation.id))
+                );
+            } else {
+                return selectedMenuItems.some(sm => Number(sm.menu_item_id) === Number(item.id) && sm.variation_id === null);
+            }
+        });
+
+        setSelectedMenuItems(prev => {
+            let newSelection = [...prev];
+            if (allItemsInCatSelected) {
+                // Deselect everything in this category
+                itemsInCategory.forEach(item => {
+                    newSelection = newSelection.filter(sm => Number(sm.menu_item_id) !== Number(item.id));
+                });
+            } else {
+                // Select everything in this category
+                itemsInCategory.forEach(item => {
+                    const hasVariations = item.variation_group && item.variation_group.length > 0;
+                    if (hasVariations) {
+                        item.variation_group.forEach(vg => {
+                            if (!newSelection.some(sm => Number(sm.menu_item_id) === Number(item.id) && Number(sm.variation_id) === Number(vg.variation.id))) {
+                                newSelection.push({ menu_item_id: Number(item.id), variation_id: Number(vg.variation.id) });
+                            }
+                        });
+                    } else {
+                        if (!newSelection.some(sm => Number(sm.menu_item_id) === Number(item.id) && sm.variation_id === null)) {
+                            newSelection.push({ menu_item_id: Number(item.id), variation_id: null });
+                        }
+                    }
+                });
+            }
+            return newSelection;
+        });
+    };
+
+    const toggleCategoryCollapse = (catId) => {
+        setCollapsedCategories(prev => {
+            const newSet = new Set(prev);
+            if (newSet.has(catId)) {
+                newSet.delete(catId);
+            } else {
+                newSet.add(catId);
+            }
+            return newSet;
+        });
+    };
+
+    const selectAllMenu = () => {
+        const itemsToSelect = [];
+        filteredMenuItems.forEach((m) => {
+            if (m.variation_group && m.variation_group.length > 0) {
+                m.variation_group.forEach((v) => {
+                    itemsToSelect.push({ menu_item_id: m.id, variation_id: v.variation.id });
+                });
+            } else {
+                itemsToSelect.push({ menu_item_id: m.id, variation_id: null });
+            }
+        });
+
+        setSelectedMenuItems((prev) => {
+            const newSelection = [...prev];
+            itemsToSelect.forEach((item) => {
+                if (!newSelection.find(x => Number(x.menu_item_id) === Number(item.menu_item_id) && 
+                                           (x.variation_id === null ? item.variation_id === null : Number(x.variation_id) === Number(item.variation_id)))) {
+                    newSelection.push(item);
+                }
+            });
+            return newSelection;
         });
     };
 
     const deselectAllMenu = () => {
-        const filteredIds = filteredMenuItems.map((m) => m.id);
-        setSelectedMenuItems((prev) => prev.filter((x) => !filteredIds.includes(x)));
+        const filteredIds = filteredMenuItems.map((m) => Number(m.id));
+        setSelectedMenuItems((prev) => prev.filter((x) => !filteredIds.includes(Number(x.menu_item_id))));
     };
 
     const filteredMenuItems = outletMenuItems.filter((m) =>
         m.name.toLowerCase().includes(menuSearch.toLowerCase())
     );
+
+    const menuByCategory = menuCategories.map(cat => ({
+        ...cat,
+        items: filteredMenuItems.filter(m => Number(m.category_id) === Number(cat.id))
+    })).filter(cat => cat.items.length > 0);
+
+    // Also include items with no category or category not in menuCategories
+    const orphanedItems = filteredMenuItems.filter(m => 
+        !m.category_id || !menuCategories.some(cat => Number(cat.id) === Number(m.category_id))
+    );
+
+    if (orphanedItems.length > 0) {
+        menuByCategory.push({
+            id: 'others',
+            title: 'Others',
+            items: orphanedItems
+        });
+    }
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -188,6 +380,7 @@ const UniqueQrAdd = () => {
             fd.append("latitude", formData.latitude);
             fd.append("longitude", formData.longitude);
             fd.append("menu_items", JSON.stringify(selectedMenuItems));
+            fd.append("store_discount_ids", JSON.stringify(selectedStoreDiscountIds));
 
             if (logoFile) {
                 fd.append("logo", logoFile);
@@ -308,6 +501,47 @@ const UniqueQrAdd = () => {
                                 </label>
                             )}
                         </div>
+                        <div className="md:col-span-2">
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Special Discounts (Auto-Applied)
+                            </label>
+                            <div className="flex flex-col gap-3">
+                                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-dashed border-gray-300">
+                                    <p className="text-sm text-gray-600">
+                                        {selectedStoreDiscountIds.length} discount(s) selected
+                                    </p>
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowDiscountPopup(true)}
+                                        className="px-4 py-2 bg-indigo-900 text-white rounded-md hover:bg-indigo-800 text-sm"
+                                    >
+                                        Select Discounts
+                                    </button>
+                                </div>
+                                {selectedStoreDiscountIds.length > 0 && (
+                                    <div className="flex flex-wrap gap-2">
+                                        {selectedStoreDiscountIds.map((id) => {
+                                            const disc = storeDiscounts.find((d) => d.id === id);
+                                            return disc ? (
+                                                <span
+                                                    key={id}
+                                                    className="inline-flex items-center gap-1 px-3 py-1 bg-green-50 text-green-800 rounded-full text-sm border border-green-200"
+                                                >
+                                                    {disc.discount_name} ({disc.discount_type === 'percentage' ? `${disc.discount_value}%` : `RM${disc.discount_value}`})
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => toggleStoreDiscount(id)}
+                                                        className="hover:text-red-600"
+                                                    >
+                                                        <X size={14} />
+                                                    </button>
+                                                </span>
+                                            ) : null;
+                                        })}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -405,6 +639,7 @@ const UniqueQrAdd = () => {
                     </div>
                 </div>
 
+
                 {/* Menu Items Section */}
                 <div className="bg-white rounded-lg shadow-sm mb-6">
                     <div className="bg-indigo-900 text-white px-6 py-4 rounded-t-lg">
@@ -431,23 +666,33 @@ const UniqueQrAdd = () => {
                                 </div>
                                 {selectedMenuItems.length > 0 && (
                                     <div className="flex flex-wrap gap-2">
-                                        {selectedMenuItems.map((id) => {
-                                            const item = allMenuItems.find((m) => m.id === id);
-                                            return item ? (
+                                            {selectedMenuItems.map((selItem, index) => {
+                                                const item = allMenuItems.find((m) => Number(m.id) === Number(selItem.menu_item_id));
+                                                if (!item) return null;
+                                                
+                                                let displayName = item.name;
+                                                if (selItem.variation_id) {
+                                                    const variation = item.variation_group?.find(vg => Number(vg.variation.id) === Number(selItem.variation_id));
+                                                    if (variation) {
+                                                        displayName += ` (${variation.variation.title})`;
+                                                    }
+                                                }
+
+                                            return (
                                                 <span
-                                                    key={id}
-                                                    className="inline-flex items-center gap-1 px-3 py-1 bg-indigo-50 text-indigo-800 rounded-full text-sm"
+                                                    key={`${selItem.menu_item_id}-${selItem.variation_id}-${index}`}
+                                                    className="inline-flex items-center gap-1 px-3 py-1 bg-indigo-50 text-indigo-800 rounded-full text-sm border border-indigo-100"
                                                 >
-                                                    {item.name}
+                                                    {displayName}
                                                     <button
                                                         type="button"
-                                                        onClick={() => toggleMenuItem(id)}
-                                                        className="hover:text-red-600"
+                                                        onClick={() => toggleMenuItem(selItem.menu_item_id, selItem.variation_id)}
+                                                        className="hover:text-red-600 ml-1"
                                                     >
                                                         <X size={14} />
                                                     </button>
                                                 </span>
-                                            ) : null;
+                                            );
                                         })}
                                     </div>
                                 )}
@@ -475,6 +720,67 @@ const UniqueQrAdd = () => {
                     </button>
                 </div>
             </form>
+
+            {/* Discount Selection Modal */}
+            {showDiscountPopup && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+                    <div className="bg-white rounded-lg w-full max-w-2xl max-h-[80vh] flex flex-col">
+                        <div className="bg-indigo-900 text-white px-6 py-4 rounded-t-lg flex items-center justify-between">
+                            <h3 className="text-lg font-medium text-white">Select Special Discounts</h3>
+                            <button onClick={() => setShowDiscountPopup(false)}>
+                                <X size={20} />
+                            </button>
+                        </div>
+                        <div className="p-4 border-b">
+                            <div className="relative">
+                                <input
+                                    type="text"
+                                    placeholder="Search discounts..."
+                                    value={discountSearch}
+                                    onChange={(e) => setDiscountSearch(e.target.value)}
+                                    className="w-full pl-10 pr-4 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500"
+                                />
+                                <Loader2 className="absolute left-3 top-2.5 text-gray-400" size={18} />
+                            </div>
+                        </div>
+                        <div className="flex-1 overflow-y-auto p-4">
+                            <div className="grid grid-cols-1 gap-2">
+                                {storeDiscounts
+                                    .filter(d => d.discount_name.toLowerCase().includes(discountSearch.toLowerCase()))
+                                    .map((disc) => (
+                                        <div
+                                            key={disc.id}
+                                            onClick={() => toggleStoreDiscount(disc.id)}
+                                            className={`flex items-center justify-between p-3 rounded-md border cursor-pointer transition-colors ${
+                                                selectedStoreDiscountIds.map(Number).includes(Number(disc.id))
+                                                    ? "bg-indigo-50 border-indigo-200"
+                                                    : "hover:bg-gray-50 border-gray-100"
+                                            }`}
+                                        >
+                                            <div>
+                                                <p className="font-medium text-gray-900">{disc.discount_name}</p>
+                                                <p className="text-xs text-gray-500">
+                                                    {disc.discount_type === 'percentage' ? `${disc.discount_value}% Discount` : `RM${disc.discount_value} Off`}
+                                                </p>
+                                            </div>
+                                            {selectedStoreDiscountIds.map(Number).includes(Number(disc.id)) && (
+                                                <Check className="text-indigo-600" size={20} />
+                                            )}
+                                        </div>
+                                    ))}
+                            </div>
+                        </div>
+                        <div className="p-4 border-t bg-gray-50 flex justify-end">
+                            <button
+                                onClick={() => setShowDiscountPopup(false)}
+                                className="px-6 py-2 bg-indigo-900 text-white rounded-md hover:bg-indigo-800"
+                            >
+                                Done
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Menu Selection Modal */}
             {showMenuPopup && (
@@ -513,31 +819,137 @@ const UniqueQrAdd = () => {
                             </div>
                         </div>
                         <div className="flex-1 overflow-y-auto p-4">
-                            {filteredMenuItems.length === 0 ? (
+                            {menuByCategory.length === 0 ? (
                                 <p className="text-gray-500 text-center py-4">
                                     No menu items found.
                                 </p>
                             ) : (
-                                <div className="space-y-1">
-                                    {filteredMenuItems.map((item) => (
-                                        <label
-                                            key={item.id}
-                                            className="flex items-center gap-3 p-2 rounded hover:bg-gray-50 cursor-pointer"
-                                            onClick={() => toggleMenuItem(item.id)}
-                                        >
-                                            <div
-                                                className={`w-5 h-5 rounded border flex items-center justify-center ${selectedMenuItems.includes(item.id)
-                                                    ? "bg-indigo-600 border-indigo-600 text-white"
-                                                    : "border-gray-300"
-                                                    }`}
-                                            >
-                                                {selectedMenuItems.includes(item.id) && (
-                                                    <Check size={14} />
+                                <div className="space-y-4">
+                                    {menuByCategory.map((category) => {
+                                        const itemsInCategory = category.items;
+                                        const isCategoryFullySelected = itemsInCategory.every(item => {
+                                            const hasVariations = item.variation_group && item.variation_group.length > 0;
+                                            if (hasVariations) {
+                                                return item.variation_group.every(vg => 
+                                                    selectedMenuItems.some(sm => Number(sm.menu_item_id) === Number(item.id) && Number(sm.variation_id) === Number(vg.variation.id))
+                                                );
+                                            } else {
+                                                return selectedMenuItems.some(sm => Number(sm.menu_item_id) === Number(item.id) && sm.variation_id === null);
+                                            }
+                                        });
+
+                                        const isCategoryPartiallySelected = !isCategoryFullySelected && itemsInCategory.some(item => {
+                                            const hasVariations = item.variation_group && item.variation_group.length > 0;
+                                            if (hasVariations) {
+                                                return item.variation_group.some(vg => 
+                                                    selectedMenuItems.some(sm => Number(sm.menu_item_id) === Number(item.id) && Number(sm.variation_id) === Number(vg.variation.id))
+                                                );
+                                            } else {
+                                                return selectedMenuItems.some(sm => Number(sm.menu_item_id) === Number(item.id) && sm.variation_id === null);
+                                            }
+                                        });
+
+                                        const isCollapsed = collapsedCategories.has(category.id);
+
+                                        return (
+                                            <div key={category.id} className="border rounded-lg overflow-hidden border-gray-200">
+                                                <div 
+                                                    className={`flex items-center gap-3 p-3 bg-gray-50 border-b cursor-pointer hover:bg-gray-100`}
+                                                    onClick={() => toggleCategoryCollapse(category.id)}
+                                                >
+                                                    <div 
+                                                        className="p-1 hover:bg-gray-200 rounded transition-colors"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            toggleCategory(category.id);
+                                                        }}
+                                                    >
+                                                        <div
+                                                            className={`w-5 h-5 rounded border flex items-center justify-center ${isCategoryFullySelected
+                                                                ? "bg-indigo-600 border-indigo-600 text-white"
+                                                                : isCategoryPartiallySelected ? "bg-indigo-400 border-indigo-400 text-white" : "border-gray-300"
+                                                                }`}
+                                                        >
+                                                            {isCategoryFullySelected && <Check size={14} />}
+                                                            {isCategoryPartiallySelected && <div className="w-2 h-0.5 bg-white"></div>}
+                                                        </div>
+                                                    </div>
+                                                    <span className="font-bold text-indigo-900 flex-1">
+                                                        {category.title}
+                                                    </span>
+                                                    {isCollapsed ? <ChevronRight size={20} className="text-gray-400" /> : <ChevronDown size={20} className="text-gray-400" />}
+                                                </div>
+
+                                                {!isCollapsed && (
+                                                    <div className="p-2 space-y-1">
+                                                        {category.items.map((item) => {
+                                                        const hasVariations = item.variation_group && item.variation_group.length > 0;
+                                                        
+                                                        const isItemFullySelected = hasVariations 
+                                                            ? item.variation_group.every(vg => selectedMenuItems.some(sm => Number(sm.menu_item_id) === Number(item.id) && Number(sm.variation_id) === Number(vg.variation.id)))
+                                                            : selectedMenuItems.some(sm => Number(sm.menu_item_id) === Number(item.id) && sm.variation_id === null);
+
+                                                        const isItemPartiallySelected = hasVariations && !isItemFullySelected && item.variation_group.some(vg => 
+                                                            selectedMenuItems.some(sm => Number(sm.menu_item_id) === Number(item.id) && Number(sm.variation_id) === Number(vg.variation.id))
+                                                        );
+
+                                                        return (
+                                                            <div key={item.id} className="border-b last:border-0 border-gray-100 py-1">
+                                                                <div 
+                                                                    className={`flex items-center gap-3 p-2 rounded hover:bg-gray-50 cursor-pointer`}
+                                                                    onClick={() => toggleItemWithVariations(item)}
+                                                                >
+                                                                    <div
+                                                                        className={`w-5 h-5 rounded border flex items-center justify-center ${isItemFullySelected
+                                                                            ? "bg-indigo-600 border-indigo-600 text-white"
+                                                                            : isItemPartiallySelected ? "bg-indigo-400 border-indigo-400 text-white" : "border-gray-300"
+                                                                            }`}
+                                                                    >
+                                                                        {isItemFullySelected && <Check size={14} />}
+                                                                        {isItemPartiallySelected && <div className="w-2 h-0.5 bg-white"></div>}
+                                                                    </div>
+                                                                    <span className={`text-sm ${hasVariations ? "font-semibold text-gray-800" : "text-gray-700"}`}>
+                                                                        {item.name}
+                                                                    </span>
+                                                                </div>
+
+                                                                {hasVariations && (
+                                                                    <div className="ml-8 space-y-1 mt-1 pb-2">
+                                                                        {item.variation_group.map((vg, vIndex) => {
+                                                                            const isVarSelected = selectedMenuItems.some(
+                                                                                x => Number(x.menu_item_id) === Number(item.id) && Number(x.variation_id) === Number(vg.variation.id)
+                                                                            );
+                                                                            return (
+                                                                                <label
+                                                                                    key={`${item.id}-var-${vg.variation.id}-${vIndex}`}
+                                                                                    className="flex items-center gap-3 p-1 rounded hover:bg-indigo-50 cursor-pointer"
+                                                                                    onClick={(e) => {
+                                                                                        e.stopPropagation();
+                                                                                        toggleMenuItem(item.id, vg.variation.id);
+                                                                                    }}
+                                                                                >
+                                                                                    <div
+                                                                                        className={`w-4 h-4 rounded border flex items-center justify-center ${isVarSelected
+                                                                                            ? "bg-indigo-600 border-indigo-600 text-white"
+                                                                                            : "border-gray-300"
+                                                                                            }`}
+                                                                                    >
+                                                                                        {isVarSelected && <Check size={12} />}
+                                                                                    </div>
+                                                                                    <span className="text-xs text-gray-600">{vg.variation.title}</span>
+                                                                                </label>
+                                                                            );
+                                                                        })}
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        );
+                                                    })}
+                                                    </div>
                                                 )}
                                             </div>
-                                            <span className="text-sm text-gray-700">{item.name}</span>
-                                        </label>
-                                    ))}
+                                        );
+                                    })}
                                 </div>
                             )}
                         </div>

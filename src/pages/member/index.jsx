@@ -10,6 +10,7 @@ import {
   Search,
   X,
   Filter,
+  LogIn,
 } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import DeleteConfirmationModal from "../../components/ui/DeletePopUp";
@@ -19,6 +20,7 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import UserService from "../../store/api/userService";
 import useExportPermission from '@/hooks/useExportPermission';
+import AdminImpersonationService from "@/store/api/adminImpersonationService";
 
 const MemberPage = () => {
   const authToken = sessionStorage.getItem("token");
@@ -57,6 +59,8 @@ const MemberPage = () => {
       return null;
     }
   }, []);
+
+  const canImpersonate = user_id === 1;
 
   const user_id = userData?.user?.user_id || null;
 
@@ -425,9 +429,29 @@ const MemberPage = () => {
     setShowDeleteModal(true);
   };
 
+  const handleCustomerWebLogin = async (customerId) => {
+    try {
+      const result = await AdminImpersonationService.impersonateCustomer(customerId);
+      window.open(result.login_url, "_blank", "noopener,noreferrer");
+    } catch (error) {
+      toast.error(error.message || "Failed to open customer web session.");
+    }
+  };
+
   const ActionButtons = ({ row }) => {
     return (
       <div className="flex items-center gap-4 justify-end pr-2">
+        {canImpersonate && (
+          <button
+            type="button"
+            data-tag="allowRowEvents"
+            className="p-2 border rounded-md hover:bg-gray-100"
+            onClick={() => handleCustomerWebLogin(row.id)}
+            title="Login As Customer (Web)"
+          >
+            <LogIn size={18} className="text-gray-600" />
+          </button>
+        )}
         {(isAdmin || hasUpdatePermission) && (
           <button
             type="button"
@@ -466,7 +490,7 @@ const MemberPage = () => {
       name: "Action",
       cell: (row) => <ActionButtons row={row} />,
       button: true,
-      width: "180px",
+      width: "230px",
       right: true,
     },
     {

@@ -126,11 +126,13 @@ class UniqueQrService {
             });
             const data = await this.handleResponse(response);
             if (data.status === 200 && data.result) {
-                const outletMenu = data.result.outlet_menu || [];
-                const menuItemIds = outletMenu.map((m) => m.menu_item_id);
-                return { status: 200, result: menuItemIds };
+                return { 
+                    status: 200, 
+                    result: data.result.outlet_menu || [],
+                    outlet_menu_detail: data.result.outlet_menu_detail || []
+                };
             }
-            return { status: 200, result: [] };
+            return { status: 200, result: [], outlet_menu_detail: [] };
         } catch (error) {
             console.error("Error fetching outlet menu items:", error);
             throw error;
@@ -151,6 +153,37 @@ class UniqueQrService {
             throw error;
         }
     }
+
+    async getStoreDiscounts() {
+        const token = this.getToken();
+        try {
+            const response = await fetch(`${BASE_URL}store-discount/list`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+            return await this.handleResponse(response);
+        } catch (error) {
+            console.error("Error fetching store discounts:", error);
+            throw error;
+        }
+    }
+    
+    async getMenuCategories() {
+        const token = this.getToken();
+        try {
+            const response = await fetch(`${BASE_URL}menu-category/list`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+            return await this.handleResponse(response);
+        } catch (error) {
+            console.error("Error fetching menu categories:", error);
+            throw error;
+        }
+    }
+
 }
 
 export default new UniqueQrService();
