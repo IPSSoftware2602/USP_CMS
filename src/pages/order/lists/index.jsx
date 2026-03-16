@@ -400,6 +400,7 @@ const OrderList = () => {
             ? `-RM${order.voucher_discount_amount}`
             : "-",
         notes: order.notes || "-",
+        zeoniqOrderNo: order.zeoniq_order_id || "-",
         expectedReadyTime: order.expected_ready_time,
         trackingLink: order.deliveries?.[0]?.tracking_link || null,
       }));
@@ -475,7 +476,7 @@ const OrderList = () => {
     },
     {
       name: "Zeoniq Order No",
-      // selector: (row) => row.orderSO,
+      selector: (row) => row.zeoniqOrderNo,
       sortable: true,
       width: "180px",
     },
