@@ -32,6 +32,7 @@ const PushNotificationPage = () => {
     const [perPage, setPerPage] = useState(50);
     const [currentPage, setCurrentPage] = useState(1);
     const [selectedRows, setSelectedRows] = useState([]);
+    const [clearSelectionToggle, setClearSelectionToggle] = useState(false);
 
     // Form States
     const [title, setTitle] = useState("");
@@ -162,15 +163,19 @@ const PushNotificationPage = () => {
             // Send as JSON string for array
             formData.append("customer_ids", JSON.stringify(selectedRows));
 
-            if (linkType === "url") {
-                if (!urlLink) return toast.error("URL Link is required");
-                formData.append("url_link", urlLink);
-            } else {
-                if (!content) return toast.error("In-App content is required");
-                formData.append("content", content);
-                if (image) {
-                    formData.append("image", image);
-                }
+            const trimmedUrlLink = urlLink?.trim();
+            const trimmedContent = content?.trim();
+
+            if (trimmedUrlLink) {
+                formData.append("url_link", trimmedUrlLink);
+            }
+
+            if (trimmedContent) {
+                formData.append("content", trimmedContent);
+            }
+
+            if (image) {
+                formData.append("image", image);
             }
 
             const res = await pushNotificationService.sendNotification(formData);
@@ -183,6 +188,7 @@ const PushNotificationPage = () => {
                 setContent("");
                 setImage(null);
                 setSelectedRows([]);
+                setClearSelectionToggle((prev) => !prev);
                 setScheduledAt("");
                 setIsScheduled(false);
             }
@@ -283,7 +289,7 @@ const PushNotificationPage = () => {
                             onSelectedRowsChange={handleRowSelected}
                             paginationPerPage={50}
                             paginationRowsPerPageOptions={[50, 100, 250, 500]}
-                            clearSelectedRows={selectedRows.length === 0}
+                            clearSelectedRows={clearSelectionToggle}
                             customStyles={{
                                 headCells: {
                                     style: {

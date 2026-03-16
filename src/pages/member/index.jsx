@@ -60,9 +60,8 @@ const MemberPage = () => {
     }
   }, []);
 
-  const canImpersonate = user_id === 1;
-
   const user_id = userData?.user?.user_id || null;
+  const canImpersonate = user_id === 1;
 
   const exportToCSV = async () => {
     if (isDisabled) return;
