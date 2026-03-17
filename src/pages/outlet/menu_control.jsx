@@ -61,7 +61,7 @@ const OutletMenuControlPage = () => {
       const menu_item_variations = [];
       const menu_item_options_groups = [];
       const variation_options_groups = [];
-      const menu_item_options = []; 
+      const menu_item_options = [];
       const variation_options = [];
 
       selectedVariations.forEach(vKey => {
@@ -162,15 +162,15 @@ const OutletMenuControlPage = () => {
             ...item,
             id: item.id || item.itemId,
             name: item.name || item.title || `Item ${item.id}`,
-            categoryId: item.categoryId || item.category_id || 
-                       (Array.isArray(item.categories) ? item.categories[0]?.id : item.categories?.id) || 
-                       (Array.isArray(item.category) ? item.category[0]?.id : item.category?.id) || null
+            categoryId: item.categoryId || item.category_id ||
+              (Array.isArray(item.categories) ? item.categories[0]?.id : item.categories?.id) ||
+              (Array.isArray(item.category) ? item.category[0]?.id : item.category?.id) || null
           };
         });
 
         // Filter out items that have no variations and no option groups in the new structure
-        const itemsWithDetails = transformedItems.filter(item => 
-          (item.variation_group && item.variation_group.length > 0) || 
+        const itemsWithDetails = transformedItems.filter(item =>
+          (item.variation_group && item.variation_group.length > 0) ||
           (item.menu_option_group && item.menu_option_group.length > 0)
         );
 
@@ -228,7 +228,7 @@ const OutletMenuControlPage = () => {
   const handleVariationToggle = (menuItemId, vg, isChecked) => {
     const vKey = `v-${menuItemId}-${vg.variation.id}`;
     setSelectedVariations(prev => isChecked ? [...prev, vKey] : prev.filter(k => k !== vKey));
-    
+
     // Cascading selection
     const ogKeys = [];
     const optKeys = [];
@@ -247,9 +247,9 @@ const OutletMenuControlPage = () => {
   const handleVariationOptionGroupToggle = (menuItemId, variationId, og, isChecked) => {
     const ogId = typeof og === 'object' ? (og.id || og.option_group_id) : og;
     const ogKey = `vog-${menuItemId}-${variationId}-${ogId}`;
-    
+
     setSelectedOptionGroups(prev => isChecked ? [...prev, ogKey] : prev.filter(k => k !== ogKey));
-    
+
     const optKeys = [];
     if (og.options) {
       og.options.forEach(opt => optKeys.push(`vo-${menuItemId}-${variationId}-${ogId}-${opt.id}`));
@@ -259,14 +259,14 @@ const OutletMenuControlPage = () => {
 
   const handleVariationOptionToggle = (menuItemId, variationId, optionGroupId, optionId, isChecked) => {
     const optKey = `vo-${menuItemId}-${variationId}-${optionGroupId}-${optionId}`;
-    
+
     setSelectedOptions(prev => isChecked ? [...prev, optKey] : prev.filter(k => k !== optKey));
   };
 
   const handleMenuOptionGroupToggle = (menuItemId, mog, isChecked) => {
     const mogKey = `mog-${menuItemId}-${mog.id}`;
     setSelectedOptionGroups(prev => isChecked ? [...prev, mogKey] : prev.filter(k => k !== mogKey));
-    
+
     const optKeys = [];
     if (mog.options) {
       mog.options.forEach(opt => optKeys.push(`mo-${menuItemId}-${mog.id}-${opt.id}`));
@@ -276,7 +276,7 @@ const OutletMenuControlPage = () => {
 
   const handleMenuOptionToggle = (item_id, optionGroupId, optionId, isChecked) => {
     const optKey = `mo-${item_id}-${optionGroupId}-${optionId}`;
-    
+
     setSelectedOptions(prev => isChecked ? [...prev, optKey] : prev.filter(k => k !== optKey));
   };
 
@@ -318,7 +318,7 @@ const OutletMenuControlPage = () => {
 
   const renderItemContents = (item) => (
     <div className="pl-12 pb-4 pr-4 space-y-4 bg-gray-50 pt-3 border-t border-b border-gray-100">
-      
+
       {/* Menu Level Option Groups */}
       {item.menu_option_group && item.menu_option_group.length > 0 && (
         <div className="mb-4">
@@ -329,15 +329,15 @@ const OutletMenuControlPage = () => {
               return (
                 <div key={mogKey} className="bg-white border rounded p-3">
                   <label className="flex items-center cursor-pointer mb-2">
-                    <input 
-                      type="checkbox" 
+                    <input
+                      type="checkbox"
                       checked={isOptionGroupFullySelected(mog, item.id, 'mog')}
                       onChange={(e) => handleMenuOptionGroupToggle(item.id, mog, e.target.checked)}
                       className="h-4 w-4 mr-3 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
                     />
                     <span className="text-sm font-bold text-gray-800">{mog.title || mog.name || `Option Group #${mog.id}`}</span>
                   </label>
-                  
+
                   {mog.options && mog.options.length > 0 && (
                     <div className="pl-7 mt-2">
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
@@ -345,8 +345,8 @@ const OutletMenuControlPage = () => {
                           const optKey = `mo-${item.id}-${mog.id}-${opt.id}`;
                           return (
                             <label key={optKey} className="flex items-center p-2 bg-gray-50 border rounded hover:bg-indigo-50 hover:border-indigo-200 cursor-pointer transition-colors">
-                              <input 
-                                type="checkbox" 
+                              <input
+                                type="checkbox"
                                 checked={selectedOptions.includes(optKey)}
                                 onChange={(e) => handleMenuOptionToggle(item.id, mog.id, opt.id, e.target.checked)}
                                 className="h-3.5 w-3.5 mr-2 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
@@ -373,12 +373,12 @@ const OutletMenuControlPage = () => {
             {item.variation_group.map(vg => {
               const vKey = `v-${item.id}-${vg.variation.id}`;
               const hasVarOg = vg.option_groups && vg.option_groups.length > 0;
-              
+
               return (
                 <div key={vKey} className="bg-white border rounded p-4 shadow-sm">
                   <label className="flex items-center cursor-pointer mb-3">
-                    <input 
-                      type="checkbox" 
+                    <input
+                      type="checkbox"
                       checked={isVariationFullySelected(item.id, vg)}
                       onChange={(e) => handleVariationToggle(item.id, vg, e.target.checked)}
                       className="h-4 w-4 mr-3 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
@@ -389,10 +389,10 @@ const OutletMenuControlPage = () => {
                   {/* Variation Option Groups */}
                   {hasVarOg && (
                     <div className="pl-7 mt-2 border-t pt-3">
-                       <div className="text-xs text-gray-500 mb-2 flex items-center">
-                         <List className="h-3 w-3 mr-1"/> Variation Option Groups
-                       </div>
-                       <div className="space-y-3">
+                      <div className="text-xs text-gray-500 mb-2 flex items-center">
+                        <List className="h-3 w-3 mr-1" /> Variation Option Groups
+                      </div>
+                      <div className="space-y-3">
                         {vg.option_groups.map(vog => {
                           const vogId = typeof vog === 'object' ? (vog.id || vog.option_group_id) : vog;
                           const vogTitle = typeof vog === 'object' ? (vog.title || vog.name || `Option Group #${vogId}`) : `Option Group #${vogId}`;
@@ -401,8 +401,8 @@ const OutletMenuControlPage = () => {
                           return (
                             <div key={vogKey} className="bg-gray-50 border border-gray-200 rounded p-3">
                               <label className="flex items-center hover:text-indigo-600 cursor-pointer transition-colors mb-2">
-                                <input 
-                                  type="checkbox" 
+                                <input
+                                  type="checkbox"
                                   checked={isOptionGroupFullySelected(vog, item.id, 'vog', vg.variation.id)}
                                   onChange={(e) => handleVariationOptionGroupToggle(item.id, vg.variation.id, vog, e.target.checked)}
                                   className="h-3.5 w-3.5 mr-2 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
@@ -416,8 +416,8 @@ const OutletMenuControlPage = () => {
                                     const optKey = `vo-${item.id}-${vg.variation.id}-${vogId}-${opt.id}`;
                                     return (
                                       <label key={optKey} className="flex items-center p-2 bg-white border border-gray-200 rounded hover:border-indigo-300 cursor-pointer transition-colors">
-                                         <input 
-                                          type="checkbox" 
+                                        <input
+                                          type="checkbox"
                                           checked={selectedOptions.includes(optKey)}
                                           onChange={(e) => handleVariationOptionToggle(item.id, vg.variation.id, vogId, opt.id, e.target.checked)}
                                           className="h-3 w-3 mr-2 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
@@ -431,7 +431,7 @@ const OutletMenuControlPage = () => {
                             </div>
                           )
                         })}
-                       </div>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -530,7 +530,7 @@ const OutletMenuControlPage = () => {
                     <div className="flex items-center">
                       <input type="checkbox" checked={selectedOutlets.includes(outlet.id)} onChange={() => toggleOutletSelection(outlet.id)} className="h-3 w-3" style={{ color: '#312e81' }} onClick={(e) => e.stopPropagation()} />
                       <div className="truncate ml-2">
-                        <p className="text-xs font-medium text-gray-900 truncate">{(outlet.title || outlet.name || '').replace(/uspizza|Auntea Jenny/gi, '').replace(/-/g, '').trim()}</p>
+                        <p className="text-xs font-medium text-gray-900 truncate">{(outlet.title || outlet.name || '').replace(/uspizza|US Pizza|US PIZZA/gi, '').replace(/-/g, '').trim()}</p>
                       </div>
                     </div>
                   </div>
@@ -547,14 +547,14 @@ const OutletMenuControlPage = () => {
           </div>
 
           {loadingCategories ? (
-             <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin" style={{ color: '#312e81' }} /></div>
+            <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin" style={{ color: '#312e81' }} /></div>
           ) : menuItems.length === 0 ? (
             <div className="text-center py-4 text-gray-500">
-               No menu items with variations or option groups found.
+              No menu items with variations or option groups found.
             </div>
           ) : (
             <div className="space-y-4">
-               <div className="text-sm text-gray-600 mb-2">
+              <div className="text-sm text-gray-600 mb-2">
                 {selectedVariations.length} Variation(s), {selectedOptionGroups.length} Option Group(s), {selectedOptions.length} Option(s) selected
               </div>
 
@@ -583,13 +583,13 @@ const OutletMenuControlPage = () => {
 
                             return (
                               <div key={item.id}>
-                                <div 
+                                <div
                                   className="p-3 pl-6 flex items-center justify-between cursor-pointer hover:bg-gray-50"
                                   onClick={() => toggleItemExpansion(item.id)}
                                 >
                                   <div className="flex items-center text-sm font-medium text-gray-800">
-                                    <input 
-                                      type="checkbox" 
+                                    <input
+                                      type="checkbox"
                                       checked={isItemFullySelected(item)}
                                       onChange={(e) => {
                                         e.stopPropagation();
@@ -598,7 +598,7 @@ const OutletMenuControlPage = () => {
                                       className="h-4 w-4 mr-3 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
                                     />
                                     <Layers className="h-4 w-4 mr-2 text-indigo-500" />
-                                    {item.name} 
+                                    {item.name}
                                     <span className="ml-2 text-xs text-gray-500 font-normal">({varsCount} Variations, {ogCount} Option Groups)</span>
                                   </div>
                                   <div>{isItemExpanded ? <ChevronDown size={18} /> : <ChevronRight size={18} />}</div>
@@ -616,48 +616,48 @@ const OutletMenuControlPage = () => {
 
                 {/* Uncategorized Items */}
                 {getUncategorizedItems().length > 0 && (
-                   <div className="border-t">
-                     <div
-                        className="p-3 bg-gray-50 flex items-center justify-between cursor-pointer hover:bg-gray-100"
-                        onClick={() => toggleCategoryExpansion('uncategorized')}
-                      >
-                        <span className="font-medium text-gray-900 flex-1">Other Items ({getUncategorizedItems().length} items)</span>
-                        <div>{expandedCategories['uncategorized'] ? <ChevronDown size={20} /> : <ChevronRight size={20} />}</div>
-                      </div>
-                      
-                      {expandedCategories['uncategorized'] && (
-                         <div className="border-t divide-y">
-                           {getUncategorizedItems().map(item => (
-                             <div key={item.id} className="bg-gray-50">
-                               <div 
-                                  className="p-3 pl-6 flex items-center justify-between cursor-pointer hover:bg-gray-100"
-                                  onClick={() => toggleItemExpansion(item.id)}
-                                >
-                                  <div className="flex items-center text-sm font-medium text-gray-800">
-                                    <input 
-                                      type="checkbox" 
-                                      checked={isItemFullySelected(item)}
-                                      onChange={(e) => {
-                                        e.stopPropagation();
-                                        handleItemToggle(item, e.target.checked);
-                                      }}
-                                      className="h-4 w-4 mr-3 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-                                    />
-                                    <Layers className="h-4 w-4 mr-2 text-indigo-500" />
-                                    {item.name} 
-                                    <span className="ml-2 text-xs text-gray-500 font-normal">
-                                      ({item.variation_group?.length || 0} Variations, {item.menu_option_group?.length || 0} Option Groups)
-                                    </span>
-                                  </div>
-                                  <div>{expandedItems[item.id] ? <ChevronDown size={18} /> : <ChevronRight size={18} />}</div>
-                                </div>
+                  <div className="border-t">
+                    <div
+                      className="p-3 bg-gray-50 flex items-center justify-between cursor-pointer hover:bg-gray-100"
+                      onClick={() => toggleCategoryExpansion('uncategorized')}
+                    >
+                      <span className="font-medium text-gray-900 flex-1">Other Items ({getUncategorizedItems().length} items)</span>
+                      <div>{expandedCategories['uncategorized'] ? <ChevronDown size={20} /> : <ChevronRight size={20} />}</div>
+                    </div>
 
-                                {expandedItems[item.id] && renderItemContents(item)}
-                             </div>
-                           ))}
-                         </div>
-                      )}
-                   </div>
+                    {expandedCategories['uncategorized'] && (
+                      <div className="border-t divide-y">
+                        {getUncategorizedItems().map(item => (
+                          <div key={item.id} className="bg-gray-50">
+                            <div
+                              className="p-3 pl-6 flex items-center justify-between cursor-pointer hover:bg-gray-100"
+                              onClick={() => toggleItemExpansion(item.id)}
+                            >
+                              <div className="flex items-center text-sm font-medium text-gray-800">
+                                <input
+                                  type="checkbox"
+                                  checked={isItemFullySelected(item)}
+                                  onChange={(e) => {
+                                    e.stopPropagation();
+                                    handleItemToggle(item, e.target.checked);
+                                  }}
+                                  className="h-4 w-4 mr-3 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                                />
+                                <Layers className="h-4 w-4 mr-2 text-indigo-500" />
+                                {item.name}
+                                <span className="ml-2 text-xs text-gray-500 font-normal">
+                                  ({item.variation_group?.length || 0} Variations, {item.menu_option_group?.length || 0} Option Groups)
+                                </span>
+                              </div>
+                              <div>{expandedItems[item.id] ? <ChevronDown size={18} /> : <ChevronRight size={18} />}</div>
+                            </div>
+
+                            {expandedItems[item.id] && renderItemContents(item)}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 )}
               </div>
             </div>
@@ -681,15 +681,15 @@ const OutletMenuControlPage = () => {
             <div>
               <h3 className="text-sm font-medium text-gray-700">Selected Payload Items:</h3>
               <p className="mt-1 text-sm text-gray-900">
-                {selectedVariations.length} Variation(s)<br/>
-                {selectedOptionGroups.length} Option Group(s)<br/>
+                {selectedVariations.length} Variation(s)<br />
+                {selectedOptionGroups.length} Option Group(s)<br />
                 {selectedOptions.length} Option(s)
               </p>
             </div>
           </div>
 
           <div className="mt-6 flex justify-end space-x-3">
-             <button
+            <button
               onClick={() => {
                 setSelectedOutlets([]);
                 setSelectedVariations([]);
@@ -706,7 +706,7 @@ const OutletMenuControlPage = () => {
               className={`px-4 py-2 rounded-md text-white ${submitting || selectedOutlets.length === 0 || (selectedVariations.length === 0 && selectedOptionGroups.length === 0 && selectedOptions.length === 0)
                 ? 'bg-indigo-300 cursor-not-allowed'
                 : action === 'delete' ? 'bg-red-600 hover:bg-red-700' : 'bg-indigo-600 hover:bg-indigo-700'
-              }`}
+                }`}
             >
               {submitting ? (
                 <div className="flex items-center"><Loader2 className="animate-spin mr-2 h-4 w-4" />Processing...</div>

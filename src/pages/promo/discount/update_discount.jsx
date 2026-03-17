@@ -10,7 +10,7 @@ import { VITE_API_BASE_URL } from '../../../constant/config';
 const UpdateDiscount = () => {
   const navigate = useNavigate();
   const { id } = useParams(); // Get discount ID from URL params
-  
+
   // Form data state
   const [formData, setFormData] = useState({
     discount_name: '',
@@ -26,13 +26,13 @@ const UpdateDiscount = () => {
   // State for outlets
   const [outlets, setOutlets] = useState([]);
   const [loadingOutlets, setLoadingOutlets] = useState(true);
-  
+
   // State for categories and menu items
   const [categories, setCategories] = useState([]);
   const [menuItems, setMenuItems] = useState([]);
   const [expandedCategories, setExpandedCategories] = useState({});
   const [loadingCategories, setLoadingCategories] = useState(true);
-  
+
   // UI and loading states
   const [error, setError] = useState(null);
   const [submitting, setSubmitting] = useState(false);
@@ -57,9 +57,9 @@ const UpdateDiscount = () => {
 
   const getUncategorizedItems = () => {
     return menuItems.filter(item => {
-      return !item.categoryId && 
-            (!item.category || item.category.length === 0) &&
-            (!item.categories || item.categories.length === 0);
+      return !item.categoryId &&
+        (!item.category || item.category.length === 0) &&
+        (!item.categories || item.categories.length === 0);
     });
   };
 
@@ -67,7 +67,7 @@ const UpdateDiscount = () => {
   const fetchDiscount = async () => {
     try {
       const token = getAuthToken();
-      
+
       const response = await fetch(`${VITE_API_BASE_URL}store-discount/${id}`, {
         method: 'GET',
         headers: {
@@ -84,7 +84,7 @@ const UpdateDiscount = () => {
 
       if (data.status === 'success' && data.data) {
         const discountData = data.data;
-        
+
         // Parse outlet_list from comma-separated string to array of numbers
         let outletList = [];
         if (discountData.outlet_list) {
@@ -101,7 +101,7 @@ const UpdateDiscount = () => {
             .split(',')
             .map(id => parseInt(id.trim()))
             .filter(id => !isNaN(id));
-          
+
           // Remove duplicates using Set
           menuItemList = [...new Set(menuItemList)];
         }
@@ -116,7 +116,7 @@ const UpdateDiscount = () => {
           tier_id_list: discountData.tier_id_list?.toString() || '0',
           only_available_for_qr: `${discountData.only_available_for_qr ?? 0}`
         });
-        
+
         console.log('Loaded discount data:', {
           name: discountData.discount_name,
           type: discountData.discount_type,
@@ -125,13 +125,13 @@ const UpdateDiscount = () => {
           menuItems: menuItemList.length,
           status: discountData.status
         });
-        
+
         console.log('FormData outlet_list after setting:', outletList);
         console.log('FormData outlet_list types:', outletList.map(id => ({ id, type: typeof id })));
       } else {
         throw new Error('Invalid discount data received');
       }
-      
+
       setLoadingDiscount(false);
     } catch (err) {
       console.error('Error fetching discount:', err);
@@ -170,8 +170,8 @@ const UpdateDiscount = () => {
       try {
         // Fetch outlets first
         const outletsResponse = await OutletApiService.getOutlets(user_id);
-        const outletsData = Array.isArray(outletsResponse.result) 
-          ? outletsResponse.result 
+        const outletsData = Array.isArray(outletsResponse.result)
+          ? outletsResponse.result
           : [];
         console.log('Fetched outlets:', outletsData);
         console.log('Outlet IDs from API:', outletsData.map(outlet => ({ id: outlet.id, type: typeof outlet.id, name: outlet.title || outlet.name })));
@@ -181,7 +181,7 @@ const UpdateDiscount = () => {
         // Fetch categories
         const categoriesResponse = await CategoryService.getCategories();
         let categoriesData = [];
-        
+
         if (Array.isArray(categoriesResponse)) {
           categoriesData = categoriesResponse;
         } else if (categoriesResponse.data && Array.isArray(categoriesResponse.data)) {
@@ -194,7 +194,7 @@ const UpdateDiscount = () => {
         // Fetch menu items
         const itemsResponse = await ItemService.getMenuItems();
         let itemsData = [];
-        
+
         if (Array.isArray(itemsResponse)) {
           itemsData = itemsResponse;
         } else if (itemsResponse.data && Array.isArray(itemsResponse.data)) {
@@ -202,23 +202,23 @@ const UpdateDiscount = () => {
         } else if (itemsResponse.result && Array.isArray(itemsResponse.result)) {
           itemsData = itemsResponse.result;
         }
-        
+
         const transformedItems = itemsData.map(item => {
           if (ItemService.transformApiItemToComponent) {
             return ItemService.transformApiItemToComponent(item);
           }
-          
+
           return {
             ...item,
             id: item.id || item.itemId,
             name: item.name || item.title || `Item ${item.id}`,
             price: item.price || item.basePrice || 0,
             status: item.status || 'active',
-            categoryId: item.categoryId || item.category_id || 
-                       item.category?.id || (item.categories?.[0]?.id) || null
+            categoryId: item.categoryId || item.category_id ||
+              item.category?.id || (item.categories?.[0]?.id) || null
           };
         });
-        
+
         setMenuItems(transformedItems);
         setLoadingCategories(false);
 
@@ -253,9 +253,9 @@ const UpdateDiscount = () => {
     if (formData.outlet_list.length === outlets.length) {
       setFormData(prev => ({ ...prev, outlet_list: [] }));
     } else {
-      setFormData(prev => ({ 
-        ...prev, 
-        outlet_list: outlets.map(outlet => parseInt(outlet.id)) 
+      setFormData(prev => ({
+        ...prev,
+        outlet_list: outlets.map(outlet => parseInt(outlet.id))
       }));
     }
   };
@@ -272,22 +272,22 @@ const UpdateDiscount = () => {
     if (categoryId === 'uncategorized') {
       return getUncategorizedItems();
     }
-    
+
     return menuItems.filter(item => {
       const itemCategoryId = item.categoryId || item.category_id;
       const itemCategories = item.categories || item.category || [];
-      
+
       if (itemCategoryId == categoryId) return true;
-      
+
       if (Array.isArray(itemCategories)) {
         return itemCategories.some(cat => {
           const catId = cat?.id || cat;
           return catId == categoryId;
         });
       }
-      
+
       if (itemCategories?.id == categoryId) return true;
-      
+
       return false;
     });
   };
@@ -296,8 +296,8 @@ const UpdateDiscount = () => {
     const id = Number(itemId);
     setFormData(prev => ({
       ...prev,
-      menu_item_list: isChecked 
-        ? [...prev.menu_item_list, id] 
+      menu_item_list: isChecked
+        ? [...prev.menu_item_list, id]
         : prev.menu_item_list.filter(selectedId => selectedId !== id)
     }));
   };
@@ -305,12 +305,12 @@ const UpdateDiscount = () => {
   const handleCategoryItemsChange = (categoryId, checked) => {
     const categoryItems = getItemsForCategory(categoryId);
     const categoryItemIds = categoryItems.map(item => Number(item.id));
-    
+
     setFormData(prev => {
       const newMenuItems = checked
         ? [...new Set([...prev.menu_item_list, ...categoryItemIds])]
         : prev.menu_item_list.filter(id => !categoryItemIds.includes(id));
-      
+
       return { ...prev, menu_item_list: newMenuItems };
     });
   };
@@ -318,8 +318,8 @@ const UpdateDiscount = () => {
   const areAllCategoryItemsSelected = (categoryId) => {
     const categoryItems = getItemsForCategory(categoryId);
     if (categoryItems.length === 0) return false;
-    
-    return categoryItems.every(item => 
+
+    return categoryItems.every(item =>
       formData.menu_item_list.includes(Number(item.id))
     );
   };
@@ -342,8 +342,8 @@ const UpdateDiscount = () => {
 
     if (!formData.discount_value) {
       newErrors.discount_value = 'Discount value is required';
-    } else if (formData.discount_type === 'percentage' && 
-               (formData.discount_value < 0 || formData.discount_value > 100)) {
+    } else if (formData.discount_type === 'percentage' &&
+      (formData.discount_value < 0 || formData.discount_value > 100)) {
       newErrors.discount_value = 'Percentage must be between 0 and 100';
     }
 
@@ -361,7 +361,7 @@ const UpdateDiscount = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       toast.error('Please fill all required fields correctly');
       return;
@@ -371,7 +371,7 @@ const UpdateDiscount = () => {
 
     try {
       const token = getAuthToken();
-      
+
       const response = await fetch(`${VITE_API_BASE_URL}store-discount/update/${id}`, {
         method: 'POST',
         headers: {
@@ -398,7 +398,7 @@ const UpdateDiscount = () => {
           progress: undefined,
           theme: "light",
         });
-        
+
         navigate('/promo/discount');
       } else {
         throw new Error(data.message || 'Failed to update discount');
@@ -423,12 +423,12 @@ const UpdateDiscount = () => {
   // Display helpers
   const getSelectedOutletsNames = () => {
     if (formData.outlet_list.length === 0) return "No outlets selected";
-    
+
     const selectedOutletNames = outlets
       .filter(outlet => formData.outlet_list.includes(parseInt(outlet.id)))
       .slice(0, 3)
       .map(outlet => outlet.title || outlet.name || `Outlet #${outlet.id}`);
-    
+
     return formData.outlet_list.length > 3
       ? `${selectedOutletNames.join(', ')} and ${formData.outlet_list.length - 3} more...`
       : selectedOutletNames.join(', ');
@@ -436,12 +436,12 @@ const UpdateDiscount = () => {
 
   const getSelectedItemsNames = () => {
     if (formData.menu_item_list.length === 0) return "No items selected";
-    
+
     const selectedItemNames = menuItems
       .filter(item => formData.menu_item_list.includes(Number(item.id)))
       .slice(0, 3)
       .map(item => item.name || item.title || `Item #${item.id}`);
-    
+
     return formData.menu_item_list.length > 3
       ? `${selectedItemNames.join(', ')} and ${formData.menu_item_list.length - 3} more...`
       : selectedItemNames.join(', ');
@@ -489,7 +489,7 @@ const UpdateDiscount = () => {
         {/* Discount Details Section */}
         <div className="bg-white border border-gray-200 p-6">
           <h2 className="text-lg font-semibold text-gray-800 mb-4">1. Discount Details</h2>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Discount Name */}
             <div>
@@ -575,7 +575,7 @@ const UpdateDiscount = () => {
         {/* Outlet Selection Section */}
         <div className="bg-white border p-6">
           <h2 className="text-lg font-semibold text-gray-800 mb-4">2. Select Outlets *</h2>
-          
+
           {loadingOutlets ? (
             <div className="flex justify-center py-8">
               <Loader2 className="h-6 w-6 animate-spin" style={{ color: '#312e81' }} />
@@ -586,46 +586,45 @@ const UpdateDiscount = () => {
             <>
               <div className="flex justify-between items-center mb-4">
                 <div className="text-sm text-gray-600">
-                  {formData.outlet_list.length > 0 
+                  {formData.outlet_list.length > 0
                     ? `${formData.outlet_list.length} outlet(s) selected`
                     : 'No outlets selected'}
                 </div>
                 <button
                   onClick={toggleAllOutlets}
-                  className="text-sm font-medium" 
+                  className="text-sm font-medium"
                   style={{ color: '#312e81' }}
                 >
                   {formData.outlet_list.length === outlets.length ? 'Deselect All' : 'Select All'}
                 </button>
               </div>
-              
+
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 max-h-96 overflow-y-auto p-1">
                 {outlets.map(outlet => {
                   const outletId = parseInt(outlet.id);
                   const isSelected = formData.outlet_list.includes(outletId);
-                  
+
                   return (
-                    <div 
+                    <div
                       key={outlet.id}
                       onClick={() => toggleOutletSelection(outlet.id)}
-                      className={`p-2 border cursor-pointer transition-colors ${
-                        isSelected
+                      className={`p-2 border cursor-pointer transition-colors ${isSelected
                           ? 'bg-indigo-50 border-indigo-300'
                           : 'bg-white border-gray-200 hover:bg-gray-50'
-                      }`}
+                        }`}
                     >
                       <div className="flex items-center">
                         <input
                           type="checkbox"
                           checked={isSelected}
                           onChange={() => toggleOutletSelection(outlet.id)}
-                          className="h-3 w-3" 
+                          className="h-3 w-3"
                           style={{ color: '#312e81' }}
                           onClick={(e) => e.stopPropagation()}
                         />
                         <div className="truncate ml-2">
                           <p className="text-xs font-medium text-gray-900 truncate">
-                            {outlet.title || outlet.name}
+                            {(outlet.title || outlet.name).replace(/uspizza|US Pizza|US PIZZA/gi, '').replace(/-/g, '').trim()}
                           </p>
                         </div>
                       </div>
@@ -640,7 +639,7 @@ const UpdateDiscount = () => {
         {/* Menu Item Selection Section */}
         <div className="bg-white border p-6">
           <h2 className="text-lg font-semibold text-gray-800 mb-4">3. Select Menu Items *</h2>
-          
+
           {loadingCategories ? (
             <div className="flex justify-center py-8">
               <Loader2 className="h-6 w-6 animate-spin" style={{ color: '#312e81' }} />
@@ -650,11 +649,11 @@ const UpdateDiscount = () => {
           ) : (
             <div className="space-y-4">
               <div className="text-sm text-gray-600">
-                {formData.menu_item_list.length > 0 
+                {formData.menu_item_list.length > 0
                   ? `${formData.menu_item_list.length} item(s) selected`
                   : 'No items selected'}
               </div>
-              
+
               <div className="max-h-96 overflow-y-auto border p-2">
                 {categories.map((category) => {
                   const categoryItems = getItemsForCategory(category.id);
@@ -662,7 +661,7 @@ const UpdateDiscount = () => {
 
                   return (
                     <div key={category.id} className="border mb-3">
-                      <div 
+                      <div
                         className="p-3 bg-gray-50 flex items-center justify-between cursor-pointer hover:bg-gray-100"
                         onClick={() => toggleCategoryExpansion(category.id)}
                       >
@@ -674,7 +673,7 @@ const UpdateDiscount = () => {
                               e.stopPropagation();
                               handleCategoryItemsChange(category.id, e.target.checked);
                             }}
-                            className="h-4 w-4 mr-3" 
+                            className="h-4 w-4 mr-3"
                             style={{ color: '#312e81' }}
                             disabled={categoryItems.length === 0}
                           />
@@ -694,15 +693,15 @@ const UpdateDiscount = () => {
                         <div className="border-t">
                           <div className="p-3 space-y-2">
                             {categoryItems.map((item) => (
-                              <label 
-                                key={item.id} 
+                              <label
+                                key={item.id}
                                 className="flex items-center p-2 hover:bg-gray-50 cursor-pointer"
                               >
                                 <input
                                   type="checkbox"
                                   checked={formData.menu_item_list.includes(Number(item.id))}
                                   onChange={(e) => handleItemChange(item.id, e.target.checked)}
-                                  className="h-4 w-4 mr-3" 
+                                  className="h-4 w-4 mr-3"
                                   style={{ color: '#312e81' }}
                                 />
                                 <div className="flex-1">
@@ -725,7 +724,7 @@ const UpdateDiscount = () => {
                 {/* Uncategorized Items */}
                 {getUncategorizedItems().length > 0 && (
                   <div className="border mb-3">
-                    <div 
+                    <div
                       className="p-3 bg-gray-50 flex items-center justify-between cursor-pointer hover:bg-gray-100"
                       onClick={() => toggleCategoryExpansion('uncategorized')}
                     >
@@ -737,7 +736,7 @@ const UpdateDiscount = () => {
                             e.stopPropagation();
                             handleCategoryItemsChange('uncategorized', e.target.checked);
                           }}
-                          className="h-4 w-4 mr-3" 
+                          className="h-4 w-4 mr-3"
                           style={{ color: '#312e81' }}
                         />
                         <span className="font-medium text-gray-900 flex-1">
@@ -753,15 +752,15 @@ const UpdateDiscount = () => {
                       <div className="border-t">
                         <div className="p-3 space-y-2">
                           {getUncategorizedItems().map((item) => (
-                            <label 
-                              key={item.id} 
+                            <label
+                              key={item.id}
                               className="flex items-center p-2 hover:bg-gray-50 cursor-pointer"
                             >
                               <input
                                 type="checkbox"
                                 checked={formData.menu_item_list.includes(Number(item.id))}
                                 onChange={(e) => handleItemChange(item.id, e.target.checked)}
-                                className="h-4 w-4 mr-3" 
+                                className="h-4 w-4 mr-3"
                                 style={{ color: '#312e81' }}
                               />
                               <div className="flex-1">
@@ -787,18 +786,18 @@ const UpdateDiscount = () => {
         {/* Tier Selection Section */}
         <div className="bg-white border p-6">
           <h2 className="text-lg font-semibold text-gray-800 mb-4">4. Select Tier</h2>
-          
+
           {tierData.length === 0 ? (
             <div className="text-center py-4 text-gray-500">Loading tiers...</div>
           ) : (
             <div className="space-y-3">
               <div className="text-sm text-gray-600 mb-4">
-                {formData.tier_id_list == '0' 
+                {formData.tier_id_list == '0'
                   ? 'All tiers selected'
                   : `${tierData.find(tier => tier.id == parseInt(formData.tier_id_list))?.name || 'Selected tier'}`
                 }
               </div>
-              
+
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
                 {/* "All" option */}
                 <label className="flex items-center p-3 border border-gray-200 rounded-md cursor-pointer hover:bg-gray-50">
@@ -842,7 +841,7 @@ const UpdateDiscount = () => {
         {/* Summary and Submit Section */}
         <div className="bg-white border rounded-lg p-6">
           <h2 className="text-lg font-semibold text-gray-800 mb-4">Summary</h2>
-          
+
           <div className="space-y-4">
             <div>
               <h3 className="text-sm font-medium text-gray-700">Discount Name:</h3>
@@ -850,14 +849,14 @@ const UpdateDiscount = () => {
                 {formData.discount_name || 'Not specified'}
               </p>
             </div>
-            
+
             <div>
               <h3 className="text-sm font-medium text-gray-700">Discount Value:</h3>
               <p className="mt-1 text-sm text-gray-900">
                 {formData.discount_value} {formData.discount_type === 'percentage' ? '%' : ''}
               </p>
             </div>
-            
+
             <div>
               <h3 className="text-sm font-medium text-gray-700">Status:</h3>
               <p className="mt-1 text-sm text-gray-900 capitalize">
@@ -870,14 +869,14 @@ const UpdateDiscount = () => {
                 {formData.only_available_for_qr === '1' ? 'Yes' : 'No'}
               </p>
             </div>
-            
+
             <div>
               <h3 className="text-sm font-medium text-gray-700">Selected Outlets:</h3>
               <p className="mt-1 text-sm text-gray-900">
                 {getSelectedOutletsNames()}
               </p>
             </div>
-            
+
             <div>
               <h3 className="text-sm font-medium text-gray-700">Selected Menu Items:</h3>
               <p className="mt-1 text-sm text-gray-900">
@@ -888,8 +887,8 @@ const UpdateDiscount = () => {
             <div>
               <h3 className="text-sm font-medium text-gray-700">Selected Tier:</h3>
               <p className="mt-1 text-sm text-gray-900">
-                {formData.tier_id_list == '0' 
-                  ? 'All Tiers' 
+                {formData.tier_id_list == '0'
+                  ? 'All Tiers'
                   : tierData.find(tier => tier.id == parseInt(formData.tier_id_list))?.name || 'Not specified'
                 }
               </p>
