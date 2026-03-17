@@ -18,7 +18,8 @@ const CreateDiscount = () => {
     outlet_list: [],
     menu_item_list: [],
     status: 'active',
-    tier_id_list: '0'
+    tier_id_list: '0',
+    only_available_for_qr: '0'
   });
 
   // State for outlets
@@ -449,6 +450,20 @@ const CreateDiscount = () => {
                 <option value="inactive">Inactive</option>
               </select>
             </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Only available for QR
+              </label>
+              <select
+                name="only_available_for_qr"
+                value={formData.only_available_for_qr}
+                onChange={handleInputChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              >
+                <option value="0">No</option>
+                <option value="1">Yes</option>
+              </select>
+            </div>
           </div>
         </div>
 
@@ -737,6 +752,12 @@ const CreateDiscount = () => {
               <h3 className="text-sm font-medium text-gray-700">Status:</h3>
               <p className="mt-1 text-sm text-gray-900 capitalize">
                 {formData.status}
+              </p>
+            </div>
+            <div>
+              <h3 className="text-sm font-medium text-gray-700">Only available for QR:</h3>
+              <p className="mt-1 text-sm text-gray-900">
+                {formData.only_available_for_qr === '1' ? 'Yes' : 'No'}
               </p>
             </div>
             

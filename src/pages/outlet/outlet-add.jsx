@@ -109,6 +109,7 @@ const AddOutletForm = () => {
     reservationSlots: "",
     orderSlots: "",
     pizzaSlots: "",
+    pickupLeadTime: "0",
     eventSlots: "",
     applySst: "No",
     applyServiceTax: "No",
@@ -1425,6 +1426,7 @@ const AddOutletForm = () => {
         outlet_delivery_coverage: formData.deliveryRange || "0",
         order_max_per_hour: formData.orderSlots || "0",
         item_max_per_hour: formData.pizzaSlots || "0",
+        pickup_lead_time: formData.pickupLeadTime || "0",
         outlet_menu: selectedMenuItems.map(Number),
         outlet_menu_detail: outletMenuDetail,
         outlet_tax: taxData,
@@ -2122,6 +2124,20 @@ const AddOutletForm = () => {
                 onChange={(e) => handleInputChange('pizzaSlots', e.target.value)}
               />
               <ErrorMessage error={errors.pizzaSlots} />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Pickup Lead Time (minutes)
+              </label>
+              <input
+                type="number"
+                min="0"
+                placeholder="Enter pickup lead time"
+                className={getInputClasses("pickupLeadTime")}
+                value={formData.pickupLeadTime}
+                onChange={(e) => handleInputChange('pickupLeadTime', e.target.value)}
+              />
+              <ErrorMessage error={errors.pickupLeadTime} />
             </div>
           </div>
         </div>

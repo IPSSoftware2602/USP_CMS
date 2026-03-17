@@ -58,6 +58,7 @@ class OutletService {
     // Capacity limits
     formData.append('order_max_per_hour', outletData.orderMaxPerHour || outletData.order_max_per_hour || '');
     formData.append('item_max_per_hour', outletData.itemMaxPerHour || outletData.item_max_per_hour || '');
+    formData.append('pickup_lead_time', outletData.pickup_lead_time || outletData.pickupLeadTime || '0');
 
     // Operating schedule
     let operatingDays = outletData.operating_days || [{}];
@@ -252,6 +253,7 @@ class OutletService {
     fd.append('outlet_delivery_coverage', String(outletData.outlet_delivery_coverage ?? outletData.deliveryCoverage ?? '0'));
     fd.append('order_max_per_hour', String(outletData.order_max_per_hour ?? outletData.orderMaxPerHour ?? '0'));
     fd.append('item_max_per_hour', String(outletData.item_max_per_hour ?? outletData.itemMaxPerHour ?? '0'));
+    fd.append('pickup_lead_time', String(outletData.pickup_lead_time ?? outletData.pickupLeadTime ?? '0'));
 
     // Complex objects — backend expects [0], so wrap in single-element array
     const opDays = outletData.outlet_operating_days ?? {};
