@@ -89,7 +89,20 @@ const AddNewUser = () => {
         'App Settings': { read: false, create: false, update: false, delete: false }
       }
     },
-    'Excel Report': { read: false, create: false, update: false, delete: false }
+    'Excel Report': { read: false, create: false, update: false, delete: false },
+    Report: {
+      read: false,
+      subItems: {
+        'Sales Report': { read: false, create: false, update: false, delete: false },
+        'Promo Report': { read: false, create: false, update: false, delete: false },
+        'Product Report': { read: false, create: false, update: false, delete: false },
+        'Order Report': { read: false, create: false, update: false, delete: false },
+        'Wallet Report': { read: false, create: false, update: false, delete: false },
+        'Point Report': { read: false, create: false, update: false, delete: false },
+        'Unutilized Voucher Report': { read: false, create: false, update: false, delete: false },
+        'Unique QR Report': { read: false, create: false, update: false, delete: false }
+      }
+    }
   });
 
   useEffect(() => {
@@ -208,14 +221,20 @@ const AddNewUser = () => {
       setFormData(prev => ({ ...prev, outlet: '' }));
     }
 
-    if (field === 'userRoles' && value === 'Admin') {
+    if (field === 'userRoles' && value !== 'Airbnb') {
       setFormData(prev => ({ ...prev, allowedUniqueQrIds: [] }));
     }
   };
 
-  const handleUniqueQrChange = (event) => {
-    const selectedValues = Array.from(event.target.selectedOptions, (option) => option.value);
-    setFormData((prev) => ({ ...prev, allowedUniqueQrIds: selectedValues }));
+  const handleUniqueQrToggle = (qrId) => {
+    setFormData((prev) => {
+      const exists = prev.allowedUniqueQrIds.includes(qrId);
+      const nextIds = exists
+        ? prev.allowedUniqueQrIds.filter((id) => id !== qrId)
+        : [...prev.allowedUniqueQrIds, qrId];
+
+      return { ...prev, allowedUniqueQrIds: nextIds };
+    });
   };
 
   const handleSubmit = async (e) => {
@@ -234,7 +253,7 @@ const AddNewUser = () => {
         // Only include outlet if role is Outlet
         outlet: formData.userRoles === 'Outlet' ? formData.outlet : undefined,
         menuPermissions,
-        allowedUniqueQrIds: formData.userRoles === 'Admin' ? [] : formData.allowedUniqueQrIds,
+        allowedUniqueQrIds: formData.userRoles === 'Airbnb' ? formData.allowedUniqueQrIds : [],
       };
 
       // Call the API to create user
@@ -329,6 +348,7 @@ const AddNewUser = () => {
                   <option value="Viewer">Viewer</option>
                   <option value="Account">Account</option>
                   <option value="Outlet">Outlet</option>
+                  <option value="Airbnb">Airbnb</option>
                 </select>
                 {errors.userRoles && <p className="mt-1 text-sm text-red-600">{errors.userRoles}</p>}
               </div>
@@ -379,7 +399,7 @@ const AddNewUser = () => {
                 </div>
               )}
 
-              {formData.userRoles && formData.userRoles !== 'Admin' && (
+              {formData.userRoles === 'Airbnb' && (
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Unique QR Access
@@ -390,18 +410,27 @@ const AddNewUser = () => {
                       Loading Unique QRs...
                     </div>
                   ) : (
-                    <select
-                      multiple
-                      value={formData.allowedUniqueQrIds}
-                      onChange={handleUniqueQrChange}
-                      className="w-full min-h-40 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
-                    >
-                      {uniqueQrOptions.map((qr) => (
-                        <option key={qr.id} value={String(qr.id)}>
-                          {qr.name} ({qr.unique_code})
-                        </option>
-                      ))}
-                    </select>
+                    <div className="w-full max-h-56 overflow-y-auto px-4 py-3 border border-gray-300 rounded-lg space-y-2">
+                      {uniqueQrOptions.length === 0 && (
+                        <p className="text-sm text-gray-500">No Unique QR available.</p>
+                      )}
+                      {uniqueQrOptions.map((qr) => {
+                        const qrId = String(qr.id);
+                        const checked = formData.allowedUniqueQrIds.includes(qrId);
+
+                        return (
+                          <label key={qrId} className="flex items-center gap-3 text-sm text-gray-800 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              onChange={() => handleUniqueQrToggle(qrId)}
+                              className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                            />
+                            <span>{qr.name} ({qr.unique_code})</span>
+                          </label>
+                        );
+                      })}
+                    </div>
                   )}
                   <p className="mt-1 text-sm text-gray-500">
                     Selected Unique QRs are the only ones this non-admin user can see in Unique QR Report.
