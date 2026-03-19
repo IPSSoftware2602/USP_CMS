@@ -1,5 +1,5 @@
 import React, { lazy, Suspense, useEffect } from "react";
-import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
+import { Routes, Route, Navigate, useNavigate, useLocation } from "react-router-dom";
 import { useSelector } from 'react-redux';
 // import { toast } from "react-toastify";
 // import { useSessionManager } from "./hooks/useSessionManager";
@@ -158,10 +158,16 @@ import PointReport from "./pages/report/point";
 import UnutilizedReport from "./pages/report/unutilized";
 import UniqueQrReport from "./pages/report/unique-qr";
 import UniqueQrDetailReport from "./pages/report/unique-qr-detail";
+import { getRoleHomePath, isAirbnbRole } from "@/utils/roleHome";
 
 function App() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { isAuth } = useSelector(state => state.auth);
+  const currentUserRole =
+    useSelector(state => state.auth?.user?.user?.role) || "";
+  const defaultHomePath = getRoleHomePath(currentUserRole);
+  const isAirbnbUser = isAirbnbRole(currentUserRole);
   // const {
   //   showWarning,
   //   timeLeft,
@@ -189,10 +195,10 @@ function App() {
 
 
   useEffect(() => {
-    if (isAuth && window.location.pathname === '/') {
-      navigate("/dashboard");
+    if (isAuth && location.pathname === '/') {
+      navigate(defaultHomePath, { replace: true });
     }
-  }, [isAuth, navigate]);
+  }, [defaultHomePath, isAuth, location.pathname, navigate]);
 
   return (
     <main className="App relative">
@@ -207,9 +213,15 @@ function App() {
           </Route>
 
           <Route path="/*" element={<Layout />}>
-            <Route index element={<Navigate to="/dashboard" />} />
-            <Route path="dashboard" element={<Dashboard />} />
-            <Route path="outlet_dashboard" element={<OutletDashboard />} />
+            <Route index element={<Navigate to={defaultHomePath} replace />} />
+            <Route
+              path="dashboard"
+              element={isAirbnbUser ? <Navigate to={defaultHomePath} replace /> : <Dashboard />}
+            />
+            <Route
+              path="outlet_dashboard"
+              element={isAirbnbUser ? <Navigate to={defaultHomePath} replace /> : <OutletDashboard />}
+            />
 
             <Route path="orders">
               <Route index element={<Navigate to="order_lists" />} />

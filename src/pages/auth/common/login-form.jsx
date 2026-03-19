@@ -11,6 +11,7 @@ import { useSessionManager } from "@/hooks/useSessionManager";
 import Button from "@/components/ui/Button";
 import Textinput from "@/components/ui/Textinput";
 import { Icon } from "@iconify/react";
+import { getRoleHomePath, getStoredUserRole } from "@/utils/roleHome";
 
 const schema = yup.object({
   username: yup.string().required("Username is Required"),
@@ -59,7 +60,7 @@ const LoginForm = () => {
     if (autoLoginAttempted) return;
 
     const urlParams = new URLSearchParams(location.search);
-    const returnUrl = urlParams.get('returnUrl') || '/dashboard';
+    const returnUrl = urlParams.get('returnUrl') || getRoleHomePath(getStoredUserRole());
     const autoLoginSuccess = checkAutoLogin();
     setAutoLoginAttempted(true);
 
@@ -76,7 +77,7 @@ const LoginForm = () => {
   useEffect(() => {
     if (isAuth && autoLoginAttempted) {
       const urlParams = new URLSearchParams(location.search);
-      const returnUrl = urlParams.get('returnUrl') || '/dashboard';
+      const returnUrl = urlParams.get('returnUrl') || getRoleHomePath(getStoredUserRole());
       navigate(returnUrl, { replace: true });
     }
   }, [isAuth, navigate, location.search, autoLoginAttempted]);
@@ -115,7 +116,7 @@ const LoginForm = () => {
         });
 
         const urlParams = new URLSearchParams(location.search);
-        const returnUrl = urlParams.get('returnUrl') || '/dashboard';
+        const returnUrl = urlParams.get('returnUrl') || getRoleHomePath(response.userData?.role);
 
         reset();
         

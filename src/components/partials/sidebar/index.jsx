@@ -8,6 +8,7 @@ import useSemiDark from "@/hooks/useSemiDark";
 import useSkin from "@/hooks/useSkin";
 import svgRabitImage from "@/assets/images/svg/rabit.svg";
 import UserService from "@/store/api/userService";
+import { getRoleHomePath, isAirbnbRole } from "@/utils/roleHome";
 
 const Sidebar = () => {
   const scrollableNodeRef = useRef();
@@ -17,6 +18,7 @@ const Sidebar = () => {
   const [menuHover, setMenuHover] = useState(false);
   const [isSemiDark] = useSemiDark();
   const [skin] = useSkin();
+  const [homePath, setHomePath] = useState("/dashboard");
 
   useEffect(() => {
     const handleScroll = () => {
@@ -42,6 +44,8 @@ const Sidebar = () => {
         const userDataRes = await UserService.getUser(userId);
         const userData = userDataRes?.data;
         if (!userData) return;
+        const isAirbnbUser = isAirbnbRole(userData.role);
+        setHomePath(getRoleHomePath(userData.role));
 
         if (userData.role && userData.role.toLowerCase() === "admin") {
           setFilteredMenu(menuItems);
@@ -66,7 +70,19 @@ const Sidebar = () => {
               if (item.isHeadr) return item;
               
 
-              if (item.title === "Dashboard" || item.title === "Logout") {
+              if (item.title === "Logout") {
+                if (item.child) {
+                  const filteredChild = filterChildMenu(item.child, permissions);
+                  return { ...item, child: filteredChild };
+                }
+                return item;
+              }
+
+              if (item.title === "Dashboard" && isAirbnbUser) {
+                return null;
+              }
+
+              if (item.title === "Dashboard") {
 
                 if (item.child) {
                   const filteredChild = filterChildMenu(item.child, permissions);
@@ -184,7 +200,7 @@ const Sidebar = () => {
           setMenuHover(false);
         }}
       >
-        <SidebarLogo menuHover={menuHover} />
+        <SidebarLogo menuHover={menuHover} homePath={homePath} />
         <div
           className={`h-[60px]  absolute top-[80px] nav-shadow z-[1] w-full transition-all duration-200 pointer-events-none ${
             scroll ? " opacity-100" : " opacity-0"

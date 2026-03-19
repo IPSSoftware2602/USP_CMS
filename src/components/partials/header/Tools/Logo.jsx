@@ -2,15 +2,17 @@ import React from "react";
 import useDarkMode from "@/hooks/useDarkMode";
 import { Link } from "react-router-dom";
 import useWidth from "@/hooks/useWidth";
+import { getRoleHomePath, getStoredUserRole } from "@/utils/roleHome";
 
 import MainLogo from "@/assets/images/logo/logo.png";
 const Logo = () => {
   const [isDark] = useDarkMode();
   const { width, breakpoints } = useWidth();
+  const homePath = getRoleHomePath(getStoredUserRole());
 
   return (
     <div>
-      <Link to="/dashboard">
+      <Link to={homePath}>
         {width >= breakpoints.xl ? (
           <img src={MainLogo} alt="US Pizza Logo" />
         ) : (

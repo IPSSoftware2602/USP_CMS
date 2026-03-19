@@ -2,10 +2,12 @@ import React from "react";
 import { useLocation, NavLink } from "react-router-dom";
 import { menuItems } from "@/constant/data";
 import Icon from "@/components/ui/Icon";
+import { getRoleHomePath, getStoredUserRole } from "@/utils/roleHome";
 
 const Breadcrumbs = () => {
   const location = useLocation();
   const pathnames = location.pathname.split("/").filter((x) => x);
+  const homePath = getRoleHomePath(getStoredUserRole());
 
   const isDynamicSegment = (segment) => {
 
@@ -81,7 +83,7 @@ const Breadcrumbs = () => {
     <div className="md:mb-6 mb-4 flex space-x-3 rtl:space-x-reverse">
       <ul className="breadcrumbs">
         <li className="text-indigo-900">
-          <NavLink to="/dashboard" className="text-lg">
+          <NavLink to={homePath} className="text-lg">
             <Icon icon="heroicons-outline:home" />
           </NavLink>
           <span className="breadcrumbs-icon rtl:transform rtl:rotate-180">

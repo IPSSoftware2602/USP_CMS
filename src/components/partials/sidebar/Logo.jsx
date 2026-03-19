@@ -5,11 +5,12 @@ import useDarkMode from "@/hooks/useDarkMode";
 import useSidebar from "@/hooks/useSidebar";
 import useSemiDark from "@/hooks/useSemiDark";
 import useSkin from "@/hooks/useSkin";
+import { DEFAULT_HOME_PATH } from "@/utils/roleHome";
 
 // import images
 import MobileLogo from "@/assets/images/logo/logo.png";
 
-const SidebarLogo = ({ menuHover }) => {
+const SidebarLogo = ({ menuHover, homePath = DEFAULT_HOME_PATH }) => {
   const [isDark] = useDarkMode();
   const [collapsed, setMenuCollapsed] = useSidebar();
   // semi dark
@@ -28,7 +29,7 @@ const SidebarLogo = ({ menuHover }) => {
       
       `}
     >
-      <Link to="/dashboard">
+      <Link to={homePath}>
         <div className="flex items-center space-x-4">
           <div className="logo-icon">
               <img src={MobileLogo} alt="" className="w-9 h-9" />

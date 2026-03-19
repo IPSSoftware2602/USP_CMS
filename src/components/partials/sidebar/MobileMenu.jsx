@@ -9,6 +9,7 @@ import { Link } from "react-router-dom";
 import useMobileMenu from "@/hooks/useMobileMenu";
 import Icon from "@/components/ui/Icon";
 import UserService from "@/store/api/userService";
+import { getRoleHomePath, isAirbnbRole } from "@/utils/roleHome";
 
 // import images
 import MobileLogo from "@/assets/images/logo/logo.png";
@@ -21,6 +22,7 @@ const MobileMenu = ({ className = "custom-class" }) => {
   const [skin] = useSkin();
   const [isDark] = useDarkMode();
   const [mobileMenu, setMobileMenu] = useMobileMenu();
+  const [homePath, setHomePath] = useState("/dashboard");
 
   useEffect(() => {
     const handleScroll = () => {
@@ -47,6 +49,8 @@ const MobileMenu = ({ className = "custom-class" }) => {
         const userDataRes = await UserService.getUser(userId);
         const userData = userDataRes?.data;
         if (!userData) return;
+        const isAirbnbUser = isAirbnbRole(userData.role);
+        setHomePath(getRoleHomePath(userData.role));
 
         // 3. Check if user is admin - if yes, show all menu items without filtering
         if (userData.role && userData.role.toLowerCase() === "admin") {
@@ -72,9 +76,21 @@ const MobileMenu = ({ className = "custom-class" }) => {
               // If it's a header, always show
               if (item.isHeadr) return item;
               
-              // Always show Dashboard and Logout regardless of permissions
-              if (item.title === "Dashboard" || item.title === "Logout") {
+              // Always show Logout regardless of permissions
+              if (item.title === "Logout") {
                 // If has children, filter them
+                if (item.child) {
+                  const filteredChild = filterChildMenu(item.child, permissions);
+                  return { ...item, child: filteredChild };
+                }
+                return item;
+              }
+
+              if (item.title === "Dashboard" && isAirbnbUser) {
+                return null;
+              }
+
+              if (item.title === "Dashboard") {
                 if (item.child) {
                   const filteredChild = filterChildMenu(item.child, permissions);
                   return { ...item, child: filteredChild };
@@ -184,7 +200,7 @@ const MobileMenu = ({ className = "custom-class" }) => {
       className={`${className} fixed  top-0 bg-white dark:bg-slate-800 shadow-lg  h-full   w-[248px]`}
     >
       <div className="logo-segment flex justify-between items-center bg-white dark:bg-slate-800 z-[9] h-[85px]  px-4 ">
-        <Link to="/dashboard">
+        <Link to={homePath}>
           <div className="flex items-center space-x-4">
             <div className="logo-icon">
                 <img src={MobileLogo} alt="" className="w-8 h-8"/>
