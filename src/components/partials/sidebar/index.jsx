@@ -8,7 +8,7 @@ import useSemiDark from "@/hooks/useSemiDark";
 import useSkin from "@/hooks/useSkin";
 import svgRabitImage from "@/assets/images/svg/rabit.svg";
 import UserService from "@/store/api/userService";
-import { getRoleHomePath, isAirbnbRole } from "@/utils/roleHome";
+import { getRoleHomePath } from "@/utils/roleHome";
 
 const Sidebar = () => {
   const scrollableNodeRef = useRef();
@@ -44,7 +44,6 @@ const Sidebar = () => {
         const userDataRes = await UserService.getUser(userId);
         const userData = userDataRes?.data;
         if (!userData) return;
-        const isAirbnbUser = isAirbnbRole(userData.role);
         setHomePath(getRoleHomePath(userData.role));
 
         if (userData.role && userData.role.toLowerCase() === "admin") {
@@ -78,19 +77,6 @@ const Sidebar = () => {
                 return item;
               }
 
-              if (item.title === "Dashboard" && isAirbnbUser) {
-                return null;
-              }
-
-              if (item.title === "Dashboard") {
-
-                if (item.child) {
-                  const filteredChild = filterChildMenu(item.child, permissions);
-                  return { ...item, child: filteredChild };
-                }
-                return item;
-              }
-              
               const permKey = item.permissionKey || item.title?.replace(/\s/g, "");
               
 

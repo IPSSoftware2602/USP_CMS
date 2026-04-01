@@ -158,7 +158,7 @@ import PointReport from "./pages/report/point";
 import UnutilizedReport from "./pages/report/unutilized";
 import UniqueQrReport from "./pages/report/unique-qr";
 import UniqueQrDetailReport from "./pages/report/unique-qr-detail";
-import { getRoleHomePath, isAirbnbRole } from "@/utils/roleHome";
+import { getRoleHomePath } from "@/utils/roleHome";
 
 function App() {
   const navigate = useNavigate();
@@ -167,7 +167,6 @@ function App() {
   const currentUserRole =
     useSelector(state => state.auth?.user?.user?.role) || "";
   const defaultHomePath = getRoleHomePath(currentUserRole);
-  const isAirbnbUser = isAirbnbRole(currentUserRole);
   // const {
   //   showWarning,
   //   timeLeft,
@@ -214,14 +213,8 @@ function App() {
 
           <Route path="/*" element={<Layout />}>
             <Route index element={<Navigate to={defaultHomePath} replace />} />
-            <Route
-              path="dashboard"
-              element={isAirbnbUser ? <Navigate to={defaultHomePath} replace /> : <Dashboard />}
-            />
-            <Route
-              path="outlet_dashboard"
-              element={isAirbnbUser ? <Navigate to={defaultHomePath} replace /> : <OutletDashboard />}
-            />
+            <Route path="dashboard" element={<Dashboard />} />
+            <Route path="outlet_dashboard" element={<OutletDashboard />} />
 
             <Route path="orders">
               <Route index element={<Navigate to="order_lists" />} />

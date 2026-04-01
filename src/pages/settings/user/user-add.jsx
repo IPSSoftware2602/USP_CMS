@@ -30,6 +30,7 @@ const AddNewUser = () => {
   const navigate = useNavigate();
 
   const [menuPermissions, setMenuPermissions] = useState({
+    Dashboard: { read: false, create: false, update: false, delete: false },
     'Outlet Dashboard': { read: false, create: false, update: false, delete: false },
     Orders: {
       read: false,

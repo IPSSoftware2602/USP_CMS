@@ -31,6 +31,7 @@ const UserEdit = () => {
   });
 
   const defaultMenuPermissions = {
+    Dashboard: { read: false, create: false, update: false, delete: false },
     'Outlet Dashboard': { read: false, create: false, update: false, delete: false },
     Orders: {
       read: false,

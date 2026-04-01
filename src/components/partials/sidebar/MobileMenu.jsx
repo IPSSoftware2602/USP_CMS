@@ -9,7 +9,7 @@ import { Link } from "react-router-dom";
 import useMobileMenu from "@/hooks/useMobileMenu";
 import Icon from "@/components/ui/Icon";
 import UserService from "@/store/api/userService";
-import { getRoleHomePath, isAirbnbRole } from "@/utils/roleHome";
+import { getRoleHomePath } from "@/utils/roleHome";
 
 // import images
 import MobileLogo from "@/assets/images/logo/logo.png";
@@ -49,7 +49,6 @@ const MobileMenu = ({ className = "custom-class" }) => {
         const userDataRes = await UserService.getUser(userId);
         const userData = userDataRes?.data;
         if (!userData) return;
-        const isAirbnbUser = isAirbnbRole(userData.role);
         setHomePath(getRoleHomePath(userData.role));
 
         // 3. Check if user is admin - if yes, show all menu items without filtering
@@ -86,18 +85,6 @@ const MobileMenu = ({ className = "custom-class" }) => {
                 return item;
               }
 
-              if (item.title === "Dashboard" && isAirbnbUser) {
-                return null;
-              }
-
-              if (item.title === "Dashboard") {
-                if (item.child) {
-                  const filteredChild = filterChildMenu(item.child, permissions);
-                  return { ...item, child: filteredChild };
-                }
-                return item;
-              }
-              
               // Get the permission key for this menu item
               const permKey = item.permissionKey || item.title?.replace(/\s/g, "");
               

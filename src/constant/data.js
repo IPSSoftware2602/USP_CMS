@@ -10,6 +10,7 @@ export const menuItems = [
     isOpen: true,
     isHide: true,
     link: "dashboard",
+    permissionKey: "Dashboard",
   },
   {
     title: "Outlet Dashboard",
