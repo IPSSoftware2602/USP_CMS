@@ -26,12 +26,29 @@ import {
 } from "recharts";
 import dashboardService from "@/store/api/dashboardService";
 
+const getDashboardRole = () => {
+  try {
+    const raw = localStorage.getItem("user");
+    if (!raw) return "";
+    return String(JSON.parse(raw)?.user?.role || "").trim().toLowerCase();
+  } catch (error) {
+    return "";
+  }
+};
+
 const Dashboard = () => {
   const [dashboard, setDashboard] = useState({});
   const [dashboardSummary, setDashboardSummary] = useState({});
   const [timePeriod, setTimePeriod] = useState("Today");
   const [chartData, setChartData] = useState([]);
   const [liveMonitor, setLiveMonitor] = useState({});
+  const [role, setRole] = useState("");
+
+  useEffect(() => {
+    setRole(getDashboardRole());
+  }, []);
+
+  const isScopedDashboardView = role === "outlet" || role === "airbnb";
 
   const isBarChart = timePeriod === "Today" || timePeriod === "Yesterday";
   const xAxisKey = isBarChart ? "hour" : "date";
@@ -71,11 +88,12 @@ const Dashboard = () => {
 
   // Load all data function
   const loadAllData = async () => {
-    await Promise.all([
-      loadDashboard(),
-      loadDashboardSummary(),
-      loadLiveMonitor(),
-    ]);
+    if (isScopedDashboardView) {
+      await loadDashboard();
+      return;
+    }
+
+    await Promise.all([loadDashboard(), loadDashboardSummary(), loadLiveMonitor()]);
   };
 
   const processChartData = (data, period) => {
@@ -126,7 +144,7 @@ const Dashboard = () => {
 
     // Clean up interval on component unmount
     return () => clearInterval(intervalId);
-  }, []);
+  }, [isScopedDashboardView]);
 
   const handleTimePeriodChange = (period) => {
     setTimePeriod(period);
@@ -144,7 +162,7 @@ const Dashboard = () => {
     }).format(value);
   };
 
-  const statsCards = [
+  const allStatsCards = [
     {
       title: "Net Sales Today",
       value: formatCurrency(dashboard.today_net_sales || 0),
@@ -188,6 +206,16 @@ const Dashboard = () => {
       color: "bg-purple-500",
     },
   ];
+  const statsCards = isScopedDashboardView
+    ? allStatsCards.filter((card) =>
+        [
+          "Net Sales Today",
+          "Today Transaction",
+          "Net Sales Month to Day",
+          "Net Sales Year to Day",
+        ].includes(card.title)
+      )
+    : allStatsCards;
 
   const liveMonitorLeft = [
     {
@@ -279,138 +307,142 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Live Monitor */}
-      <h2 className="text-xl font-medium text-gray-700 mb-4 ml-2">
-        Live Monitor
-      </h2>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        {/* Left side */}
-        <div className="bg-white p-6 rounded-lg shadow-sm">
-          {liveMonitorLeft.map((item, index) => (
-            <div
-              key={index}
-              className="flex items-center justify-between py-4 border-b last:border-b-0"
-            >
-              <div className="flex items-center">
-                <div className="rounded-full bg-gray-100 p-3 mr-4">
-                  {item.icon}
-                </div>
-                <div>
-                  <p className="font-medium">{item.title}</p>
-                  <p className="text-xs text-gray-500">{item.subtitle}</p>
-                </div>
-              </div>
-              <div className="flex items-center">
-                <span className="mr-2 text-lg font-medium">{item.value}</span>
-                <ChevronRight className="h-5 w-5 text-gray-400" />
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Right side */}
-        <div className="bg-white p-6 rounded-lg shadow-sm">
-          {liveMonitorRight.map((item, index) => (
-            <div
-              key={index}
-              className="flex items-center justify-between py-4 border-b last:border-b-0"
-            >
-              <div className="flex items-center">
-                <div className="rounded-full bg-gray-100 p-3 mr-4">
-                  {item.icon}
-                </div>
-                <div>
-                  <div className="flex items-center">
-                    <p className="font-normal mr-2">{item.title}</p>
-                    <Info className="h-4 w-4 text-gray-400" />
-                  </div>
-                  <p className="text-lg font-bold text-gray-800">
-                    {item.value}
-                  </p>
-                </div>
-              </div>
-              <div>
-                <span
-                  className={`text-sm ${
-                    item.positive ? "text-green-500" : "text-red-500"
-                  }`}
+      {!isScopedDashboardView && (
+        <>
+          {/* Live Monitor */}
+          <h2 className="text-xl font-medium text-gray-700 mb-4 ml-2">
+            Live Monitor
+          </h2>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            {/* Left side */}
+            <div className="bg-white p-6 rounded-lg shadow-sm">
+              {liveMonitorLeft.map((item, index) => (
+                <div
+                  key={index}
+                  className="flex items-center justify-between py-4 border-b last:border-b-0"
                 >
-                  {item.change}
-                </span>
+                  <div className="flex items-center">
+                    <div className="rounded-full bg-gray-100 p-3 mr-4">
+                      {item.icon}
+                    </div>
+                    <div>
+                      <p className="font-medium">{item.title}</p>
+                      <p className="text-xs text-gray-500">{item.subtitle}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center">
+                    <span className="mr-2 text-lg font-medium">{item.value}</span>
+                    <ChevronRight className="h-5 w-5 text-gray-400" />
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Right side */}
+            <div className="bg-white p-6 rounded-lg shadow-sm">
+              {liveMonitorRight.map((item, index) => (
+                <div
+                  key={index}
+                  className="flex items-center justify-between py-4 border-b last:border-b-0"
+                >
+                  <div className="flex items-center">
+                    <div className="rounded-full bg-gray-100 p-3 mr-4">
+                      {item.icon}
+                    </div>
+                    <div>
+                      <div className="flex items-center">
+                        <p className="font-normal mr-2">{item.title}</p>
+                        <Info className="h-4 w-4 text-gray-400" />
+                      </div>
+                      <p className="text-lg font-bold text-gray-800">
+                        {item.value}
+                      </p>
+                    </div>
+                  </div>
+                  <div>
+                    <span
+                      className={`text-sm ${
+                        item.positive ? "text-green-500" : "text-red-500"
+                      }`}
+                    >
+                      {item.change}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Summary */}
+          <h2 className="text-xl font-medium text-gray-700 mb-4 ml-2">Summary</h2>
+          <div className="bg-white p-6 rounded-lg shadow-sm">
+            <div className="bg-white p-6 rounded-lg">
+              {/* Time filter buttons */}
+              <div className="flex space-x-3 mb-6 text-[12px]">
+                {["Today", "Yesterday", "7 Days", "30 Days"].map((period) => (
+                  <button
+                    key={period}
+                    className={`px-6 py-2 rounded-full border ${
+                      timePeriod === period
+                        ? "bg-blue-50 border-blue-300 text-blue-700"
+                        : "border-gray-300 text-gray-700"
+                    }`}
+                    onClick={() => handleTimePeriodChange(period)}
+                  >
+                    {period}
+                  </button>
+                ))}
               </div>
             </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Summary */}
-      <h2 className="text-xl font-medium text-gray-700 mb-4 ml-2">Summary</h2>
-      <div className="bg-white p-6 rounded-lg shadow-sm">
-        <div className="bg-white p-6 rounded-lg">
-          {/* Time filter buttons */}
-          <div className="flex space-x-3 mb-6 text-[12px]">
-            {["Today", "Yesterday", "7 Days", "30 Days"].map((period) => (
-              <button
-                key={period}
-                className={`px-6 py-2 rounded-full border ${
-                  timePeriod === period
-                    ? "bg-blue-50 border-blue-300 text-blue-700"
-                    : "border-gray-300 text-gray-700"
-                }`}
-                onClick={() => handleTimePeriodChange(period)}
-              >
-                {period}
-              </button>
-            ))}
+            {/* Chart */}
+            <div className="h-96">
+              <h3 className="text-lg font-medium text-center mb-4">{chartTitle}</h3>
+              <ResponsiveContainer width="100%" height="90%">
+                {isBarChart ? (
+                  <BarChart
+                    data={chartData}
+                    margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey={xAxisKey} />
+                    <YAxis
+                      label={{
+                        value: "Revenue (RM)",
+                        angle: -90,
+                        position: "insideLeft",
+                      }}
+                    />
+                    <Tooltip />
+                    <Bar dataKey="revenue" fill="#FF4081" />
+                  </BarChart>
+                ) : (
+                  <LineChart
+                    data={chartData}
+                    margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey={xAxisKey} />
+                    <YAxis
+                      label={{
+                        value: "Revenue (RM)",
+                        angle: -90,
+                        position: "insideLeft",
+                      }}
+                    />
+                    <Tooltip />
+                    <Line
+                      type="monotone"
+                      dataKey="revenue"
+                      stroke="#FF4081"
+                      activeDot={{ r: 8 }}
+                    />
+                  </LineChart>
+                )}
+              </ResponsiveContainer>
+            </div>
           </div>
-        </div>
-        {/* Chart */}
-        <div className="h-96">
-          <h3 className="text-lg font-medium text-center mb-4">{chartTitle}</h3>
-          <ResponsiveContainer width="100%" height="90%">
-            {isBarChart ? (
-              <BarChart
-                data={chartData}
-                margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-              >
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey={xAxisKey} />
-                <YAxis
-                  label={{
-                    value: "Revenue (RM)",
-                    angle: -90,
-                    position: "insideLeft",
-                  }}
-                />
-                <Tooltip />
-                <Bar dataKey="revenue" fill="#FF4081" />
-              </BarChart>
-            ) : (
-              <LineChart
-                data={chartData}
-                margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-              >
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey={xAxisKey} />
-                <YAxis
-                  label={{
-                    value: "Revenue (RM)",
-                    angle: -90,
-                    position: "insideLeft",
-                  }}
-                />
-                <Tooltip />
-                <Line
-                  type="monotone"
-                  dataKey="revenue"
-                  stroke="#FF4081"
-                  activeDot={{ r: 8 }}
-                />
-              </LineChart>
-            )}
-          </ResponsiveContainer>
-        </div>
-      </div>
+        </>
+      )}
     </div>
   );
 };

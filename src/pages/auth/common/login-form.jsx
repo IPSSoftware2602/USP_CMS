@@ -12,6 +12,12 @@ import Button from "@/components/ui/Button";
 import Textinput from "@/components/ui/Textinput";
 import { Icon } from "@iconify/react";
 import { getRoleHomePath, getStoredUserRole } from "@/utils/roleHome";
+import UserService from "@/store/api/userService";
+import {
+  canAccessPath,
+  getUserPermissionContext,
+  resolveAccessibleFallbackPath,
+} from "@/utils/routePermission";
 
 const schema = yup.object({
   username: yup.string().required("Username is Required"),
@@ -60,7 +66,17 @@ const LoginForm = () => {
     if (autoLoginAttempted) return;
 
     const urlParams = new URLSearchParams(location.search);
-    const returnUrl = urlParams.get('returnUrl') || getRoleHomePath(getStoredUserRole());
+    const storedRaw = localStorage.getItem("user");
+    let resolvedReturnUrl = urlParams.get("returnUrl") || getRoleHomePath(getStoredUserRole());
+    try {
+      const storedParsed = storedRaw ? JSON.parse(storedRaw) : null;
+      const userContext = getUserPermissionContext(storedParsed);
+      if (!canAccessPath(resolvedReturnUrl, userContext)) {
+        resolvedReturnUrl = resolveAccessibleFallbackPath(resolvedReturnUrl, userContext);
+      }
+    } catch (error) {
+      // keep default return path when storage parsing fails
+    }
     const autoLoginSuccess = checkAutoLogin();
     setAutoLoginAttempted(true);
 
@@ -70,15 +86,25 @@ const LoginForm = () => {
         autoClose: 2000,
       });
       
-      navigate(returnUrl, { replace: true });
+      navigate(resolvedReturnUrl, { replace: true });
     }
   }, [location.search, navigate, checkAutoLogin, autoLoginAttempted]);
 
   useEffect(() => {
     if (isAuth && autoLoginAttempted) {
       const urlParams = new URLSearchParams(location.search);
-      const returnUrl = urlParams.get('returnUrl') || getRoleHomePath(getStoredUserRole());
-      navigate(returnUrl, { replace: true });
+      const storedRaw = localStorage.getItem("user");
+      let resolvedReturnUrl = urlParams.get("returnUrl") || getRoleHomePath(getStoredUserRole());
+      try {
+        const storedParsed = storedRaw ? JSON.parse(storedRaw) : null;
+        const userContext = getUserPermissionContext(storedParsed);
+        if (!canAccessPath(resolvedReturnUrl, userContext)) {
+          resolvedReturnUrl = resolveAccessibleFallbackPath(resolvedReturnUrl, userContext);
+        }
+      } catch (error) {
+        // keep default return path when storage parsing fails
+      }
+      navigate(resolvedReturnUrl, { replace: true });
     }
   }, [isAuth, navigate, location.search, autoLoginAttempted]);
 
@@ -101,7 +127,7 @@ const LoginForm = () => {
       // toast.dismiss(loadingToast);
 
       if (response.token && response.userData) {
-        const userDataToStore = {
+        let userDataToStore = {
           token: response.token,
           user: response.userData,
           username: response.userData.username || data.username,
@@ -109,6 +135,25 @@ const LoginForm = () => {
         };
         
         initSession(userDataToStore);
+
+        // Refresh full profile after token/session is ready.
+        const userId = response.userData.user_id || response.userData.id;
+        if (userId) {
+          try {
+            const fullUserRes = await UserService.getUser(userId);
+            if (fullUserRes?.data) {
+              userDataToStore = {
+                ...userDataToStore,
+                user: { ...userDataToStore.user, ...fullUserRes.data },
+                username:
+                  fullUserRes.data.username || userDataToStore.username || data.username,
+              };
+              initSession(userDataToStore);
+            }
+          } catch (error) {
+            // Keep login success path even if profile refresh fails.
+          }
+        }
         
         toast.success(response.message || "Login Successful", {
           position: "top-right",
@@ -116,7 +161,12 @@ const LoginForm = () => {
         });
 
         const urlParams = new URLSearchParams(location.search);
-        const returnUrl = urlParams.get('returnUrl') || getRoleHomePath(response.userData?.role);
+        const preferredPath =
+          urlParams.get("returnUrl") || getRoleHomePath(userDataToStore?.user?.role);
+        const userContext = getUserPermissionContext(userDataToStore);
+        const returnUrl = canAccessPath(preferredPath, userContext)
+          ? preferredPath
+          : resolveAccessibleFallbackPath(preferredPath, userContext);
 
         reset();
         

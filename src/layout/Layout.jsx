@@ -1,5 +1,5 @@
-import React, { useEffect, Suspense, Fragment, useRef } from "react";
-import { Outlet, useNavigate } from "react-router-dom";
+import React, { Suspense, Fragment, useRef } from "react";
+import { Outlet, Navigate, useLocation } from "react-router-dom";
 import Header from "@/components/partials/header";
 import Sidebar from "@/components/partials/sidebar";
 import Settings from "@/components/partials/settings";
@@ -17,17 +17,25 @@ import { ToastContainer } from "react-toastify";
 import { useSelector } from "react-redux";
 import Loading from "@/components/Loading";
 import { motion, AnimatePresence } from "framer-motion";
+import {
+  canAccessPath,
+  getUserPermissionContext,
+  resolveAccessibleFallbackPath,
+} from "@/utils/routePermission";
+
 const Layout = () => {
   const { width, breakpoints } = useWidth();
   const [collapsed] = useSidebar();
-  const navigate = useNavigate();
+  const location = useLocation();
   const { isAuth, user } = useSelector((state) => state.auth);
+  // content width
+  const [contentWidth] = useContentWidth();
+  const [menuType] = useMenulayout();
+  const [menuHidden] = useMenuHidden();
+  // mobile menu
+  const [mobileMenu, setMobileMenu] = useMobileMenu();
+  const nodeRef = useRef(null);
 
-  useEffect(() => {
-    if (!isAuth || !user) {
-      navigate("/");
-    }
-  }, [isAuth, navigate]);
   const switchHeaderClass = () => {
     if (menuType === "horizontal" || menuHidden) {
       return "ltr:ml-0 rtl:mr-0";
@@ -37,13 +45,20 @@ const Layout = () => {
       return "ltr:ml-[248px] rtl:mr-[248px]";
     }
   };
-  // content width
-  const [contentWidth] = useContentWidth();
-  const [menuType] = useMenulayout();
-  const [menuHidden] = useMenuHidden();
-  // mobile menu
-  const [mobileMenu, setMobileMenu] = useMobileMenu();
-  const nodeRef = useRef(null);
+
+  let redirectTo = null;
+  if (!isAuth || !user) {
+    redirectTo = "/";
+  } else {
+    const userContext = getUserPermissionContext(user);
+    if (!canAccessPath(location.pathname, userContext)) {
+      redirectTo = resolveAccessibleFallbackPath(location.pathname, userContext);
+    }
+  }
+
+  if (redirectTo) {
+    return <Navigate to={redirectTo} replace />;
+  }
 
   return (
     <>
