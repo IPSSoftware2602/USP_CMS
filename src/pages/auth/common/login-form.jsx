@@ -14,9 +14,8 @@ import { Icon } from "@iconify/react";
 import { getRoleHomePath, getStoredUserRole } from "@/utils/roleHome";
 import UserService from "@/store/api/userService";
 import {
-  canAccessPath,
   getUserPermissionContext,
-  resolveAccessibleFallbackPath,
+  resolveLoginRedirectPath,
 } from "@/utils/routePermission";
 
 const schema = yup.object({
@@ -71,9 +70,7 @@ const LoginForm = () => {
     try {
       const storedParsed = storedRaw ? JSON.parse(storedRaw) : null;
       const userContext = getUserPermissionContext(storedParsed);
-      if (!canAccessPath(resolvedReturnUrl, userContext)) {
-        resolvedReturnUrl = resolveAccessibleFallbackPath(resolvedReturnUrl, userContext);
-      }
+      resolvedReturnUrl = resolveLoginRedirectPath(resolvedReturnUrl, userContext);
     } catch (error) {
       // keep default return path when storage parsing fails
     }
@@ -98,9 +95,7 @@ const LoginForm = () => {
       try {
         const storedParsed = storedRaw ? JSON.parse(storedRaw) : null;
         const userContext = getUserPermissionContext(storedParsed);
-        if (!canAccessPath(resolvedReturnUrl, userContext)) {
-          resolvedReturnUrl = resolveAccessibleFallbackPath(resolvedReturnUrl, userContext);
-        }
+        resolvedReturnUrl = resolveLoginRedirectPath(resolvedReturnUrl, userContext);
       } catch (error) {
         // keep default return path when storage parsing fails
       }
@@ -164,9 +159,7 @@ const LoginForm = () => {
         const preferredPath =
           urlParams.get("returnUrl") || getRoleHomePath(userDataToStore?.user?.role);
         const userContext = getUserPermissionContext(userDataToStore);
-        const returnUrl = canAccessPath(preferredPath, userContext)
-          ? preferredPath
-          : resolveAccessibleFallbackPath(preferredPath, userContext);
+        const returnUrl = resolveLoginRedirectPath(preferredPath, userContext);
 
         reset();
         

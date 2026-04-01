@@ -208,6 +208,23 @@ export const resolveAccessibleFallbackPath = (pathname, userContext) => {
   return "/404";
 };
 
+export const resolveLoginRedirectPath = (requestedPath, userContext) => {
+  if (canAccessPath("/dashboard", userContext)) {
+    return "/dashboard";
+  }
+
+  if (requestedPath && canAccessPath(requestedPath, userContext)) {
+    return requestedPath;
+  }
+
+  const roleHomePath = getRoleHomePath(userContext?.role);
+  if (canAccessPath(roleHomePath, userContext)) {
+    return roleHomePath;
+  }
+
+  return resolveAccessibleFallbackPath(requestedPath || "/dashboard", userContext);
+};
+
 export const __internal = {
   normalizePath,
   ROUTE_RULES,

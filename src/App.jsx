@@ -159,14 +159,21 @@ import UnutilizedReport from "./pages/report/unutilized";
 import UniqueQrReport from "./pages/report/unique-qr";
 import UniqueQrDetailReport from "./pages/report/unique-qr-detail";
 import { getRoleHomePath } from "@/utils/roleHome";
+import { getUserPermissionContext, resolveLoginRedirectPath } from "@/utils/routePermission";
 
 function App() {
   const navigate = useNavigate();
   const location = useLocation();
   const { isAuth } = useSelector(state => state.auth);
+  const authUser = useSelector(state => state.auth?.user) || null;
   const currentUserRole =
     useSelector(state => state.auth?.user?.user?.role) || "";
-  const defaultHomePath = getRoleHomePath(currentUserRole);
+  const defaultHomePath = isAuth
+    ? resolveLoginRedirectPath(
+        getRoleHomePath(currentUserRole),
+        getUserPermissionContext(authUser)
+      )
+    : getRoleHomePath(currentUserRole);
   // const {
   //   showWarning,
   //   timeLeft,
