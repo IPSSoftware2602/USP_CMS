@@ -58,6 +58,8 @@ const buildRouteRules = (items, topPermission = null, depth = 0) => {
         ),
         parentPermissionKey: depth > 0 ? currentTopPermission : null,
         permissionKey: ownPermission || null,
+        actions: ["read"],
+        allowAsLanding: true,
       });
     }
 
@@ -71,7 +73,58 @@ const buildRouteRules = (items, topPermission = null, depth = 0) => {
   return routes;
 };
 
-const ROUTE_RULES = buildRouteRules(menuItems).sort(
+const EXTRA_ROUTE_RULES = [
+  {
+    path: "orders/order_lists/order_overview",
+    required: ["Orders", "Lists"],
+    parentPermissionKey: "Orders",
+    permissionKey: "Lists",
+    actions: ["read"],
+    allowAsLanding: false,
+  },
+  {
+    path: "orders/order_pending/order_overview",
+    required: ["Orders", "Pending"],
+    parentPermissionKey: "Orders",
+    permissionKey: "Pending",
+    actions: ["read"],
+    allowAsLanding: false,
+  },
+  {
+    path: "orders/order_confirmed/order_overview",
+    required: ["Orders", "Confirmed"],
+    parentPermissionKey: "Orders",
+    permissionKey: "Confirmed",
+    actions: ["read"],
+    allowAsLanding: false,
+  },
+  {
+    path: "orders/order_overview/editTime",
+    required: ["Orders", "Lists"],
+    parentPermissionKey: "Orders",
+    permissionKey: "Lists",
+    actions: ["update"],
+    allowAsLanding: false,
+  },
+  {
+    path: "orders/order_overview/editStatus",
+    required: ["Orders", "Lists"],
+    parentPermissionKey: "Orders",
+    permissionKey: "Lists",
+    actions: ["update"],
+    allowAsLanding: false,
+  },
+  {
+    path: "orders/order_overview/trackinglink",
+    required: ["Orders", "Lists"],
+    parentPermissionKey: "Orders",
+    permissionKey: "Lists",
+    actions: ["update"],
+    allowAsLanding: false,
+  },
+];
+
+const ROUTE_RULES = [...buildRouteRules(menuItems), ...EXTRA_ROUTE_RULES].sort(
   (a, b) => b.path.length - a.path.length
 );
 
@@ -101,6 +154,18 @@ const hasRead = (permissionNode) => {
   ) {
     return permissionNode.read;
   }
+  return false;
+};
+
+const hasAnyAction = (permissionNode, actions = ["read"]) => {
+  if (typeof permissionNode === "boolean") {
+    return permissionNode;
+  }
+
+  if (permissionNode && typeof permissionNode === "object") {
+    return actions.some((action) => permissionNode[action] === true);
+  }
+
   return false;
 };
 
@@ -165,7 +230,7 @@ export const canAccessPath = (pathname, userContext) => {
   }
 
   const permissions = userContext.permissions || {};
-  const { parentPermissionKey, permissionKey, required } = rule;
+  const { parentPermissionKey, permissionKey, required, actions = ["read"] } = rule;
 
   if (parentPermissionKey) {
     if (!hasReadPermission(permissions, parentPermissionKey)) {
@@ -175,16 +240,28 @@ export const canAccessPath = (pathname, userContext) => {
     if (permissionKey && permissionKey !== parentPermissionKey) {
       const parentSubItem = permissions?.[parentPermissionKey]?.subItems?.[permissionKey];
       if (parentSubItem !== undefined) {
-        return hasRead(parentSubItem);
+        return hasAnyAction(parentSubItem, actions);
       }
 
-      return hasReadPermission(permissions, permissionKey);
+      const direct = permissions?.[permissionKey];
+      if (direct !== undefined) {
+        return hasAnyAction(direct, actions);
+      }
+
+      return hasAnyAction(findSubItemPermission(permissions, permissionKey), actions);
     }
 
     return true;
   }
 
-  return required.every((key) => hasReadPermission(permissions, key));
+  return required.every((key) => {
+    const direct = permissions?.[key];
+    if (direct !== undefined) {
+      return hasAnyAction(direct, actions);
+    }
+
+    return hasAnyAction(findSubItemPermission(permissions, key), actions);
+  });
 };
 
 export const resolveAccessibleFallbackPath = (pathname, userContext) => {
@@ -196,6 +273,9 @@ export const resolveAccessibleFallbackPath = (pathname, userContext) => {
   }
 
   for (const rule of ROUTE_RULES) {
+    if (rule.allowAsLanding === false) {
+      continue;
+    }
     const candidate = `/${rule.path}`;
     if (
       normalizePath(candidate) !== normalizePath(pathname) &&
