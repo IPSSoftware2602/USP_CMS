@@ -81,6 +81,9 @@ const EXTRA_ROUTE_RULES = [
     permissionKey: "Lists",
     actions: ["read"],
     allowAsLanding: false,
+    alternativePermissions: [
+      { parentPermissionKey: "Report", permissionKey: "Unique QR Report", actions: ["read"] },
+    ],
   },
   {
     path: "orders/order_pending/order_overview",
@@ -219,19 +222,7 @@ export const getUserPermissionContext = (authUser) => {
   };
 };
 
-export const canAccessPath = (pathname, userContext) => {
-  if (userContext?.isAdmin) {
-    return true;
-  }
-
-  const rule = getRouteRuleForPath(pathname);
-  if (!rule) {
-    return false;
-  }
-
-  const permissions = userContext.permissions || {};
-  const { parentPermissionKey, permissionKey, required, actions = ["read"] } = rule;
-
+const checkRulePermission = (permissions, { parentPermissionKey, permissionKey, required, actions = ["read"] }) => {
   if (parentPermissionKey) {
     if (!hasReadPermission(permissions, parentPermissionKey)) {
       return false;
@@ -254,7 +245,7 @@ export const canAccessPath = (pathname, userContext) => {
     return true;
   }
 
-  return required.every((key) => {
+  return (required || []).every((key) => {
     const direct = permissions?.[key];
     if (direct !== undefined) {
       return hasAnyAction(direct, actions);
@@ -262,6 +253,32 @@ export const canAccessPath = (pathname, userContext) => {
 
     return hasAnyAction(findSubItemPermission(permissions, key), actions);
   });
+};
+
+export const canAccessPath = (pathname, userContext) => {
+  if (userContext?.isAdmin) {
+    return true;
+  }
+
+  const rule = getRouteRuleForPath(pathname);
+  if (!rule) {
+    return false;
+  }
+
+  const permissions = userContext.permissions || {};
+
+  if (checkRulePermission(permissions, rule)) {
+    return true;
+  }
+
+  // Check alternative permissions (e.g. QR Report users accessing order overview)
+  if (Array.isArray(rule.alternativePermissions)) {
+    return rule.alternativePermissions.some((alt) =>
+      checkRulePermission(permissions, alt)
+    );
+  }
+
+  return false;
 };
 
 export const resolveAccessibleFallbackPath = (pathname, userContext) => {

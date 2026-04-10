@@ -192,6 +192,11 @@ const OrderOverview = () => {
         const orderData = await orderService.getOrderById(id);
         setOrder(orderData);
       } catch (err) {
+        if (err.statusCode === 403) {
+          toast.error("You do not have permission to view this order.");
+          navigate(-1);
+          return;
+        }
         setError(err.message || "Failed to load order details");
       } finally {
         setLoading(false);

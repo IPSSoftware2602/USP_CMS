@@ -49,14 +49,12 @@ export const orderService = {
         }
       });
 
-      if (!response.ok) {
-        throw new Error(`Failed to fetch order with ID ${id}`);
-      }
-
       const result = await response.json();
 
-      if (result.status !== 200) {
-        throw new Error(result.message || 'Failed to fetch order');
+      if (!response.ok || result.status !== 200) {
+        const err = new Error(result.messages?.error || result.message || `Failed to fetch order with ID ${id}`);
+        err.statusCode = response.status;
+        throw err;
       }
 
       return result.data;
