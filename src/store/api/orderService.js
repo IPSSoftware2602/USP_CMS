@@ -324,11 +324,40 @@ export const orderService = {
     }
 
     return res.json();
-  }
+  },
 
+  getOrderStatusLogs: async (orderId) => {
+    try {
+      const user = JSON.parse(localStorage.getItem('user'));
+      const token = user?.token;
 
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
 
+      const response = await fetch(`${VITE_API_BASE_URL}order/status-logs/${orderId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        }
+      });
 
+      if (!response.ok) {
+        throw new Error('Failed to fetch order status logs');
+      }
+
+      const result = await response.json();
+
+      if (result.status !== 200) {
+        throw new Error(result.message || 'Failed to fetch order status logs');
+      }
+
+      return result.data;
+    } catch (error) {
+      console.error('Error fetching order status logs:', error);
+      throw error;
+    }
+  },
 
   // You can add more order-related API calls here as needed
 };

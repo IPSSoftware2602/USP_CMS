@@ -14,6 +14,7 @@ import {
 import UserService from '@/store/api/userService';
 import { toast } from 'react-toastify';
 import useExportPermission from '@/hooks/useExportPermission';
+import Select from 'react-select';
 
 ChartJS.register(ArcElement, Title, Tooltip, Legend);
 
@@ -24,7 +25,7 @@ const ProductReport = () => {
   const [filters, setFilters] = useState({
     startDate: '',
     endDate: '',
-    outlet: 'All',
+    outlet: [], // multi-select: array of outlet option objects
     orderMethod: 'All',
     reportMode: 'total',
     year: new Date().getFullYear().toString() // Default to current year
@@ -122,7 +123,9 @@ const ProductReport = () => {
     }
     // For yearly and total modes, no date parameters needed
 
-    if (f.outlet && f.outlet !== 'All') params.outlet_id = f.outlet;
+    if (Array.isArray(f.outlet) && f.outlet.length > 0) {
+      params.outlet_id = f.outlet.map(o => o.value);
+    }
     if (f.orderMethod && f.orderMethod !== 'All') params.order_type = f.orderMethod;
     if (f.reportMode) params.report_mode = f.reportMode;
     if (user_id) params.user_id = user_id;
@@ -532,7 +535,7 @@ const ProductReport = () => {
     const resetFilters = {
       startDate: '',
       endDate: '',
-      outlet: 'All',
+      outlet: [],
       orderMethod: 'All',
       reportMode: 'total',
       year: new Date().getFullYear().toString()
@@ -665,13 +668,17 @@ const ProductReport = () => {
 
                 <div className="space-y-1.5">
                   <label className="block text-xs font-semibold uppercase tracking-wide text-gray-600">Outlet</label>
-                  <select className="block w-full h-10 rounded-md border border-gray-300 bg-white shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm px-3"
-                    value={filters.outlet} onChange={e => setFilters(prev => ({ ...prev, outlet: e.target.value }))}>
-                    <option value={'All'}>All</option>
-                    {outletOptions.map(opt => (
-                      <option key={opt.id} value={opt.id}>{opt.title}</option>
-                    ))}
-                  </select>
+                  <Select
+                    isMulti
+                    options={outletOptions.map(opt => ({ value: opt.id, label: opt.title }))}
+                    value={filters.outlet}
+                    onChange={selected => setFilters(prev => ({ ...prev, outlet: selected || [] }))}
+                    placeholder="All Outlets"
+                    classNamePrefix="react-select"
+                    styles={{
+                      control: (base) => ({ ...base, minHeight: '40px', fontSize: '14px' }),
+                    }}
+                  />
                 </div>
                 <div className="space-y-1.5">
                   <label className="block text-xs font-semibold uppercase tracking-wide text-gray-600">Order Method</label>

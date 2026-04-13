@@ -11,6 +11,7 @@ import {
   RotateCcw,
   Link,
   FileText,
+  History,
 } from "lucide-react";
 import { orderService } from "../../store/api/orderService";
 import UserService from "../../store/api/userService";
@@ -129,6 +130,120 @@ const ChangeOutletModal = ({
   );
 };
 
+const StatusLogsModal = ({ open, onClose, logs, loading }) => {
+  if (!open) return null;
+
+  const formatStatus = (status) => {
+    if (!status) return "-";
+    return status
+      .split("_")
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+      .join(" ");
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return "-";
+    return new Date(dateString).toLocaleString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
+  const getSourceBadge = (type) => {
+    const map = {
+      cms_user: "bg-blue-600",
+      zeoniq: "bg-orange-500",
+      lalamove: "bg-yellow-500",
+      grab: "bg-green-600",
+    };
+    return (
+      <span
+        className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium text-white ${map[type] || "bg-gray-500"}`}
+      >
+        {type === "cms_user" ? "CMS User" : formatStatus(type)}
+      </span>
+    );
+  };
+
+  const getChangeTypeBadge = (type) => {
+    return (
+      <span
+        className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium text-white ${type === "status" ? "bg-indigo-600" : "bg-teal-600"}`}
+      >
+        {formatStatus(type)}
+      </span>
+    );
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg shadow-lg w-[95%] max-w-2xl max-h-[80vh] flex flex-col">
+        <div className="bg-indigo-900 px-6 py-4 rounded-t-lg flex justify-between items-center">
+          <h2 className="text-lg font-semibold text-white">
+            Order Status & Delivery Logs
+          </h2>
+          <button
+            className="text-white hover:text-gray-300"
+            onClick={onClose}
+          >
+            <XCircle size={24} />
+          </button>
+        </div>
+        <div className="p-6 overflow-y-auto flex-1">
+          {loading ? (
+            <div className="flex justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+            </div>
+          ) : logs.length === 0 ? (
+            <p className="text-center text-gray-500 py-8">No logs found.</p>
+          ) : (
+            <div className="space-y-4">
+              {logs.map((log, index) => (
+                <div
+                  key={log.id || index}
+                  className="border border-gray-200 rounded-lg p-4"
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      {getChangeTypeBadge(log.change_type)}
+                      {getSourceBadge(log.changed_by_type)}
+                    </div>
+                    <span className="text-xs text-gray-500">
+                      {formatDate(log.created_at)}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <span className="text-gray-600">
+                      {formatStatus(log.old_value || "N/A")}
+                    </span>
+                    <span className="text-gray-400">&rarr;</span>
+                    <span className="font-medium text-gray-900">
+                      {formatStatus(log.new_value || "N/A")}
+                    </span>
+                  </div>
+                  {log.changed_by_type === "cms_user" && log.changed_by_name && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      By: {log.changed_by_name}
+                    </p>
+                  )}
+                  {log.remarks && (
+                    <p className="text-xs text-gray-400 mt-1">
+                      {log.remarks}
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const OrderOverview = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -141,6 +256,9 @@ const OrderOverview = () => {
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
   const [showOutletModal, setShowOutletModal] = useState(false);
+  const [showStatusLogsModal, setShowStatusLogsModal] = useState(false);
+  const [statusLogs, setStatusLogs] = useState([]);
+  const [statusLogsLoading, setStatusLogsLoading] = useState(false);
   const [outlets, setOutlets] = useState([]);
   const [selectedOutlet, setSelectedOutlet] = useState("");
   const [isChangingOutlet, setIsChangingOutlet] = useState(false);
@@ -377,6 +495,20 @@ const OrderOverview = () => {
     );
   };
 
+  const handleViewStatusLogs = async () => {
+    setShowStatusLogsModal(true);
+    setStatusLogsLoading(true);
+    try {
+      const logs = await orderService.getOrderStatusLogs(id);
+      setStatusLogs(logs || []);
+    } catch (err) {
+      console.error("Failed to fetch status logs:", err);
+      toast.error("Failed to load status logs");
+    } finally {
+      setStatusLogsLoading(false);
+    }
+  };
+
   const handleEditTime = () => {
     navigate(`/orders/order_overview/editTime/${id}`);
   };
@@ -570,7 +702,7 @@ const OrderOverview = () => {
 
               {parseFloat(order.promo_discount_amount) > 0 && (
                 <div className="flex justify-between text-red-600">
-                  <span>Promo Discount</span>
+                  <span>Promo Discount{order.promo_code ? ` (${order.promo_code})` : ''}</span>
                   <span>- RM{order.promo_discount_amount}</span>
                 </div>
               )}
@@ -825,10 +957,17 @@ const OrderOverview = () => {
         <div className="w-full lg:w-2/5 space-y-6">
           {/* Order Details */}
           <div className="bg-white rounded-lg shadow overflow-hidden">
-            <div className="bg-indigo-900 px-6 py-3">
+            <div className="bg-indigo-900 px-6 py-3 flex justify-between items-center">
               <h3 className="text-lg text-white font-semibold">
                 Order Details
               </h3>
+              <button
+                className="flex items-center gap-1 text-white hover:text-gray-300 text-sm"
+                onClick={handleViewStatusLogs}
+              >
+                <History size={16} />
+                View Logs
+              </button>
             </div>
             <div className="p-6 space-y-4">
               <div className="flex justify-between">
@@ -1163,6 +1302,12 @@ const OrderOverview = () => {
         onSelect={setSelectedOutlet}
         onConfirm={handleChangeOutlet}
         loading={isChangingOutlet}
+      />
+      <StatusLogsModal
+        open={showStatusLogsModal}
+        onClose={() => setShowStatusLogsModal(false)}
+        logs={statusLogs}
+        loading={statusLogsLoading}
       />
 
     </div>

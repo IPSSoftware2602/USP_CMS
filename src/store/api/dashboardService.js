@@ -76,6 +76,19 @@ class DashboardService {
       console.log(error);
     }
   }
+
+  async liveMonitorDetails(type) {
+    try {
+      const response = await fetch(`${BASE_URL}live-monitor/details/${type}`, {
+        method: "GET",
+        headers: this.getHeaders(),
+      });
+
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.log(error);
+    }
+  }
 }
 
 const dashboardService = new DashboardService();

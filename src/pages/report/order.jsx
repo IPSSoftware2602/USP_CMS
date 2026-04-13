@@ -155,8 +155,8 @@ const OrderReport = () => {
       wrap: true,
     },
     {
-      name: "Order SO",
-      selector: (row) => row["Order SO"],
+      name: "Order NO",
+      selector: (row) => row["Order NO"],
       wrap: true,
     },
     {

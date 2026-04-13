@@ -70,7 +70,7 @@ const UniqueQrDetailReport = () => {
     };
 
     const columns = useMemo(() => [
-        { Header: 'Order SO', accessor: 'order_so' },
+        { Header: 'Order No', accessor: 'order_so' },
         { Header: 'Customer Name', accessor: 'customer_name' },
         { Header: 'Phone', accessor: 'customer_phone' },
         { Header: 'Method', accessor: 'order_type' },

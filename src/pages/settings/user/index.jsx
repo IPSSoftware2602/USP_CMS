@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import DataTable from 'react-data-table-component';
-import { Plus, Download, Edit, Trash2, Eye, EyeOff, RefreshCw, ChevronDown, LogIn } from 'lucide-react';
+import { Plus, Download, Edit, Trash2, Eye, EyeOff, RefreshCw, ChevronDown, LogIn, Search, X } from 'lucide-react';
 import DeleteConfirmationModal from '@/components/ui/DeletePopUp';
 import { useNavigate } from 'react-router-dom';
 import UserService from '../../../store/api/userService';
@@ -34,6 +34,28 @@ const UserDataTable = () => {
   const hasExportPermission = useExportPermission();
   const [currentUserId, setCurrentUserId] = useState(null);
   const canImpersonate = currentUserId === 1;
+
+  // Filters
+  const [filters, setFilters] = useState({
+    search: '',
+    role: 'All',
+    status: 'All',
+  });
+  const [showFilters, setShowFilters] = useState(false);
+
+  // Static role/status options (matches backend stored values)
+  const roleOptions = ['All', 'Admin', 'Editor', 'Moderator', 'Outlet', 'Account'];
+  const statusOptions = ['All', 'Active', 'Inactive'];
+
+  const handleResetFilters = () => {
+    const reset = { search: '', role: 'All', status: 'All' };
+    setFilters(reset);
+    fetchUsers(reset);
+  };
+
+  const handleApplyFilters = () => {
+    fetchUsers(filters);
+  };
 
   const fetchUserPermissions = async () => {
     try {
@@ -100,13 +122,13 @@ const UserDataTable = () => {
     }
   }, [currentUserId, isAdmin]);
 
-  const fetchUsers = async () => {
+  const fetchUsers = async (appliedFilters = filters) => {
     try {
       setLoading(true);
       setError(null);
 
       // Always fetch all users for both admin and non-admin
-      const allUsers = await UserService.getAllUsers(currentUserId);
+      const allUsers = await UserService.getAllUsers(currentUserId, appliedFilters);
 
       // Transform the data to match expected property names
       const transformedUsers = allUsers.map(user => ({
@@ -409,6 +431,14 @@ const UserDataTable = () => {
             {isAdmin ? 'User Management' : 'User Profile'}
           </h2>
           <div className="flex space-x-3">
+            <button
+              onClick={() => setShowFilters(v => !v)}
+              className="flex items-center px-4 py-2 text-gray-600 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+              title="Toggle filters"
+            >
+              <Search size={16} className="mr-2" />
+              Filter
+            </button>
             {hasExportPermission && (
               <button
                 onClick={handleExportCSV}
@@ -432,6 +462,74 @@ const UserDataTable = () => {
             )}
           </div>
         </div>
+
+        {/* Filter Bar */}
+        {showFilters && (
+          <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="md:col-span-2">
+                <label className="block text-xs font-semibold uppercase tracking-wide text-gray-600 mb-1">Search</label>
+                <div className="relative">
+                  <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="Search by username or name..."
+                    value={filters.search}
+                    onChange={e => setFilters(prev => ({ ...prev, search: e.target.value }))}
+                    onKeyDown={e => { if (e.key === 'Enter') handleApplyFilters(); }}
+                    className="w-full h-10 pl-9 pr-9 rounded-md border border-gray-300 bg-white text-sm focus:border-indigo-500 focus:ring-indigo-500"
+                  />
+                  {filters.search && (
+                    <button
+                      onClick={() => setFilters(prev => ({ ...prev, search: '' }))}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600"
+                    >
+                      <X size={14} />
+                    </button>
+                  )}
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wide text-gray-600 mb-1">Role</label>
+                <select
+                  value={filters.role}
+                  onChange={e => setFilters(prev => ({ ...prev, role: e.target.value }))}
+                  className="w-full h-10 px-3 rounded-md border border-gray-300 bg-white text-sm focus:border-indigo-500 focus:ring-indigo-500"
+                >
+                  {roleOptions.map(opt => (
+                    <option key={opt} value={opt}>{opt}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wide text-gray-600 mb-1">Status</label>
+                <select
+                  value={filters.status}
+                  onChange={e => setFilters(prev => ({ ...prev, status: e.target.value }))}
+                  className="w-full h-10 px-3 rounded-md border border-gray-300 bg-white text-sm focus:border-indigo-500 focus:ring-indigo-500"
+                >
+                  {statusOptions.map(opt => (
+                    <option key={opt} value={opt}>{opt}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <div className="mt-3 flex items-center justify-end space-x-2">
+              <button
+                onClick={handleResetFilters}
+                className="px-3 h-9 text-sm border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50"
+              >
+                Reset
+              </button>
+              <button
+                onClick={handleApplyFilters}
+                className="px-4 h-9 text-sm border border-transparent rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
+              >
+                Apply
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Data Table */}
         <DataTable

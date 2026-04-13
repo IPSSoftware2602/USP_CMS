@@ -77,9 +77,14 @@ class UserService {
 }
 
   // Get all users
-  static async getAllUsers(user_id) {
+  static async getAllUsers(user_id, filters = {}) {
     try {
-      const response = await fetch(`${BASE_URL}users?user_id=${user_id}`, {
+      const params = new URLSearchParams({ user_id });
+      if (filters.search) params.append('search', filters.search);
+      if (filters.role && filters.role !== 'All') params.append('role', filters.role);
+      if (filters.status && filters.status !== 'All') params.append('status', filters.status);
+
+      const response = await fetch(`${BASE_URL}users?${params.toString()}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',

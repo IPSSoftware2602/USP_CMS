@@ -332,6 +332,18 @@ const PushNotificationPage = () => {
                             ></textarea>
                         </FormGroup>
 
+                        <FormGroup label="Notification Image (Optional)">
+                            <Fileinput
+                                name="image"
+                                selectedFile={image}
+                                onChange={(e) => setImage(e.target.files[0])}
+                                preview
+                            />
+                            <p className="text-[10px] text-slate-500 mt-1">
+                                Upload an image to display in the push notification (recommended &lt; 1MB, JPG/PNG).
+                            </p>
+                        </FormGroup>
+
                         {/* <FormGroup label="Link Type">
                             <div className="flex space-x-4">
                                 <Radio

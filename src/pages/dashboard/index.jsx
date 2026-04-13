@@ -44,6 +44,30 @@ const Dashboard = () => {
   const [liveMonitor, setLiveMonitor] = useState({});
   const [role, setRole] = useState("");
 
+  // Live monitor details modal
+  const [detailsModal, setDetailsModal] = useState({
+    open: false,
+    type: null, // 'offline-outlets' | 'cancelled-orders' | 'delayed-orders'
+    title: '',
+    loading: false,
+    data: [],
+    error: null,
+  });
+
+  const openDetailsModal = async (type, title) => {
+    setDetailsModal({ open: true, type, title, loading: true, data: [], error: null });
+    try {
+      const res = await dashboardService.liveMonitorDetails(type);
+      setDetailsModal(prev => ({ ...prev, loading: false, data: res?.data || [] }));
+    } catch (err) {
+      setDetailsModal(prev => ({ ...prev, loading: false, error: err?.message || 'Failed to load details' }));
+    }
+  };
+
+  const closeDetailsModal = () => {
+    setDetailsModal({ open: false, type: null, title: '', loading: false, data: [], error: null });
+  };
+
   useEffect(() => {
     setRole(getDashboardRole());
   }, []);
@@ -223,18 +247,21 @@ const Dashboard = () => {
       value: liveMonitor.offline_outlets,
       icon: <Store className="text-orange-400" />,
       subtitle: "Current",
+      type: "offline-outlets",
     },
     {
       title: "Cancelled Orders",
       value: liveMonitor.cancelled_orders || 0,
       icon: <XCircle className="text-green-400" />,
       subtitle: "Today",
+      type: "cancelled-orders",
     },
     {
       title: "Delayed Orders",
-      value: "0",
+      value: liveMonitor.delayed_orders || 0,
       icon: <Clock className="text-blue-400" />,
       subtitle: "Today",
+      type: "delayed-orders",
     },
   ];
 
@@ -319,7 +346,8 @@ const Dashboard = () => {
               {liveMonitorLeft.map((item, index) => (
                 <div
                   key={index}
-                  className="flex items-center justify-between py-4 border-b last:border-b-0"
+                  className={`flex items-center justify-between py-4 border-b last:border-b-0 px-2 -mx-2 rounded ${item.type ? 'cursor-pointer hover:bg-gray-50 transition-colors' : ''}`}
+                  onClick={() => item.type && openDetailsModal(item.type, item.title)}
                 >
                   <div className="flex items-center">
                     <div className="rounded-full bg-gray-100 p-3 mr-4">
@@ -442,6 +470,133 @@ const Dashboard = () => {
             </div>
           </div>
         </>
+      )}
+
+      {/* Live Monitor Details Modal */}
+      {detailsModal.open && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={closeDetailsModal}>
+          <div
+            className="bg-white rounded-lg shadow-xl w-full max-w-3xl max-h-[85vh] flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between px-6 py-4 border-b">
+              <h3 className="text-lg font-semibold text-gray-900">{detailsModal.title}</h3>
+              <button
+                onClick={closeDetailsModal}
+                className="text-gray-400 hover:text-gray-600 text-2xl leading-none"
+                aria-label="Close"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto px-6 py-4">
+              {detailsModal.loading ? (
+                <div className="flex justify-center items-center py-12">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+                  <span className="ml-3 text-gray-600">Loading...</span>
+                </div>
+              ) : detailsModal.error ? (
+                <div className="text-center text-red-600 py-8">{detailsModal.error}</div>
+              ) : detailsModal.data.length === 0 ? (
+                <div className="text-center text-gray-500 py-8">No records found.</div>
+              ) : detailsModal.type === 'offline-outlets' ? (
+                <table className="min-w-full text-sm">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-3 py-2 text-left font-semibold text-gray-700">Outlet</th>
+                      <th className="px-3 py-2 text-left font-semibold text-gray-700">State</th>
+                      <th className="px-3 py-2 text-left font-semibold text-gray-700">Today's Hours</th>
+                      <th className="px-3 py-2 text-left font-semibold text-gray-700">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {detailsModal.data.map((o) => (
+                      <tr key={o.id} className="border-b hover:bg-gray-50">
+                        <td className="px-3 py-2">
+                          <div className="font-medium text-gray-900">{o.title}</div>
+                          <div className="text-xs text-gray-500">{o.address}</div>
+                        </td>
+                        <td className="px-3 py-2 text-gray-700">{o.state || '-'}</td>
+                        <td className="px-3 py-2 text-gray-700">
+                          {!o.is_operated_today ? (
+                            <span className="text-gray-500 italic">Not operating today</span>
+                          ) : o.today_hours && o.today_hours.length > 0 ? (
+                            o.today_hours.map((h, i) => (
+                              <div key={i}>{h.start_time} - {h.end_time}</div>
+                            ))
+                          ) : (
+                            '-'
+                          )}
+                        </td>
+                        <td className="px-3 py-2">
+                          <span className="px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                            {o.status || 'Offline'}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              ) : (
+                <table className="min-w-full text-sm">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-3 py-2 text-left font-semibold text-gray-700">Order #</th>
+                      <th className="px-3 py-2 text-left font-semibold text-gray-700">Outlet</th>
+                      <th className="px-3 py-2 text-left font-semibold text-gray-700">Customer</th>
+                      <th className="px-3 py-2 text-left font-semibold text-gray-700">Type</th>
+                      <th className="px-3 py-2 text-right font-semibold text-gray-700">Total</th>
+                      <th className="px-3 py-2 text-left font-semibold text-gray-700">
+                        {detailsModal.type === 'delayed-orders' ? 'Scheduled' : 'Created'}
+                      </th>
+                      {detailsModal.type === 'delayed-orders' && (
+                        <th className="px-3 py-2 text-left font-semibold text-gray-700">Status</th>
+                      )}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {detailsModal.data.map((o) => (
+                      <tr key={o.id} className="border-b hover:bg-gray-50">
+                        <td className="px-3 py-2 font-medium text-gray-900">{o.order_so || `#${o.id}`}</td>
+                        <td className="px-3 py-2 text-gray-700">{o.outlet_title || '-'}</td>
+                        <td className="px-3 py-2 text-gray-700">{o.customer_name || '-'}</td>
+                        <td className="px-3 py-2 text-gray-700 capitalize">{o.order_type || '-'}</td>
+                        <td className="px-3 py-2 text-right text-gray-700">
+                          RM {parseFloat(o.grand_total || 0).toFixed(2)}
+                        </td>
+                        <td className="px-3 py-2 text-gray-700">
+                          {detailsModal.type === 'delayed-orders'
+                            ? `${o.selected_date || ''} ${o.selected_time || ''}`.trim() || '-'
+                            : o.created_at}
+                        </td>
+                        {detailsModal.type === 'delayed-orders' && (
+                          <td className="px-3 py-2">
+                            <span className="px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 capitalize">
+                              {o.status}
+                            </span>
+                          </td>
+                        )}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+
+            <div className="px-6 py-3 border-t bg-gray-50 flex justify-between items-center">
+              <span className="text-xs text-gray-500">
+                {detailsModal.loading ? '' : `${detailsModal.data.length} record(s)`}
+              </span>
+              <button
+                onClick={closeDetailsModal}
+                className="px-4 py-2 text-sm border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

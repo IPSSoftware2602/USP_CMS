@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Save, X, ChevronDown, ChevronRight, Loader2 } from 'lucide-react';
+import { Save, X, ChevronDown, ChevronRight, Loader2, Search, Zap } from 'lucide-react';
 import OutletApiService from '../../../store/api/outletService';
 import ItemService from '../../../store/api/itemService';
 import CategoryService from '../../../store/api/categoryService';
@@ -17,10 +17,14 @@ const CreateDiscount = () => {
     discount_value: '',
     outlet_list: [],
     menu_item_list: [],
+    variation_list: [],
     status: 'active',
     tier_id_list: '0',
     only_available_for_qr: '0'
   });
+
+  // Expanded items to show variations
+  const [expandedItems, setExpandedItems] = useState({});
 
   // State for outlets
   const [outlets, setOutlets] = useState([]);
@@ -110,8 +114,8 @@ const CreateDiscount = () => {
         }
         setCategories(categoriesData);
 
-        // Fetch menu items
-        const itemsResponse = await ItemService.getMenuItems();
+        // Fetch menu items WITH variations for variation-level discount targeting
+        const itemsResponse = await ItemService.getMenuItemsFullList();
         let itemsData = [];
 
         if (Array.isArray(itemsResponse)) {
@@ -206,35 +210,130 @@ const CreateDiscount = () => {
     });
   };
 
-  const handleItemChange = (itemId, isChecked) => {
-    const id = Number(itemId);
-    setFormData(prev => ({
-      ...prev,
-      menu_item_list: isChecked
-        ? [...prev.menu_item_list, id]
-        : prev.menu_item_list.filter(selectedId => selectedId !== id)
-    }));
+  // Get all variation IDs for a given menu item
+  const getVariationIds = (item) => {
+    return (item.variation_group || []).map(vg => Number(vg.variation?.id || vg.id)).filter(Boolean);
+  };
+
+  // Check if item has variations
+  const hasVariations = (item) => {
+    return (item.variation_group || []).length > 0;
+  };
+
+  // Toggle a single menu item. If item has variations, also toggle all its variations.
+  const handleItemChange = (item, isChecked) => {
+    const id = Number(item.id || item);
+    const itemObj = typeof item === 'object' ? item : menuItems.find(i => Number(i.id) === id);
+    const variationIds = itemObj ? getVariationIds(itemObj) : [];
+
+    setFormData(prev => {
+      const newMenuItems = isChecked
+        ? [...new Set([...prev.menu_item_list, id])]
+        : prev.menu_item_list.filter(selectedId => selectedId !== id);
+
+      // When item is checked, also select all its variations.
+      // When unchecked, also deselect all its variations.
+      const newVariations = isChecked
+        ? [...new Set([...prev.variation_list, ...variationIds])]
+        : prev.variation_list.filter(vid => !variationIds.includes(vid));
+
+      return { ...prev, menu_item_list: newMenuItems, variation_list: newVariations };
+    });
+  };
+
+  // Toggle a single variation within an item.
+  const handleVariationChange = (item, variationId, isChecked) => {
+    const itemId = Number(item.id);
+    const vid = Number(variationId);
+
+    setFormData(prev => {
+      const newVariations = isChecked
+        ? [...new Set([...prev.variation_list, vid])]
+        : prev.variation_list.filter(v => v !== vid);
+
+      // Auto-add item to menu_item_list if any of its variations are selected.
+      // Auto-remove item if NONE of its variations are selected.
+      const allItemVarIds = getVariationIds(item);
+      const anySelected = allItemVarIds.some(v => newVariations.includes(v));
+      let newMenuItems = prev.menu_item_list;
+      if (anySelected && !newMenuItems.includes(itemId)) {
+        newMenuItems = [...newMenuItems, itemId];
+      } else if (!anySelected && newMenuItems.includes(itemId)) {
+        newMenuItems = newMenuItems.filter(id => id !== itemId);
+      }
+
+      return { ...prev, variation_list: newVariations, menu_item_list: newMenuItems };
+    });
+  };
+
+  // Are ALL variations of this item selected?
+  const areAllVariationsSelected = (item) => {
+    const varIds = getVariationIds(item);
+    if (varIds.length === 0) return formData.menu_item_list.includes(Number(item.id));
+    return varIds.every(vid => formData.variation_list.includes(vid));
+  };
+
+  // Is this item checked? (all variations selected, or no variations and item is in list)
+  const isItemSelected = (item) => {
+    if (hasVariations(item)) {
+      return getVariationIds(item).some(vid => formData.variation_list.includes(vid));
+    }
+    return formData.menu_item_list.includes(Number(item.id));
   };
 
   const handleCategoryItemsChange = (categoryId, checked) => {
     const categoryItems = getItemsForCategory(categoryId);
-    const categoryItemIds = categoryItems.map(item => Number(item.id));
-
-    setFormData(prev => {
-      const newMenuItems = checked
-        ? [...new Set([...prev.menu_item_list, ...categoryItemIds])]
-        : prev.menu_item_list.filter(id => !categoryItemIds.includes(id));
-
-      return { ...prev, menu_item_list: newMenuItems };
-    });
+    categoryItems.forEach(item => handleItemChange(item, checked));
   };
 
   const areAllCategoryItemsSelected = (categoryId) => {
     const categoryItems = getItemsForCategory(categoryId);
     if (categoryItems.length === 0) return false;
+    return categoryItems.every(item => areAllVariationsSelected(item));
+  };
 
-    return categoryItems.every(item =>
-      formData.menu_item_list.includes(Number(item.id))
+  const toggleItemExpansion = (itemId) => {
+    setExpandedItems(prev => ({ ...prev, [itemId]: !prev[itemId] }));
+  };
+
+  // ──── Quick Search: find variations by keyword and select all matches ────
+  const [variationSearchQuery, setVariationSearchQuery] = useState('');
+
+  // All variations across all items, flattened for search
+  const allVariationsFlat = useMemo(() => {
+    const result = [];
+    menuItems.forEach(item => {
+      (item.variation_group || []).forEach(vg => {
+        const v = vg.variation || vg;
+        result.push({
+          variationId: Number(v.id),
+          variationTitle: v.title || v.name || '',
+          variationPrice: v.price,
+          itemId: Number(item.id),
+          itemName: item.name || item.title || '',
+          item,
+        });
+      });
+    });
+    return result;
+  }, [menuItems]);
+
+  const filteredVariationsSearch = useMemo(() => {
+    if (!variationSearchQuery.trim()) return [];
+    const q = variationSearchQuery.toLowerCase().trim();
+    return allVariationsFlat.filter(v => v.variationTitle.toLowerCase().includes(q));
+  }, [allVariationsFlat, variationSearchQuery]);
+
+  const handleSelectAllSearchedVariations = (isChecked) => {
+    filteredVariationsSearch.forEach(({ item, variationId }) => {
+      handleVariationChange(item, variationId, isChecked);
+    });
+  };
+
+  const areAllSearchedVariationsSelected = () => {
+    if (filteredVariationsSearch.length === 0) return false;
+    return filteredVariationsSearch.every(({ variationId }) =>
+      formData.variation_list.includes(variationId)
     );
   };
 
@@ -265,8 +364,8 @@ const CreateDiscount = () => {
       newErrors.outlet_list = 'At least one outlet is required';
     }
 
-    if (formData.menu_item_list.length === 0) {
-      newErrors.menu_item_list = 'At least one menu item is required';
+    if (formData.menu_item_list.length === 0 && formData.variation_list.length === 0) {
+      newErrors.menu_item_list = 'At least one menu item or variation is required';
     }
 
     if (!formData.tier_id_list) {
@@ -353,16 +452,18 @@ const CreateDiscount = () => {
   };
 
   const getSelectedItemsNames = () => {
-    if (formData.menu_item_list.length === 0) return "No items selected";
+    if (formData.menu_item_list.length === 0 && formData.variation_list.length === 0) return "No items selected";
 
     const selectedItemNames = menuItems
       .filter(item => formData.menu_item_list.includes(Number(item.id)))
       .slice(0, 3)
       .map(item => item.name || item.title || `Item #${item.id}`);
 
-    return formData.menu_item_list.length > 3
-      ? `${selectedItemNames.join(', ')} and ${formData.menu_item_list.length - 3} more...`
-      : selectedItemNames.join(', ');
+    const totalItems = formData.menu_item_list.length;
+    const totalVariations = formData.variation_list.length;
+    const names = selectedItemNames.join(', ');
+    const extra = totalItems > 3 ? ` and ${totalItems - 3} more...` : '';
+    return `${names}${extra}${totalVariations > 0 ? ` (${totalVariations} variation${totalVariations > 1 ? 's' : ''})` : ''}`;
   };
 
   return (
@@ -526,9 +627,13 @@ const CreateDiscount = () => {
           )}
         </div>
 
-        {/* Menu Item Selection Section */}
+        {/* Menu Item & Variation Selection Section */}
         <div className="bg-white border p-6">
-          <h2 className="text-lg font-semibold text-gray-800 mb-4">3. Select Menu Items *</h2>
+          <h2 className="text-lg font-semibold text-gray-800 mb-4">3. Select Menu Items & Variations *</h2>
+          <p className="text-xs text-gray-500 mb-3">
+            Click an item to expand and select specific variations.
+            Checking the item checkbox selects ALL its variations.
+          </p>
 
           {loadingCategories ? (
             <div className="flex justify-center py-8">
@@ -540,8 +645,80 @@ const CreateDiscount = () => {
             <div className="space-y-4">
               <div className="text-sm text-gray-600">
                 {formData.menu_item_list.length > 0
-                  ? `${formData.menu_item_list.length} item(s) selected`
+                  ? `${formData.menu_item_list.length} item(s), ${formData.variation_list.length} variation(s) selected`
                   : 'No items selected'}
+              </div>
+
+              {/* Quick Search — find and select variations by keyword */}
+              <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
+                <div className="flex items-center mb-2">
+                  <Search className="h-4 w-4 text-indigo-600 mr-2" />
+                  <span className="text-xs font-semibold text-indigo-700 uppercase tracking-wider">Quick Search Variations</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    placeholder='Search variations (e.g. "Large", "9 inch", "Stuffed")...'
+                    value={variationSearchQuery}
+                    onChange={(e) => setVariationSearchQuery(e.target.value)}
+                    className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+                  />
+                  {variationSearchQuery.trim() && filteredVariationsSearch.length > 0 && (
+                    <>
+                      <button
+                        onClick={() => handleSelectAllSearchedVariations(true)}
+                        className="px-3 py-2 text-xs font-medium text-white rounded transition-colors"
+                        style={{ backgroundColor: '#312e81' }}
+                      >
+                        Select All ({filteredVariationsSearch.length})
+                      </button>
+                      <button
+                        onClick={() => handleSelectAllSearchedVariations(false)}
+                        className="px-3 py-2 text-xs font-medium text-gray-600 bg-white border border-gray-300 rounded hover:bg-gray-50 transition-colors"
+                      >
+                        Deselect All
+                      </button>
+                    </>
+                  )}
+                </div>
+                {variationSearchQuery.trim() && (
+                  <div className="mt-2">
+                    {filteredVariationsSearch.length === 0 ? (
+                      <div className="text-xs text-gray-400 py-1">No variations match "{variationSearchQuery}"</div>
+                    ) : (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 max-h-48 overflow-y-auto">
+                        {filteredVariationsSearch.map(({ variationId, variationTitle, variationPrice, itemName, item }) => {
+                          const isSelected = formData.variation_list.includes(variationId);
+                          return (
+                            <label
+                              key={`search-${variationId}-${item.id}`}
+                              className={`flex items-center p-2 border rounded cursor-pointer transition-colors text-xs ${
+                                isSelected
+                                  ? 'bg-indigo-100 border-indigo-400'
+                                  : 'bg-white border-gray-200 hover:bg-indigo-50'
+                              }`}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={isSelected}
+                                onChange={(e) => handleVariationChange(item, variationId, e.target.checked)}
+                                className="h-3.5 w-3.5 mr-2"
+                                style={{ color: '#312e81' }}
+                              />
+                              <div className="truncate">
+                                <span className="font-medium text-gray-800">{variationTitle}</span>
+                                <span className="text-gray-400 ml-1">— {itemName}</span>
+                                {variationPrice != null && (
+                                  <span className="text-gray-400 ml-1">RM{Number(variationPrice).toFixed(2)}</span>
+                                )}
+                              </div>
+                            </label>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
               <div className="max-h-96 overflow-y-auto border p-2">
@@ -580,31 +757,94 @@ const CreateDiscount = () => {
                       </div>
 
                       {isExpanded && categoryItems.length > 0 && (
-                        <div className="border-t">
-                          <div className="p-3 space-y-2">
-                            {categoryItems.map((item) => (
-                              <label
-                                key={item.id}
-                                className="flex items-center p-2 hover:bg-gray-50 cursor-pointer"
-                              >
-                                <input
-                                  type="checkbox"
-                                  checked={formData.menu_item_list.includes(Number(item.id))}
-                                  onChange={(e) => handleItemChange(item.id, e.target.checked)}
-                                  className="h-4 w-4 mr-3"
-                                  style={{ color: '#312e81' }}
-                                />
-                                <div className="flex-1">
-                                  <div className="text-sm font-medium text-gray-900">
-                                    {item.name || item.title}
+                        <div className="border-t divide-y">
+                          {categoryItems.map((item) => {
+                            const itemHasVars = hasVariations(item);
+                            const isItemExp = expandedItems[item.id] || false;
+                            const variations = item.variation_group || [];
+
+                            return (
+                              <div key={item.id}>
+                                <div
+                                  className="p-3 pl-6 flex items-center justify-between hover:bg-gray-50 cursor-pointer"
+                                  onClick={() => itemHasVars && toggleItemExpansion(item.id)}
+                                >
+                                  <div className="flex items-center flex-1">
+                                    <input
+                                      type="checkbox"
+                                      checked={areAllVariationsSelected(item)}
+                                      onChange={(e) => {
+                                        e.stopPropagation();
+                                        handleItemChange(item, e.target.checked);
+                                      }}
+                                      className="h-4 w-4 mr-3"
+                                      style={{ color: '#312e81' }}
+                                      onClick={(e) => e.stopPropagation()}
+                                    />
+                                    <div className="flex-1">
+                                      <div className="text-sm font-medium text-gray-900">
+                                        {item.name || item.title}
+                                        {itemHasVars && (
+                                          <span className="text-xs text-gray-400 ml-2">
+                                            ({variations.length} variation{variations.length > 1 ? 's' : ''})
+                                          </span>
+                                        )}
+                                      </div>
+                                      <div className="text-xs text-gray-500">
+                                        Price: RM{item.price || 'N/A'}
+                                      </div>
+                                    </div>
                                   </div>
-                                  <div className="text-xs text-gray-500">
-                                    Price: RM{item.price || 'N/A'}
-                                  </div>
+                                  {itemHasVars && (
+                                    <div className="text-gray-400">
+                                      {isItemExp ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                                    </div>
+                                  )}
                                 </div>
-                              </label>
-                            ))}
-                          </div>
+
+                                {/* Variation sub-rows */}
+                                {isItemExp && itemHasVars && (
+                                  <div className="pl-14 pr-4 pb-3 bg-gray-50 border-t">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 pt-2">
+                                      {variations.map((vg) => {
+                                        const v = vg.variation || vg;
+                                        const vid = Number(v.id);
+                                        const isVarSelected = formData.variation_list.includes(vid);
+                                        return (
+                                          <label
+                                            key={vid}
+                                            className={`flex items-center p-2 border rounded cursor-pointer transition-colors ${
+                                              isVarSelected
+                                                ? 'bg-indigo-50 border-indigo-300'
+                                                : 'bg-white border-gray-200 hover:bg-indigo-50'
+                                            }`}
+                                          >
+                                            <input
+                                              type="checkbox"
+                                              checked={isVarSelected}
+                                              onChange={(e) => handleVariationChange(item, vid, e.target.checked)}
+                                              className="h-3.5 w-3.5 mr-2"
+                                              style={{ color: '#312e81' }}
+                                            />
+                                            <div>
+                                              <span className="text-xs font-medium text-gray-800">
+                                                {v.title || v.name}
+                                              </span>
+                                              {v.price != null && (
+                                                <span className="text-xs text-gray-400 ml-1">
+                                                  RM{Number(v.price).toFixed(2)}
+                                                </span>
+                                              )}
+                                            </div>
+                                          </label>
+                                        );
+                                      })}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
                         </div>
                       )}
                     </div>
@@ -639,31 +879,93 @@ const CreateDiscount = () => {
                     </div>
 
                     {expandedCategories['uncategorized'] && (
-                      <div className="border-t">
-                        <div className="p-3 space-y-2">
-                          {getUncategorizedItems().map((item) => (
-                            <label
-                              key={item.id}
-                              className="flex items-center p-2 hover:bg-gray-50 cursor-pointer"
-                            >
-                              <input
-                                type="checkbox"
-                                checked={formData.menu_item_list.includes(Number(item.id))}
-                                onChange={(e) => handleItemChange(item.id, e.target.checked)}
-                                className="h-4 w-4 mr-3"
-                                style={{ color: '#312e81' }}
-                              />
-                              <div className="flex-1">
-                                <div className="text-sm font-medium text-gray-900">
-                                  {item.name || item.title}
+                      <div className="border-t divide-y">
+                        {getUncategorizedItems().map((item) => {
+                          const itemHasVars = hasVariations(item);
+                          const isItemExp = expandedItems[item.id] || false;
+                          const variations = item.variation_group || [];
+
+                          return (
+                            <div key={item.id}>
+                              <div
+                                className="p-3 pl-6 flex items-center justify-between hover:bg-gray-50 cursor-pointer"
+                                onClick={() => itemHasVars && toggleItemExpansion(item.id)}
+                              >
+                                <div className="flex items-center flex-1">
+                                  <input
+                                    type="checkbox"
+                                    checked={areAllVariationsSelected(item)}
+                                    onChange={(e) => {
+                                      e.stopPropagation();
+                                      handleItemChange(item, e.target.checked);
+                                    }}
+                                    className="h-4 w-4 mr-3"
+                                    style={{ color: '#312e81' }}
+                                    onClick={(e) => e.stopPropagation()}
+                                  />
+                                  <div className="flex-1">
+                                    <div className="text-sm font-medium text-gray-900">
+                                      {item.name || item.title}
+                                      {itemHasVars && (
+                                        <span className="text-xs text-gray-400 ml-2">
+                                          ({variations.length} variation{variations.length > 1 ? 's' : ''})
+                                        </span>
+                                      )}
+                                    </div>
+                                    <div className="text-xs text-gray-500">
+                                      Price: RM{item.price || 'N/A'}
+                                    </div>
+                                  </div>
                                 </div>
-                                <div className="text-xs text-gray-500">
-                                  Price: RM{item.price || 'N/A'}
-                                </div>
+                                {itemHasVars && (
+                                  <div className="text-gray-400">
+                                    {isItemExp ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                                  </div>
+                                )}
                               </div>
-                            </label>
-                          ))}
-                        </div>
+
+                              {isItemExp && itemHasVars && (
+                                <div className="pl-14 pr-4 pb-3 bg-gray-50 border-t">
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 pt-2">
+                                    {variations.map((vg) => {
+                                      const v = vg.variation || vg;
+                                      const vid = Number(v.id);
+                                      const isVarSelected = formData.variation_list.includes(vid);
+                                      return (
+                                        <label
+                                          key={vid}
+                                          className={`flex items-center p-2 border rounded cursor-pointer transition-colors ${
+                                            isVarSelected
+                                              ? 'bg-indigo-50 border-indigo-300'
+                                              : 'bg-white border-gray-200 hover:bg-indigo-50'
+                                          }`}
+                                        >
+                                          <input
+                                            type="checkbox"
+                                            checked={isVarSelected}
+                                            onChange={(e) => handleVariationChange(item, vid, e.target.checked)}
+                                            className="h-3.5 w-3.5 mr-2"
+                                            style={{ color: '#312e81' }}
+                                          />
+                                          <div>
+                                            <span className="text-xs font-medium text-gray-800">
+                                              {v.title || v.name}
+                                            </span>
+                                            {v.price != null && (
+                                              <span className="text-xs text-gray-400 ml-1">
+                                                RM{Number(v.price).toFixed(2)}
+                                              </span>
+                                            )}
+                                          </div>
+                                        </label>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
                       </div>
                     )}
                   </div>
