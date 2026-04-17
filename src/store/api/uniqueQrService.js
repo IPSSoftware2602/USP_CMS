@@ -169,6 +169,21 @@ class UniqueQrService {
         }
     }
     
+    async getOptionGroupsWithOptions() {
+        const token = this.getToken();
+        try {
+            const response = await fetch(`${BASE_URL}option-group/list-with-options`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+            return await this.handleResponse(response);
+        } catch (error) {
+            console.error("Error fetching option groups:", error);
+            throw error;
+        }
+    }
+
     async getMenuCategories() {
         const token = this.getToken();
         try {

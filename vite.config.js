@@ -7,6 +7,9 @@ import { BASE_URL } from "./src/constant/config";
 // https://vitejs.dev/config/
 export default defineConfig({
   base: '/cms/',
+  esbuild: {
+    drop: ['console', 'debugger'],
+  },
   build: {
     outDir: 'dist/cms',
     assetsDir: 'assets',

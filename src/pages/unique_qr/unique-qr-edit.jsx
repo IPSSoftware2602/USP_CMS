@@ -37,6 +37,11 @@ const UniqueQrEdit = () => {
     const [selectedStoreDiscountIds, setSelectedStoreDiscountIds] = useState([]);
     const [showDiscountPopup, setShowDiscountPopup] = useState(false);
     const [discountSearch, setDiscountSearch] = useState("");
+    const [selectedOptionIds, setSelectedOptionIds] = useState([]);
+    const [showOptionPopup, setShowOptionPopup] = useState(false);
+    const [optionSearch, setOptionSearch] = useState("");
+    const [allOptionGroups, setAllOptionGroups] = useState([]);
+    const [collapsedOptionGroups, setCollapsedOptionGroups] = useState(new Set());
 
     const [formData, setFormData] = useState({
         name: "",
@@ -62,11 +67,12 @@ const UniqueQrEdit = () => {
     const loadData = async () => {
         try {
             setFetching(true);
-            const [outletsRes, menuRes, categoriesRes, storeDiscountsRes, qrRes] = await Promise.all([
+            const [outletsRes, menuRes, categoriesRes, storeDiscountsRes, optionGroupsRes, qrRes] = await Promise.all([
                 UniqueQrService.getOutlets(user_id),
                 UniqueQrService.getMenuItems(),
                 UniqueQrService.getMenuCategories(),
                 UniqueQrService.getStoreDiscounts(),
+                UniqueQrService.getOptionGroupsWithOptions(),
                 UniqueQrService.getOne(id),
             ]);
 
@@ -74,6 +80,7 @@ const UniqueQrEdit = () => {
             const menuRaw = Array.isArray(menuRes.data) ? menuRes.data : (Array.isArray(menuRes.result) ? menuRes.result : []);
             const categoriesList = Array.isArray(categoriesRes.data) ? categoriesRes.data : [];
             const discountsList = Array.isArray(storeDiscountsRes.data) ? storeDiscountsRes.data : [];
+            const optionGroupsList = Array.isArray(optionGroupsRes.data) ? optionGroupsRes.data : [];
             
             // Map 'title' to 'name' for consistency
             const menuList = menuRaw.map((m) => {
@@ -86,6 +93,7 @@ const UniqueQrEdit = () => {
             });
             setOutlets(outletsList);
             setAllMenuItems(menuList);
+            setAllOptionGroups(optionGroupsList);
             setMenuCategories(categoriesList);
             setStoreDiscounts(discountsList);
 
@@ -128,6 +136,11 @@ const UniqueQrEdit = () => {
                 }
 
                 setSelectedMenuItems(restoredItems);
+
+                // Restore selected options
+                if (qr.option_ids && Array.isArray(qr.option_ids)) {
+                    setSelectedOptionIds(qr.option_ids.map(Number));
+                }
             }
         } catch (err) {
             toast.error("Failed to load data.");
@@ -368,6 +381,61 @@ const UniqueQrEdit = () => {
         setSelectedMenuItems((prev) => prev.filter((x) => !filteredIds.includes(Number(x.menu_item_id))));
     };
 
+    // Derive available option groups (with options) from selected menu items
+    const availableOptionGroupsWithOptions = (() => {
+        const selectedItemIds = selectedMenuItems.map(s => Number(s.menu_item_id));
+        const relevantGroupIds = new Set();
+        allMenuItems
+            .filter(m => selectedItemIds.includes(Number(m.id)))
+            .forEach(m => {
+                if (m.menu_option_group) {
+                    m.menu_option_group.forEach(og => relevantGroupIds.add(Number(og.id)));
+                }
+            });
+        return allOptionGroups.filter(og => relevantGroupIds.has(Number(og.id)));
+    })();
+
+    const allAvailableOptionIds = availableOptionGroupsWithOptions.flatMap(og => og.options.map(o => Number(o.id)));
+
+    const toggleOption = (optId) => {
+        const numId = Number(optId);
+        setSelectedOptionIds((prev) =>
+            prev.includes(numId)
+                ? prev.filter((x) => x !== numId)
+                : [...prev, numId]
+        );
+    };
+
+    const toggleOptionGroupOptions = (og) => {
+        const groupOptionIds = og.options.map(o => Number(o.id));
+        const allSelected = groupOptionIds.every(id => selectedOptionIds.includes(id));
+        setSelectedOptionIds(prev => {
+            if (allSelected) {
+                return prev.filter(id => !groupOptionIds.includes(id));
+            } else {
+                const newIds = [...prev];
+                groupOptionIds.forEach(id => { if (!newIds.includes(id)) newIds.push(id); });
+                return newIds;
+            }
+        });
+    };
+
+    const selectAllOptions = () => {
+        setSelectedOptionIds(allAvailableOptionIds);
+    };
+
+    const deselectAllOptions = () => {
+        setSelectedOptionIds([]);
+    };
+
+    const toggleOptionGroupCollapse = (ogId) => {
+        setCollapsedOptionGroups(prev => {
+            const newSet = new Set(prev);
+            if (newSet.has(ogId)) { newSet.delete(ogId); } else { newSet.add(ogId); }
+            return newSet;
+        });
+    };
+
     const filteredMenuItems = outletMenuItems.filter((m) =>
         m.name.toLowerCase().includes(menuSearch.toLowerCase())
     );
@@ -411,6 +479,7 @@ const UniqueQrEdit = () => {
             fd.append("longitude", formData.longitude);
             fd.append("menu_items", JSON.stringify(selectedMenuItems));
             fd.append("store_discount_ids", JSON.stringify(selectedStoreDiscountIds));
+            fd.append("option_ids", JSON.stringify(selectedOptionIds));
 
             if (logoFile) {
                 fd.append("logo", logoFile);
@@ -779,6 +848,65 @@ const UniqueQrEdit = () => {
                     </div>
                 </div>
 
+                {/* Options Section */}
+                <div className="bg-white rounded-lg shadow-sm mb-6">
+                    <div className="bg-indigo-900 text-white px-6 py-4 rounded-t-lg">
+                        <h2 className="text-lg font-medium text-white">Options</h2>
+                    </div>
+                    <div className="p-6">
+                        {selectedMenuItems.length === 0 ? (
+                            <p className="text-gray-500">
+                                Please select menu items first to configure options.
+                            </p>
+                        ) : availableOptionGroupsWithOptions.length === 0 ? (
+                            <p className="text-gray-500">
+                                No options available for the selected menu items.
+                            </p>
+                        ) : (
+                            <>
+                                <div className="flex items-center justify-between mb-4">
+                                    <p className="text-sm text-gray-600">
+                                        {selectedOptionIds.length} / {allAvailableOptionIds.length} option(s) selected
+                                    </p>
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowOptionPopup(true)}
+                                        className="px-4 py-2 bg-indigo-900 text-white rounded-md hover:bg-indigo-800 text-sm"
+                                    >
+                                        Select Options
+                                    </button>
+                                </div>
+                                {selectedOptionIds.length > 0 && (
+                                    <div className="flex flex-wrap gap-2">
+                                        {selectedOptionIds.map((optId) => {
+                                            let optTitle = "";
+                                            for (const og of allOptionGroups) {
+                                                const found = og.options.find(o => Number(o.id) === optId);
+                                                if (found) { optTitle = found.title; break; }
+                                            }
+                                            return optTitle ? (
+                                                <span
+                                                    key={optId}
+                                                    className="inline-flex items-center gap-1 px-3 py-1 bg-purple-50 text-purple-800 rounded-full text-sm border border-purple-200"
+                                                >
+                                                    {optTitle}
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => toggleOption(optId)}
+                                                        className="hover:text-red-600"
+                                                    >
+                                                        <X size={14} />
+                                                    </button>
+                                                </span>
+                                            ) : null;
+                                        })}
+                                    </div>
+                                )}
+                            </>
+                        )}
+                    </div>
+                </div>
+
                 {/* Submit */}
                 <div className="flex justify-end gap-4">
                     <button
@@ -1045,6 +1173,115 @@ const UniqueQrEdit = () => {
                                 className="px-4 py-2 bg-indigo-900 text-white rounded-md hover:bg-indigo-800"
                             >
                                 Confirm ({selectedMenuItems.length} selected)
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Option Selection Modal */}
+            {showOptionPopup && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+                    <div className="bg-white rounded-lg w-full max-w-2xl max-h-[80vh] flex flex-col">
+                        <div className="bg-indigo-900 text-white px-6 py-4 rounded-t-lg flex items-center justify-between">
+                            <h3 className="text-lg font-medium text-white">Select Options</h3>
+                            <button onClick={() => setShowOptionPopup(false)}>
+                                <X size={20} />
+                            </button>
+                        </div>
+                        <div className="p-4 border-b">
+                            <input
+                                type="text"
+                                value={optionSearch}
+                                onChange={(e) => setOptionSearch(e.target.value)}
+                                placeholder="Search options..."
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            />
+                            <div className="flex gap-2 mt-2">
+                                <button type="button" onClick={selectAllOptions} className="text-sm text-indigo-600 hover:underline">
+                                    Quick Select All
+                                </button>
+                                <span className="text-gray-300">|</span>
+                                <button type="button" onClick={deselectAllOptions} className="text-sm text-red-600 hover:underline">
+                                    Deselect All
+                                </button>
+                            </div>
+                        </div>
+                        <div className="flex-1 overflow-y-auto p-4">
+                            {availableOptionGroupsWithOptions.length === 0 ? (
+                                <p className="text-gray-500 text-center py-4">No options found.</p>
+                            ) : (
+                                <div className="space-y-3">
+                                    {availableOptionGroupsWithOptions.map((og) => {
+                                        const filteredOpts = og.options.filter(o =>
+                                            o.title.toLowerCase().includes(optionSearch.toLowerCase())
+                                        );
+                                        if (filteredOpts.length === 0) return null;
+
+                                        const groupOptIds = filteredOpts.map(o => Number(o.id));
+                                        const allGroupSelected = groupOptIds.every(id => selectedOptionIds.includes(id));
+                                        const someGroupSelected = !allGroupSelected && groupOptIds.some(id => selectedOptionIds.includes(id));
+                                        const isCollapsed = collapsedOptionGroups.has(og.id);
+
+                                        return (
+                                            <div key={og.id} className="border rounded-lg overflow-hidden border-gray-200">
+                                                <div
+                                                    className="flex items-center gap-3 p-3 bg-gray-50 border-b cursor-pointer hover:bg-gray-100"
+                                                    onClick={() => toggleOptionGroupCollapse(og.id)}
+                                                >
+                                                    <div
+                                                        className="p-1 hover:bg-gray-200 rounded transition-colors"
+                                                        onClick={(e) => { e.stopPropagation(); toggleOptionGroupOptions(og); }}
+                                                    >
+                                                        <div className={`w-5 h-5 rounded border flex items-center justify-center ${
+                                                            allGroupSelected ? "bg-purple-600 border-purple-600 text-white"
+                                                            : someGroupSelected ? "bg-purple-400 border-purple-400 text-white"
+                                                            : "border-gray-300"
+                                                        }`}>
+                                                            {allGroupSelected && <Check size={14} />}
+                                                            {someGroupSelected && <div className="w-2 h-0.5 bg-white"></div>}
+                                                        </div>
+                                                    </div>
+                                                    <span className="font-bold text-indigo-900 flex-1">{og.title}</span>
+                                                    {isCollapsed ? <ChevronRight size={20} className="text-gray-400" /> : <ChevronDown size={20} className="text-gray-400" />}
+                                                </div>
+                                                {!isCollapsed && (
+                                                    <div className="p-2 space-y-1">
+                                                        {filteredOpts.map((opt) => {
+                                                            const isSelected = selectedOptionIds.includes(Number(opt.id));
+                                                            return (
+                                                                <div
+                                                                    key={opt.id}
+                                                                    onClick={() => toggleOption(opt.id)}
+                                                                    className="flex items-center gap-3 p-2 rounded hover:bg-gray-50 cursor-pointer"
+                                                                >
+                                                                    <div className={`w-5 h-5 rounded border flex items-center justify-center ${
+                                                                        isSelected ? "bg-purple-600 border-purple-600 text-white" : "border-gray-300"
+                                                                    }`}>
+                                                                        {isSelected && <Check size={14} />}
+                                                                    </div>
+                                                                    <span className="text-sm text-gray-700">{opt.title}</span>
+                                                                    {opt.price_adjustment > 0 && (
+                                                                        <span className="text-xs text-gray-400 ml-auto">+RM{Number(opt.price_adjustment).toFixed(2)}</span>
+                                                                    )}
+                                                                </div>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </div>
+                        <div className="p-4 border-t bg-gray-50 flex justify-end">
+                            <button
+                                type="button"
+                                onClick={() => setShowOptionPopup(false)}
+                                className="px-6 py-2 bg-indigo-900 text-white rounded-md hover:bg-indigo-800"
+                            >
+                                Confirm ({selectedOptionIds.length} selected)
                             </button>
                         </div>
                     </div>
