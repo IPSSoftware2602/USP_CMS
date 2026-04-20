@@ -417,26 +417,26 @@ export default function ItemEditMenu() {
 
         const transformedVariations = itemData.variation
           ? itemData.variation.map((v) => ({
-              id: v.variation?.id,
-              title: v.variation?.title || "",
-              name: v.variation?.title || "",
-              price: v.variation?.price || "",
-              order_index: v.variation?.order_index || 0,
-              tags: v.tags || [],
-              optionGroups:
-                v.option_groups?.map((og, idx) => {
-                  const match = allOptionGroups.find((aog) => aog.id == og.id);
-                  return {
-                    ...og,
-                    optionCount:
-                      match?.optionCount ??
-                      (og.options ? og.options.length : 0),
-                    order_index: og.order_index !== 0 ? og.order_index : idx, // fallback to idx if missing
-                  };
-                }) || [],
-              images: v.variation?.images || [],
-              existingImages: v.variation?.images || [],
-            }))
+            id: v.variation?.id,
+            title: v.variation?.title || "",
+            name: v.variation?.title || "",
+            price: v.variation?.price || "",
+            order_index: v.variation?.order_index || 0,
+            tags: v.tags || [],
+            optionGroups:
+              v.option_groups?.map((og, idx) => {
+                const match = allOptionGroups.find((aog) => aog.id == og.id);
+                return {
+                  ...og,
+                  optionCount:
+                    match?.optionCount ??
+                    (og.options ? og.options.length : 0),
+                  order_index: og.order_index !== 0 ? og.order_index : idx, // fallback to idx if missing
+                };
+              }) || [],
+            images: v.variation?.images || [],
+            existingImages: v.variation?.images || [],
+          }))
           : [];
         // console.log("Transform Variation", transformedVariations);
         setVariationsList(transformedVariations);
@@ -573,9 +573,8 @@ export default function ItemEditMenu() {
     // Validate variations and their required images
     variationsList.forEach((variation, index) => {
       if (!variation.title) {
-        newErrors[`variation_${index}_name`] = `Variation ${
-          index + 1
-        } name is required`;
+        newErrors[`variation_${index}_name`] = `Variation ${index + 1
+          } name is required`;
       }
 
       if (
@@ -583,9 +582,8 @@ export default function ItemEditMenu() {
         isNaN(parseFloat(variation.price)) ||
         parseFloat(variation.price) <= 0
       ) {
-        newErrors[`variation_${index}_price`] = `Variation ${
-          index + 1
-        } must have a valid price`;
+        newErrors[`variation_${index}_price`] = `Variation ${index + 1
+          } must have a valid price`;
       }
 
       // Check if variation has at least one image (new or existing)
@@ -601,8 +599,7 @@ export default function ItemEditMenu() {
           `variation_${index}_images`
         ] = `Please upload an image for the variation.`;
         toast.error(
-          `Please upload an image for "${
-            variation.name || variation.title || `Variation ${index + 1}`
+          `Please upload an image for "${variation.name || variation.title || `Variation ${index + 1}`
           }".`
         );
       }
@@ -664,10 +661,10 @@ export default function ItemEditMenu() {
     if (currentVariationIndex !== null) {
       const updatedGroups = Array.isArray(selectedGroups)
         ? selectedGroups.map((group, idx) => ({
-            ...group,
-            optionCount: group.optionCount || group.options?.length || 0,
-            order_index: idx,
-          }))
+          ...group,
+          optionCount: group.optionCount || group.options?.length || 0,
+          order_index: idx,
+        }))
         : [];
 
       // Update both variationsList and formData.variations
@@ -675,9 +672,9 @@ export default function ItemEditMenu() {
         prev.map((variation, i) =>
           i === currentVariationIndex
             ? {
-                ...variation,
-                optionGroups: updatedGroups,
-              }
+              ...variation,
+              optionGroups: updatedGroups,
+            }
             : variation
         )
       );
@@ -687,9 +684,9 @@ export default function ItemEditMenu() {
         variations: prev.variations.map((variation, i) =>
           i === currentVariationIndex
             ? {
-                ...variation,
-                optionGroups: updatedGroups,
-              }
+              ...variation,
+              optionGroups: updatedGroups,
+            }
             : variation
         ),
       }));
@@ -738,9 +735,9 @@ export default function ItemEditMenu() {
   };
 
   const addTags = () => {
-    if(currentVariationIndex !== null) {
-      if(variationTags[currentVariationIndex] != undefined) {
-        if(itemTags.length != variationTags[currentVariationIndex].length) {
+    if (currentVariationIndex !== null) {
+      if (variationTags[currentVariationIndex] != undefined) {
+        if (itemTags.length != variationTags[currentVariationIndex].length) {
           variationTags[currentVariationIndex] = itemTags;
           setVariationTags(variationTags);
         }
@@ -976,10 +973,10 @@ export default function ItemEditMenu() {
       const updated = prev.map((variation, i) =>
         i === variationIndex
           ? {
-              ...variation,
-              optionGroups:
-                variation.optionGroups?.filter((g) => g.id !== groupId) || [],
-            }
+            ...variation,
+            optionGroups:
+              variation.optionGroups?.filter((g) => g.id !== groupId) || [],
+          }
           : variation
       );
       console.log("Updated variationsList:", updated);
@@ -990,10 +987,10 @@ export default function ItemEditMenu() {
       const updated = prev.variations.map((variation, i) =>
         i === variationIndex
           ? {
-              ...variation,
-              optionGroups:
-                variation.optionGroups?.filter((g) => g.id !== groupId) || [],
-            }
+            ...variation,
+            optionGroups:
+              variation.optionGroups?.filter((g) => g.id !== groupId) || [],
+          }
           : variation
       );
       console.log("Updated formData.variations:", updated);
@@ -1585,9 +1582,8 @@ export default function ItemEditMenu() {
                 placeholder="Enter item name"
                 value={formData.title}
                 onChange={(e) => handleInputChange("title", e.target.value)}
-                className={`w-full border rounded-lg p-3 ${
-                  errors.title ? "border-red-500" : "border-gray-300"
-                }`}
+                className={`w-full border rounded-lg p-3 ${errors.title ? "border-red-500" : "border-gray-300"
+                  }`}
               />
               {errors.title && (
                 <p className="text-red-500 text-sm mt-1">{errors.title}</p>
@@ -1646,13 +1642,12 @@ export default function ItemEditMenu() {
                 <button
                   type="button"
                   onClick={() => setShowCategorySelect(!showCategorySelect)}
-                  className={`w-full border rounded-lg p-3 text-left flex justify-between items-center ${
-                    errors.categories
+                  className={`w-full border rounded-lg p-3 text-left flex justify-between items-center ${errors.categories
                       ? "border-red-500"
                       : formData.categories.length === 0
-                      ? "border-gray-300"
-                      : "border-gray-300"
-                  }`}
+                        ? "border-gray-300"
+                        : "border-gray-300"
+                    }`}
                 >
                   <span
                     className={
@@ -1667,11 +1662,10 @@ export default function ItemEditMenu() {
                       categories.some((cat) => cat.id === id)
                     ).length === 0
                       ? "Select categories"
-                      : `${
-                          formData.categories.filter((id) =>
-                            categories.some((cat) => cat.id === id)
-                          ).length
-                        } category selected`}
+                      : `${formData.categories.filter((id) =>
+                        categories.some((cat) => cat.id === id)
+                      ).length
+                      } category selected`}
                   </span>
                   <svg
                     width="16"
@@ -1719,9 +1713,8 @@ export default function ItemEditMenu() {
                   placeholder="0.00"
                   value={formData.price}
                   onChange={(e) => handleInputChange("price", e.target.value)}
-                  className={`w-full border rounded-lg p-3 pl-12 ${
-                    errors.price ? "border-red-500" : "border-gray-300"
-                  }`}
+                  className={`w-full border rounded-lg p-3 pl-12 ${errors.price ? "border-red-500" : "border-gray-300"
+                    }`}
                 />
                 <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">
                   RM
@@ -1740,9 +1733,8 @@ export default function ItemEditMenu() {
                   placeholder="0.00"
                   value={formData.discount_price}
                   onChange={(e) => handleInputChange("discount_price", e.target.value)}
-                  className={`w-full border rounded-lg p-3 pl-12 ${
-                    errors.discount_price ? "border-red-500" : "border-gray-300"
-                  }`}
+                  className={`w-full border rounded-lg p-3 pl-12 ${errors.discount_price ? "border-red-500" : "border-gray-300"
+                    }`}
                 />
                 <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">
                   RM
@@ -1765,9 +1757,8 @@ export default function ItemEditMenu() {
                   onChange={(e) =>
                     handleInputChange("pwp_price", e.target.value)
                   }
-                  className={`w-full border rounded-lg p-3 pl-12 ${
-                    errors.pwp_price ? "border-red-500" : "border-gray-300"
-                  }`}
+                  className={`w-full border rounded-lg p-3 pl-12 ${errors.pwp_price ? "border-red-500" : "border-gray-300"
+                    }`}
                 />
                 <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">
                   RM
@@ -1790,11 +1781,10 @@ export default function ItemEditMenu() {
                   onChange={(e) =>
                     handleInputChange("packaging_price", e.target.value)
                   }
-                  className={`w-full border rounded-lg p-3 pl-12 ${
-                    errors.packaging_price
+                  className={`w-full border rounded-lg p-3 pl-12 ${errors.packaging_price
                       ? "border-red-500"
                       : "border-gray-300"
-                  }`}
+                    }`}
                 />
                 <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">
                   RM
@@ -1847,7 +1837,7 @@ export default function ItemEditMenu() {
                       <div className="w-64">
                         <input
                           type="text"
-                          value={variation.price || ""}
+                          value={variation.original_price || ""}
                           onChange={(e) =>
                             updateVariation(index, "price", e.target.value)
                           }
@@ -2068,13 +2058,13 @@ export default function ItemEditMenu() {
                                   <img
                                     src={
                                       variation.variation?.images instanceof
-                                      File
+                                        File
                                         ? URL.createObjectURL(
-                                            variation.variation.images
-                                          )
+                                          variation.variation.images
+                                        )
                                         : variation.variation?.images ||
-                                          variation.images ||
-                                          variation.images[0]
+                                        variation.images ||
+                                        variation.images[0]
                                     }
                                     alt={`Variation ${index + 1} Preview`}
                                     className="w-32 h-24 object-cover rounded border"
@@ -2380,14 +2370,12 @@ export default function ItemEditMenu() {
                     />
                     <label
                       htmlFor="collection-time"
-                      className={`relative inline-flex items-center h-6 rounded-full w-12 transition-colors duration-200 ease-in-out ${
-                        showCollectionTime ? "bg-blue-500" : "bg-gray-200"
-                      }`}
+                      className={`relative inline-flex items-center h-6 rounded-full w-12 transition-colors duration-200 ease-in-out ${showCollectionTime ? "bg-blue-500" : "bg-gray-200"
+                        }`}
                     >
                       <span
-                        className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform duration-200 ease-in-out ${
-                          showCollectionTime ? "translate-x-7" : "translate-x-1"
-                        }`}
+                        className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform duration-200 ease-in-out ${showCollectionTime ? "translate-x-7" : "translate-x-1"
+                          }`}
                       />
                     </label>
                   </div>
@@ -2468,11 +2456,10 @@ export default function ItemEditMenu() {
                       onChange={(e) =>
                         handleSeasonalChange("start_date", e.target.value)
                       }
-                      className={`w-full p-2 border rounded ${
-                        errors.seasonal_start_date
+                      className={`w-full p-2 border rounded ${errors.seasonal_start_date
                           ? "border-red-500"
                           : "border-gray-300"
-                      }`}
+                        }`}
                     />
                     {errors.seasonal_start_date && (
                       <p className="text-red-500 text-sm mt-1">
@@ -2493,11 +2480,10 @@ export default function ItemEditMenu() {
                       onChange={(e) =>
                         handleSeasonalChange("end_date", e.target.value)
                       }
-                      className={`w-full p-2 border rounded ${
-                        errors.seasonal_end_date
+                      className={`w-full p-2 border rounded ${errors.seasonal_end_date
                           ? "border-red-500"
                           : "border-gray-300"
-                      }`}
+                        }`}
                     />
                     {errors.seasonal_end_date && (
                       <p className="text-red-500 text-sm mt-1">
@@ -2563,9 +2549,9 @@ export default function ItemEditMenu() {
                     src={`${image.image_url}`}
                     alt={`Item ${index + 1}`}
                     className="w-full h-24 object-cover rounded-lg"
-                    // onError={(e) => {
-                    //   e.target.src = '/placeholder-image.png';
-                    // }}
+                  // onError={(e) => {
+                  //   e.target.src = '/placeholder-image.png';
+                  // }}
                   />
                   <button
                     type="button"
@@ -2675,28 +2661,27 @@ export default function ItemEditMenu() {
             className={`
           fixed inset-0 bg-gray-800 bg-opacity-50 backdrop-blur-sm flex items-center justify-center
           z-[9999] transition-all duration-150
-          ${
-            !isHamburger
-              ? collapsed
-                ? "ltr:ml-[72px] rtl:mr-[72px]"
-                : "ltr:ml-[248px] rtl:mr-[248px]"
-              : ""
-          }
+          ${!isHamburger
+                ? collapsed
+                  ? "ltr:ml-[72px] rtl:mr-[72px]"
+                  : "ltr:ml-[248px] rtl:mr-[248px]"
+                : ""
+              }
         `}
           >
-           <OptionGroupManager
-            key={`variationOptionGroups_${currentVariationIndex}_${variationsList[currentVariationIndex]?.optionGroups?.length}`}
-            onClose={() => setShowVariationOptionManager(false)}
-            onSave={(selectedGroups) => {
-              handleVariationOptionGroupSelect(selectedGroups);
-            }}
-            title="Select Option Groups for Variation"
-            keyName={`variationOptionGroups_${currentVariationIndex}`}
-            previouslySelectedGroup={
-              variationsList[currentVariationIndex]?.optionGroups || []
-            }
-            reopen={setShowVariationOptionManager}
-          />
+            <OptionGroupManager
+              key={`variationOptionGroups_${currentVariationIndex}_${variationsList[currentVariationIndex]?.optionGroups?.length}`}
+              onClose={() => setShowVariationOptionManager(false)}
+              onSave={(selectedGroups) => {
+                handleVariationOptionGroupSelect(selectedGroups);
+              }}
+              title="Select Option Groups for Variation"
+              keyName={`variationOptionGroups_${currentVariationIndex}`}
+              previouslySelectedGroup={
+                variationsList[currentVariationIndex]?.optionGroups || []
+              }
+              reopen={setShowVariationOptionManager}
+            />
           </div>
         )}
 
@@ -2705,13 +2690,12 @@ export default function ItemEditMenu() {
             className={`
           fixed inset-0 bg-gray-800 bg-opacity-50 backdrop-blur-sm flex items-center justify-center
           z-[9999] transition-all duration-150
-          ${
-            !isHamburger
-              ? collapsed
-                ? "ltr:ml-[72px] rtl:mr-[72px]"
-                : "ltr:ml-[248px] rtl:mr-[248px]"
-              : ""
-          }
+          ${!isHamburger
+                ? collapsed
+                  ? "ltr:ml-[72px] rtl:mr-[72px]"
+                  : "ltr:ml-[248px] rtl:mr-[248px]"
+                : ""
+              }
         `}
           >
             <div className="bg-white border rounded-lg w-full max-w-4xl mx-4 shadow-lg max-h-[90vh] overflow-y-auto">
@@ -2722,7 +2706,7 @@ export default function ItemEditMenu() {
                     : "Select Tags for Item"}
                 </h2>
                 <button
-                  onClick={() => {setShowTagsModal(false); setItemTags(originalItemTags);}}
+                  onClick={() => { setShowTagsModal(false); setItemTags(originalItemTags); }}
                   className="text-gray-500 hover:text-gray-700"
                 >
                   <X size={24} />
@@ -2914,21 +2898,18 @@ export default function ItemEditMenu() {
                         <div
                           key={tag.id}
                           className={`border rounded-lg p-3 transition-all relative group hover:shadow-sm
-                        ${
-                          isSelected
-                            ? "ring-2 ring-indigo-700 bg-indigo-50 shadow-md"
-                            : ""
-                        }
-                        ${
-                          isPreviouslySelected && !isSelected
-                            ? "ring-2 ring-indigo-700 bg-indigo-50 pointer-events-none opacity-60"
-                            : ""
-                        }
-                        ${
-                          isPreviouslySelected && isSelected
-                            ? "ring-2 ring-indigo-700 bg-indigo-50 shadow-md pointer-events-none opacity-60"
-                            : ""
-                        }
+                        ${isSelected
+                              ? "ring-2 ring-indigo-700 bg-indigo-50 shadow-md"
+                              : ""
+                            }
+                        ${isPreviouslySelected && !isSelected
+                              ? "ring-2 ring-indigo-700 bg-indigo-50 pointer-events-none opacity-60"
+                              : ""
+                            }
+                        ${isPreviouslySelected && isSelected
+                              ? "ring-2 ring-indigo-700 bg-indigo-50 shadow-md pointer-events-none opacity-60"
+                              : ""
+                            }
                         `}
                         >
                           {/* Delete button */}
@@ -2949,9 +2930,8 @@ export default function ItemEditMenu() {
                             onClick={() => {
                               if (!isPreviouslySelected) toggleTag(tag.id);
                             }}
-                            className={`cursor-pointer flex items-center ${
-                              isPreviouslySelected ? "pointer-events-none" : ""
-                            }`}
+                            className={`cursor-pointer flex items-center ${isPreviouslySelected ? "pointer-events-none" : ""
+                              }`}
                           >
                             <div className="flex items-center">
                               {tag.iconUrl ? (
@@ -2981,7 +2961,7 @@ export default function ItemEditMenu() {
 
               <div className="flex justify-end gap-2 p-4 border-t">
                 <button
-                  onClick={() => {setShowTagsModal(false); setItemTags(originalItemTags);}}
+                  onClick={() => { setShowTagsModal(false); setItemTags(originalItemTags); }}
                   className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
                 >
                   Cancel
@@ -3064,10 +3044,10 @@ export default function ItemEditMenu() {
                 const newGroups = prevGroups.map((group) =>
                   group.id === currentOptionGroup.id
                     ? {
-                        ...group,
-                        options: updatedOptions,
-                        optionCount: updatedOptions.length,
-                      } // update count here
+                      ...group,
+                      options: updatedOptions,
+                      optionCount: updatedOptions.length,
+                    } // update count here
                     : group
                 );
 
