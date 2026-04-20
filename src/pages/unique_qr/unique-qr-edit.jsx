@@ -81,12 +81,12 @@ const UniqueQrEdit = () => {
             const categoriesList = Array.isArray(categoriesRes.data) ? categoriesRes.data : [];
             const discountsList = Array.isArray(storeDiscountsRes.data) ? storeDiscountsRes.data : [];
             const optionGroupsList = Array.isArray(optionGroupsRes.data) ? optionGroupsRes.data : [];
-            
+
             // Map 'title' to 'name' for consistency
             const menuList = menuRaw.map((m) => {
                 const category = Array.isArray(m.category) ? m.category[0] : null;
-                return { 
-                    ...m, 
+                return {
+                    ...m,
                     name: m.title || m.name,
                     category_id: category ? Number(category.id) : null
                 };
@@ -159,7 +159,7 @@ const UniqueQrEdit = () => {
         try {
             const response = await UniqueQrService.getMenuItemsByOutlet(outletId);
             const detail = Array.isArray(response.outlet_menu_detail) ? response.outlet_menu_detail : [];
-            
+
             setOutletMenuDetail(detail);
 
             if (detail.length > 0) {
@@ -245,8 +245,8 @@ const UniqueQrEdit = () => {
     const toggleStoreDiscount = (id) => {
         const numId = Number(id);
         setSelectedStoreDiscountIds((prev) =>
-            prev.map(Number).includes(numId) 
-                ? prev.filter((x) => Number(x) !== numId) 
+            prev.map(Number).includes(numId)
+                ? prev.filter((x) => Number(x) !== numId)
                 : [...prev, numId]
         );
     };
@@ -256,13 +256,13 @@ const UniqueQrEdit = () => {
         const vId = variation_id ? Number(variation_id) : null;
         setSelectedMenuItems((prev) => {
             const exists = prev.find(
-                (item) => Number(item.menu_item_id) === mId && 
-                         (item.variation_id === null ? vId === null : Number(item.variation_id) === vId)
+                (item) => Number(item.menu_item_id) === mId &&
+                    (item.variation_id === null ? vId === null : Number(item.variation_id) === vId)
             );
             if (exists) {
                 return prev.filter(
-                    (item) => !(Number(item.menu_item_id) === mId && 
-                               (item.variation_id === null ? vId === null : Number(item.variation_id) === vId))
+                    (item) => !(Number(item.menu_item_id) === mId &&
+                        (item.variation_id === null ? vId === null : Number(item.variation_id) === vId))
                 );
             } else {
                 return [...prev, { menu_item_id: mId, variation_id: vId }];
@@ -273,14 +273,14 @@ const UniqueQrEdit = () => {
     const toggleItemWithVariations = (item) => {
         const itemId = Number(item.id);
         const hasVariations = item.variation_group && item.variation_group.length > 0;
-        
+
         if (!hasVariations) {
             toggleMenuItem(itemId);
             return;
         }
 
         const variationIds = item.variation_group.map(vg => Number(vg.variation.id));
-        const allVariationsSelected = variationIds.every(vId => 
+        const allVariationsSelected = variationIds.every(vId =>
             selectedMenuItems.some(sm => Number(sm.menu_item_id) === itemId && Number(sm.variation_id) === vId)
         );
 
@@ -304,7 +304,7 @@ const UniqueQrEdit = () => {
         const allItemsInCatSelected = itemsInCategory.every(item => {
             const hasVariations = item.variation_group && item.variation_group.length > 0;
             if (hasVariations) {
-                return item.variation_group.every(vg => 
+                return item.variation_group.every(vg =>
                     selectedMenuItems.some(sm => Number(sm.menu_item_id) === Number(item.id) && Number(sm.variation_id) === Number(vg.variation.id))
                 );
             } else {
@@ -367,8 +367,8 @@ const UniqueQrEdit = () => {
         setSelectedMenuItems((prev) => {
             const newSelection = [...prev];
             itemsToSelect.forEach((item) => {
-                if (!newSelection.find(x => Number(x.menu_item_id) === Number(item.menu_item_id) && 
-                                           (x.variation_id === null ? item.variation_id === null : Number(x.variation_id) === Number(item.variation_id)))) {
+                if (!newSelection.find(x => Number(x.menu_item_id) === Number(item.menu_item_id) &&
+                    (x.variation_id === null ? item.variation_id === null : Number(x.variation_id) === Number(item.variation_id)))) {
                     newSelection.push(item);
                 }
             });
@@ -381,21 +381,7 @@ const UniqueQrEdit = () => {
         setSelectedMenuItems((prev) => prev.filter((x) => !filteredIds.includes(Number(x.menu_item_id))));
     };
 
-    // Derive available option groups (with options) from selected menu items
-    const availableOptionGroupsWithOptions = (() => {
-        const selectedItemIds = selectedMenuItems.map(s => Number(s.menu_item_id));
-        const relevantGroupIds = new Set();
-        allMenuItems
-            .filter(m => selectedItemIds.includes(Number(m.id)))
-            .forEach(m => {
-                if (m.menu_option_group) {
-                    m.menu_option_group.forEach(og => relevantGroupIds.add(Number(og.id)));
-                }
-            });
-        return allOptionGroups.filter(og => relevantGroupIds.has(Number(og.id)));
-    })();
-
-    const allAvailableOptionIds = availableOptionGroupsWithOptions.flatMap(og => og.options.map(o => Number(o.id)));
+    const allAvailableOptionIds = allOptionGroups.flatMap(og => og.options.map(o => Number(o.id)));
 
     const toggleOption = (optId) => {
         const numId = Number(optId);
@@ -446,7 +432,7 @@ const UniqueQrEdit = () => {
     })).filter(cat => cat.items.length > 0);
 
     // Also include items with no category or category not in menuCategories
-    const orphanedItems = filteredMenuItems.filter(m => 
+    const orphanedItems = filteredMenuItems.filter(m =>
         !m.category_id || !menuCategories.some(cat => Number(cat.id) === Number(m.category_id))
     );
 
@@ -816,7 +802,7 @@ const UniqueQrEdit = () => {
                                         {selectedMenuItems.map((selItem, index) => {
                                             const item = allMenuItems.find((m) => Number(m.id) === Number(selItem.menu_item_id));
                                             if (!item) return null;
-                                            
+
                                             let displayName = item.name;
                                             if (selItem.variation_id) {
                                                 const variation = item.variation_group?.find(vg => Number(vg.variation.id) === Number(selItem.variation_id));
@@ -854,13 +840,9 @@ const UniqueQrEdit = () => {
                         <h2 className="text-lg font-medium text-white">Options</h2>
                     </div>
                     <div className="p-6">
-                        {selectedMenuItems.length === 0 ? (
+                        {allOptionGroups.length === 0 ? (
                             <p className="text-gray-500">
-                                Please select menu items first to configure options.
-                            </p>
-                        ) : availableOptionGroupsWithOptions.length === 0 ? (
-                            <p className="text-gray-500">
-                                No options available for the selected menu items.
+                                No options available.
                             </p>
                         ) : (
                             <>
@@ -957,11 +939,10 @@ const UniqueQrEdit = () => {
                                         <div
                                             key={disc.id}
                                             onClick={() => toggleStoreDiscount(disc.id)}
-                                            className={`flex items-center justify-between p-3 rounded-md border cursor-pointer transition-colors ${
-                                                selectedStoreDiscountIds.map(Number).includes(Number(disc.id))
+                                            className={`flex items-center justify-between p-3 rounded-md border cursor-pointer transition-colors ${selectedStoreDiscountIds.map(Number).includes(Number(disc.id))
                                                     ? "bg-indigo-50 border-indigo-200"
                                                     : "hover:bg-gray-50 border-gray-100"
-                                            }`}
+                                                }`}
                                         >
                                             <div>
                                                 <p className="font-medium text-gray-900">{disc.discount_name}</p>
@@ -1036,7 +1017,7 @@ const UniqueQrEdit = () => {
                                         const isCategoryFullySelected = itemsInCategory.every(item => {
                                             const hasVariations = item.variation_group && item.variation_group.length > 0;
                                             if (hasVariations) {
-                                                return item.variation_group.every(vg => 
+                                                return item.variation_group.every(vg =>
                                                     selectedMenuItems.some(sm => Number(sm.menu_item_id) === Number(item.id) && Number(sm.variation_id) === Number(vg.variation.id))
                                                 );
                                             } else {
@@ -1047,7 +1028,7 @@ const UniqueQrEdit = () => {
                                         const isCategoryPartiallySelected = !isCategoryFullySelected && itemsInCategory.some(item => {
                                             const hasVariations = item.variation_group && item.variation_group.length > 0;
                                             if (hasVariations) {
-                                                return item.variation_group.some(vg => 
+                                                return item.variation_group.some(vg =>
                                                     selectedMenuItems.some(sm => Number(sm.menu_item_id) === Number(item.id) && Number(sm.variation_id) === Number(vg.variation.id))
                                                 );
                                             } else {
@@ -1059,11 +1040,11 @@ const UniqueQrEdit = () => {
 
                                         return (
                                             <div key={category.id} className="border rounded-lg overflow-hidden border-gray-200">
-                                                <div 
+                                                <div
                                                     className={`flex items-center gap-3 p-3 bg-gray-50 border-b cursor-pointer hover:bg-gray-100`}
                                                     onClick={() => toggleCategoryCollapse(category.id)}
                                                 >
-                                                    <div 
+                                                    <div
                                                         className="p-1 hover:bg-gray-200 rounded transition-colors"
                                                         onClick={(e) => {
                                                             e.stopPropagation();
@@ -1089,68 +1070,68 @@ const UniqueQrEdit = () => {
                                                 {!isCollapsed && (
                                                     <div className="p-2 space-y-1">
                                                         {category.items.map((item) => {
-                                                        const hasVariations = item.variation_group && item.variation_group.length > 0;
-                                                        
-                                                        const isItemFullySelected = hasVariations 
-                                                            ? item.variation_group.every(vg => selectedMenuItems.some(sm => Number(sm.menu_item_id) === Number(item.id) && Number(sm.variation_id) === Number(vg.variation.id)))
-                                                            : selectedMenuItems.some(sm => Number(sm.menu_item_id) === Number(item.id) && sm.variation_id === null);
+                                                            const hasVariations = item.variation_group && item.variation_group.length > 0;
 
-                                                        const isItemPartiallySelected = hasVariations && !isItemFullySelected && item.variation_group.some(vg => 
-                                                            selectedMenuItems.some(sm => Number(sm.menu_item_id) === Number(item.id) && Number(sm.variation_id) === Number(vg.variation.id))
-                                                        );
+                                                            const isItemFullySelected = hasVariations
+                                                                ? item.variation_group.every(vg => selectedMenuItems.some(sm => Number(sm.menu_item_id) === Number(item.id) && Number(sm.variation_id) === Number(vg.variation.id)))
+                                                                : selectedMenuItems.some(sm => Number(sm.menu_item_id) === Number(item.id) && sm.variation_id === null);
 
-                                                        return (
-                                                            <div key={item.id} className="border-b last:border-0 border-gray-100 py-1">
-                                                                <div 
-                                                                    className={`flex items-center gap-3 p-2 rounded hover:bg-gray-50 cursor-pointer`}
-                                                                    onClick={() => toggleItemWithVariations(item)}
-                                                                >
+                                                            const isItemPartiallySelected = hasVariations && !isItemFullySelected && item.variation_group.some(vg =>
+                                                                selectedMenuItems.some(sm => Number(sm.menu_item_id) === Number(item.id) && Number(sm.variation_id) === Number(vg.variation.id))
+                                                            );
+
+                                                            return (
+                                                                <div key={item.id} className="border-b last:border-0 border-gray-100 py-1">
                                                                     <div
-                                                                        className={`w-5 h-5 rounded border flex items-center justify-center ${isItemFullySelected
-                                                                            ? "bg-indigo-600 border-indigo-600 text-white"
-                                                                            : isItemPartiallySelected ? "bg-indigo-400 border-indigo-400 text-white" : "border-gray-300"
-                                                                            }`}
+                                                                        className={`flex items-center gap-3 p-2 rounded hover:bg-gray-50 cursor-pointer`}
+                                                                        onClick={() => toggleItemWithVariations(item)}
                                                                     >
-                                                                        {isItemFullySelected && <Check size={14} />}
-                                                                        {isItemPartiallySelected && <div className="w-2 h-0.5 bg-white"></div>}
+                                                                        <div
+                                                                            className={`w-5 h-5 rounded border flex items-center justify-center ${isItemFullySelected
+                                                                                ? "bg-indigo-600 border-indigo-600 text-white"
+                                                                                : isItemPartiallySelected ? "bg-indigo-400 border-indigo-400 text-white" : "border-gray-300"
+                                                                                }`}
+                                                                        >
+                                                                            {isItemFullySelected && <Check size={14} />}
+                                                                            {isItemPartiallySelected && <div className="w-2 h-0.5 bg-white"></div>}
+                                                                        </div>
+                                                                        <span className={`text-sm ${hasVariations ? "font-semibold text-gray-800" : "text-gray-700"}`}>
+                                                                            {item.name}
+                                                                        </span>
                                                                     </div>
-                                                                    <span className={`text-sm ${hasVariations ? "font-semibold text-gray-800" : "text-gray-700"}`}>
-                                                                        {item.name}
-                                                                    </span>
-                                                                </div>
 
-                                                                {hasVariations && (
-                                                                    <div className="ml-8 space-y-1 mt-1 pb-2">
-                                                                        {item.variation_group.map((vg, vIndex) => {
-                                                                            const isVarSelected = selectedMenuItems.some(
-                                                                                x => Number(x.menu_item_id) === Number(item.id) && Number(x.variation_id) === Number(vg.variation.id)
-                                                                            );
-                                                                            return (
-                                                                                <label
-                                                                                    key={`${item.id}-var-${vg.variation.id}-${vIndex}`}
-                                                                                    className="flex items-center gap-3 p-1 rounded hover:bg-indigo-50 cursor-pointer"
-                                                                                    onClick={(e) => {
-                                                                                        e.stopPropagation();
-                                                                                        toggleMenuItem(item.id, vg.variation.id);
-                                                                                    }}
-                                                                                >
-                                                                                    <div
-                                                                                        className={`w-4 h-4 rounded border flex items-center justify-center ${isVarSelected
-                                                                                            ? "bg-indigo-600 border-indigo-600 text-white"
-                                                                                            : "border-gray-300"
-                                                                                            }`}
+                                                                    {hasVariations && (
+                                                                        <div className="ml-8 space-y-1 mt-1 pb-2">
+                                                                            {item.variation_group.map((vg, vIndex) => {
+                                                                                const isVarSelected = selectedMenuItems.some(
+                                                                                    x => Number(x.menu_item_id) === Number(item.id) && Number(x.variation_id) === Number(vg.variation.id)
+                                                                                );
+                                                                                return (
+                                                                                    <label
+                                                                                        key={`${item.id}-var-${vg.variation.id}-${vIndex}`}
+                                                                                        className="flex items-center gap-3 p-1 rounded hover:bg-indigo-50 cursor-pointer"
+                                                                                        onClick={(e) => {
+                                                                                            e.stopPropagation();
+                                                                                            toggleMenuItem(item.id, vg.variation.id);
+                                                                                        }}
                                                                                     >
-                                                                                        {isVarSelected && <Check size={12} />}
-                                                                                    </div>
-                                                                                    <span className="text-xs text-gray-600">{vg.variation.title}</span>
-                                                                                </label>
-                                                                            );
-                                                                        })}
-                                                                    </div>
-                                                                )}
-                                                            </div>
-                                                        );
-                                                    })}
+                                                                                        <div
+                                                                                            className={`w-4 h-4 rounded border flex items-center justify-center ${isVarSelected
+                                                                                                ? "bg-indigo-600 border-indigo-600 text-white"
+                                                                                                : "border-gray-300"
+                                                                                                }`}
+                                                                                        >
+                                                                                            {isVarSelected && <Check size={12} />}
+                                                                                        </div>
+                                                                                        <span className="text-xs text-gray-600">{vg.variation.title}</span>
+                                                                                    </label>
+                                                                                );
+                                                                            })}
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            );
+                                                        })}
                                                     </div>
                                                 )}
                                             </div>
@@ -1208,11 +1189,11 @@ const UniqueQrEdit = () => {
                             </div>
                         </div>
                         <div className="flex-1 overflow-y-auto p-4">
-                            {availableOptionGroupsWithOptions.length === 0 ? (
+                            {allOptionGroups.length === 0 ? (
                                 <p className="text-gray-500 text-center py-4">No options found.</p>
                             ) : (
                                 <div className="space-y-3">
-                                    {availableOptionGroupsWithOptions.map((og) => {
+                                    {allOptionGroups.map((og) => {
                                         const filteredOpts = og.options.filter(o =>
                                             o.title.toLowerCase().includes(optionSearch.toLowerCase())
                                         );
@@ -1233,11 +1214,10 @@ const UniqueQrEdit = () => {
                                                         className="p-1 hover:bg-gray-200 rounded transition-colors"
                                                         onClick={(e) => { e.stopPropagation(); toggleOptionGroupOptions(og); }}
                                                     >
-                                                        <div className={`w-5 h-5 rounded border flex items-center justify-center ${
-                                                            allGroupSelected ? "bg-purple-600 border-purple-600 text-white"
-                                                            : someGroupSelected ? "bg-purple-400 border-purple-400 text-white"
-                                                            : "border-gray-300"
-                                                        }`}>
+                                                        <div className={`w-5 h-5 rounded border flex items-center justify-center ${allGroupSelected ? "bg-purple-600 border-purple-600 text-white"
+                                                                : someGroupSelected ? "bg-purple-400 border-purple-400 text-white"
+                                                                    : "border-gray-300"
+                                                            }`}>
                                                             {allGroupSelected && <Check size={14} />}
                                                             {someGroupSelected && <div className="w-2 h-0.5 bg-white"></div>}
                                                         </div>
@@ -1255,9 +1235,8 @@ const UniqueQrEdit = () => {
                                                                     onClick={() => toggleOption(opt.id)}
                                                                     className="flex items-center gap-3 p-2 rounded hover:bg-gray-50 cursor-pointer"
                                                                 >
-                                                                    <div className={`w-5 h-5 rounded border flex items-center justify-center ${
-                                                                        isSelected ? "bg-purple-600 border-purple-600 text-white" : "border-gray-300"
-                                                                    }`}>
+                                                                    <div className={`w-5 h-5 rounded border flex items-center justify-center ${isSelected ? "bg-purple-600 border-purple-600 text-white" : "border-gray-300"
+                                                                        }`}>
                                                                         {isSelected && <Check size={14} />}
                                                                     </div>
                                                                     <span className="text-sm text-gray-700">{opt.title}</span>
