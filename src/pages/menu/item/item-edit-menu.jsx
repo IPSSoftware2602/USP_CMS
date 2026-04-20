@@ -421,6 +421,7 @@ export default function ItemEditMenu() {
             title: v.variation?.title || "",
             name: v.variation?.title || "",
             price: v.variation?.price || "",
+            original_price: v.variation?.original_price || "",
             order_index: v.variation?.order_index || 0,
             tags: v.tags || [],
             optionGroups:
@@ -1643,10 +1644,10 @@ export default function ItemEditMenu() {
                   type="button"
                   onClick={() => setShowCategorySelect(!showCategorySelect)}
                   className={`w-full border rounded-lg p-3 text-left flex justify-between items-center ${errors.categories
-                      ? "border-red-500"
-                      : formData.categories.length === 0
-                        ? "border-gray-300"
-                        : "border-gray-300"
+                    ? "border-red-500"
+                    : formData.categories.length === 0
+                      ? "border-gray-300"
+                      : "border-gray-300"
                     }`}
                 >
                   <span
@@ -1782,8 +1783,8 @@ export default function ItemEditMenu() {
                     handleInputChange("packaging_price", e.target.value)
                   }
                   className={`w-full border rounded-lg p-3 pl-12 ${errors.packaging_price
-                      ? "border-red-500"
-                      : "border-gray-300"
+                    ? "border-red-500"
+                    : "border-gray-300"
                     }`}
                 />
                 <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">
@@ -2457,8 +2458,8 @@ export default function ItemEditMenu() {
                         handleSeasonalChange("start_date", e.target.value)
                       }
                       className={`w-full p-2 border rounded ${errors.seasonal_start_date
-                          ? "border-red-500"
-                          : "border-gray-300"
+                        ? "border-red-500"
+                        : "border-gray-300"
                         }`}
                     />
                     {errors.seasonal_start_date && (
@@ -2481,8 +2482,8 @@ export default function ItemEditMenu() {
                         handleSeasonalChange("end_date", e.target.value)
                       }
                       className={`w-full p-2 border rounded ${errors.seasonal_end_date
-                          ? "border-red-500"
-                          : "border-gray-300"
+                        ? "border-red-500"
+                        : "border-gray-300"
                         }`}
                     />
                     {errors.seasonal_end_date && (
