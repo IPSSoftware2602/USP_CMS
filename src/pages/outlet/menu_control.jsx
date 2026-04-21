@@ -397,6 +397,7 @@ const OutletMenuControlPage = () => {
   const [showQuickSelect, setShowQuickSelect] = useState(false);
   const [ogSearchQuery, setOgSearchQuery] = useState('');
   const [varSearchQuery, setVarSearchQuery] = useState('');
+  const [optSearchQuery, setOptSearchQuery] = useState('');
 
   const filteredOptionGroups = useMemo(() => {
     if (!ogSearchQuery.trim()) return uniqueOptionGroups;
@@ -410,12 +411,86 @@ const OutletMenuControlPage = () => {
     return uniqueVariations.filter(v => v.title.toLowerCase().includes(q));
   }, [uniqueVariations, varSearchQuery]);
 
+  // Unique options across all items (item-level + variation-level), grouped by title
+  const uniqueOptions = useMemo(() => {
+    const map = new Map();
+    menuItems.forEach(item => {
+      // Item-level options
+      (item.menu_option_group || []).forEach(mog => {
+        (mog.options || []).forEach(opt => {
+          const title = opt.title || opt.name || `Option #${opt.id}`;
+          if (!map.has(title)) {
+            map.set(title, { title, entries: [] });
+          }
+          map.get(title).entries.push({
+            type: 'mo',
+            item,
+            optionGroupId: mog.id,
+            optionId: opt.id
+          });
+        });
+      });
+      // Variation-level options
+      (item.variation_group || []).forEach(vg => {
+        (vg.option_groups || []).forEach(vog => {
+          const vogId = vog.id || vog.option_group_id;
+          (vog.options || []).forEach(opt => {
+            const title = opt.title || opt.name || `Option #${opt.id}`;
+            if (!map.has(title)) {
+              map.set(title, { title, entries: [] });
+            }
+            map.get(title).entries.push({
+              type: 'vo',
+              item,
+              variationId: vg.variation.id,
+              optionGroupId: vogId,
+              optionId: opt.id
+            });
+          });
+        });
+      });
+    });
+    return Array.from(map.values()).sort((a, b) => a.title.localeCompare(b.title));
+  }, [menuItems]);
+
+  const filteredOptions = useMemo(() => {
+    if (!optSearchQuery.trim()) return uniqueOptions;
+    const q = optSearchQuery.toLowerCase().trim();
+    return uniqueOptions.filter(o => o.title.toLowerCase().includes(q));
+  }, [uniqueOptions, optSearchQuery]);
+
+  const handleBulkOptionSelect = (o, isChecked) => {
+    o.entries.forEach(entry => {
+      if (entry.type === 'mo') {
+        handleMenuOptionToggle(entry.item.id, entry.optionGroupId, entry.optionId, isChecked);
+      } else if (entry.type === 'vo') {
+        handleVariationOptionToggle(entry.item.id, entry.variationId, entry.optionGroupId, entry.optionId, isChecked);
+      }
+    });
+  };
+
+  const isBulkOptionFullySelected = (o) => {
+    return o.entries.every(entry => {
+      if (entry.type === 'mo') {
+        return selectedOptions.includes(`mo-${entry.item.id}-${entry.optionGroupId}-${entry.optionId}`);
+      }
+      if (entry.type === 'vo') {
+        return selectedOptions.includes(`vo-${entry.item.id}-${entry.variationId}-${entry.optionGroupId}-${entry.optionId}`);
+      }
+      return false;
+    });
+  };
+
   const handleSelectAllFilteredOptionGroups = (isChecked) => {
     filteredOptionGroups.forEach(og => handleBulkOptionGroupSelect(og, isChecked));
   };
 
   const handleSelectAllFilteredVariations = (isChecked) => {
     filteredVariations.forEach(v => handleBulkVariationSelect(v, isChecked));
+  };
+
+  const handleSelectAllFilteredOptions = (isChecked) => {
+    filteredOptions.forEach(o => handleBulkOptionSelect(o, isChecked));
   };
 
   const renderItemContents = (item) => (
@@ -678,7 +753,7 @@ const OutletMenuControlPage = () => {
               {showQuickSelect && (
                 <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4 space-y-4">
                   <div className="text-xs font-semibold text-indigo-700 uppercase tracking-wider">
-                    Quick Select — pick an option group or variation to select it across ALL items
+                    Quick Select — pick an option group, variation, or option to select it across ALL items
                   </div>
 
                   {/* Option Groups bulk with search */}
@@ -737,6 +812,71 @@ const OutletMenuControlPage = () => {
                                 <div>
                                   <span className="text-xs font-medium text-gray-800">{og.title}</span>
                                   <span className="text-xs text-gray-400 ml-1">({og.items.length} item{og.items.length !== 1 ? 's' : ''})</span>
+                                </div>
+                              </label>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Options bulk with search */}
+                  {uniqueOptions.length > 0 && (
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="text-xs font-bold text-gray-600">Options</div>
+                        {filteredOptions.length > 0 && (
+                          <div className="flex items-center space-x-2">
+                            <span className="text-xs text-gray-400">
+                              {filteredOptions.length}{optSearchQuery ? ` of ${uniqueOptions.length}` : ''} option{filteredOptions.length !== 1 ? 's' : ''}
+                            </span>
+                            <button
+                              onClick={() => handleSelectAllFilteredOptions(true)}
+                              className="text-xs font-medium text-indigo-600 hover:text-indigo-800 px-2 py-0.5 border border-indigo-300 rounded hover:bg-indigo-50 transition-colors"
+                            >
+                              Select All{optSearchQuery ? ' Filtered' : ''}
+                            </button>
+                            <button
+                              onClick={() => handleSelectAllFilteredOptions(false)}
+                              className="text-xs font-medium text-gray-500 hover:text-gray-700 px-2 py-0.5 border border-gray-300 rounded hover:bg-gray-50 transition-colors"
+                            >
+                              Deselect All{optSearchQuery ? ' Filtered' : ''}
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                      <input
+                        type="text"
+                        placeholder="Search options..."
+                        value={optSearchQuery}
+                        onChange={(e) => setOptSearchQuery(e.target.value)}
+                        className="w-full px-3 py-2 text-xs border border-gray-300 rounded mb-2 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+                      />
+                      {filteredOptions.length === 0 ? (
+                        <div className="text-xs text-gray-400 py-2 text-center">No options match "{optSearchQuery}"</div>
+                      ) : (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 max-h-60 overflow-y-auto">
+                          {filteredOptions.map(o => {
+                            const isFullySelected = isBulkOptionFullySelected(o);
+                            return (
+                              <label
+                                key={`bulk-o-${o.title}`}
+                                className={`flex items-center p-2.5 border rounded cursor-pointer transition-colors ${
+                                  isFullySelected
+                                    ? 'bg-indigo-100 border-indigo-400'
+                                    : 'bg-white border-gray-200 hover:bg-indigo-50 hover:border-indigo-300'
+                                }`}
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={isFullySelected}
+                                  onChange={(e) => handleBulkOptionSelect(o, e.target.checked)}
+                                  className="h-3.5 w-3.5 mr-2 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                                />
+                                <div>
+                                  <span className="text-xs font-medium text-gray-800">{o.title}</span>
+                                  <span className="text-xs text-gray-400 ml-1">({o.entries.length} item{o.entries.length !== 1 ? 's' : ''})</span>
                                 </div>
                               </label>
                             );
