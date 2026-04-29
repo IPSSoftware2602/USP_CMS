@@ -18,8 +18,10 @@ const UniqueQrAdd = () => {
     const [outlets, setOutlets] = useState([]);
     const [allMenuItems, setAllMenuItems] = useState([]);
     const [menuCategories, setMenuCategories] = useState([]);
+    // CR-004: menu picker is no longer scoped to the QR's outlet — always show
+    // all active menu items. `outletMenuItems` is kept as a kept-alive alias of
+    // `allMenuItems` to avoid touching every selector that reads from it.
     const [outletMenuItems, setOutletMenuItems] = useState([]);
-    const [outletMenuDetail, setOutletMenuDetail] = useState([]);
     const [selectedMenuItems, setSelectedMenuItems] = useState([]);
     const [collapsedCategories, setCollapsedCategories] = useState(new Set());
     const [logoFile, setLogoFile] = useState(null);
@@ -46,6 +48,7 @@ const UniqueQrAdd = () => {
         address_note: "",
         latitude: "",
         longitude: "",
+        payout_rate: "0.00",
     });
 
     useEffect(() => {
@@ -56,14 +59,11 @@ const UniqueQrAdd = () => {
         loadOptionGroups();
     }, []);
 
+    // CR-004: menu list is global, not outlet-scoped. Mirror allMenuItems into
+    // outletMenuItems so the existing picker selectors keep working unchanged.
     useEffect(() => {
-        if (formData.outlet_id && allMenuItems.length > 0) {
-            loadOutletMenuItems(formData.outlet_id);
-        } else {
-            setOutletMenuItems([]);
-            setSelectedMenuItems([]);
-        }
-    }, [formData.outlet_id, allMenuItems]);
+        setOutletMenuItems(allMenuItems);
+    }, [allMenuItems]);
 
     const loadOutlets = async () => {
         try {
@@ -101,41 +101,6 @@ const UniqueQrAdd = () => {
             setMenuCategories(result);
         } catch (err) {
             console.error("Error loading menu categories:", err);
-        }
-    };
-
-    const loadOutletMenuItems = async (outletId) => {
-        try {
-            const response = await UniqueQrService.getMenuItemsByOutlet(outletId);
-            const detail = Array.isArray(response.outlet_menu_detail) ? response.outlet_menu_detail : [];
-            
-            setOutletMenuDetail(detail);
-
-            if (detail.length > 0) {
-                // Filter allMenuItems to only those present in detail
-                const activeItemIds = detail.map(d => Number(d.menu_item_id));
-                const filtered = allMenuItems
-                    .filter((m) => m && activeItemIds.includes(Number(m.id)))
-                    .map(m => {
-                        // Also filter variations for this item
-                        const itemDetail = detail.find(d => Number(d.menu_item_id) === Number(m.id));
-                        if (itemDetail && Array.isArray(m.variation_group)) {
-                            const activeVarIds = (itemDetail.variations || []).map(v => Number(v.variation_id));
-                            return {
-                                ...m,
-                                variation_group: m.variation_group.filter(vg => vg && vg.variation && activeVarIds.includes(Number(vg.variation.id)))
-                            };
-                        }
-                        return m;
-                    });
-                setOutletMenuItems(filtered);
-            } else {
-                setOutletMenuItems(allMenuItems);
-            }
-            setSelectedMenuItems([]);
-        } catch (err) {
-            console.error("Error loading outlet menu items:", err);
-            setOutletMenuItems(allMenuItems);
         }
     };
 
@@ -453,6 +418,8 @@ const UniqueQrAdd = () => {
             fd.append("menu_items", JSON.stringify(selectedMenuItems));
             fd.append("store_discount_ids", JSON.stringify(selectedStoreDiscountIds));
             fd.append("option_ids", JSON.stringify(selectedOptionIds));
+            // CR-004: clamp 0-100, send as decimal string. Backend re-clamps defensively.
+            fd.append("payout_rate", String(Math.max(0, Math.min(100, parseFloat(formData.payout_rate) || 0))));
 
             if (logoFile) {
                 fd.append("logo", logoFile);
@@ -540,6 +507,25 @@ const UniqueQrAdd = () => {
                                 <option value="active">Active</option>
                                 <option value="inactive">Inactive</option>
                             </select>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Payout Rate (%)
+                            </label>
+                            <input
+                                type="number"
+                                name="payout_rate"
+                                value={formData.payout_rate}
+                                onChange={handleChange}
+                                min="0"
+                                max="100"
+                                step="0.01"
+                                placeholder="0.00"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            />
+                            <p className="text-xs text-gray-500 mt-1">
+                                Percent of each order's subtotal (excluding delivery + tax) paid out per QR.
+                            </p>
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">

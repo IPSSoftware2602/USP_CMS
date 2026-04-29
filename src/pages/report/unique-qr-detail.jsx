@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useTable, useSortBy, usePagination } from 'react-table';
 import { toast } from 'react-toastify';
-import { ArrowLeft, Download, Loader2 } from 'lucide-react';
+import { ArrowLeft, Download, Loader2, CheckCircle2 } from 'lucide-react';
 import { useParams, useNavigate } from 'react-router-dom';
 import reportService from '@/store/api/reportService';
 import useExportPermission from '@/hooks/useExportPermission';
@@ -16,19 +16,32 @@ const UniqueQrDetailReport = () => {
     const [filters, setFilters] = useState({
         startDate: '',
         endDate: '',
+        payoutStatus: 'all', // CR-006: 'all' | 'pending' | 'paid'
     });
+    // CR-006: selected order ids for bulk mark-payout-paid action.
+    const [selectedIds, setSelectedIds] = useState(new Set());
+    const [marking, setMarking] = useState(false);
+
+    const buildParams = () => {
+        const params = {};
+        if (filters.startDate) params.start_date = filters.startDate;
+        if (filters.endDate) params.end_date = filters.endDate;
+        if (filters.payoutStatus && filters.payoutStatus !== 'all') {
+            params.payout_status = filters.payoutStatus;
+        }
+        return params;
+    };
 
     const fetchDetails = async () => {
         setLoading(true);
         setError(null);
         try {
-            const params = {};
-            if (filters.startDate) params.start_date = filters.startDate;
-            if (filters.endDate) params.end_date = filters.endDate;
-
-            const response = await reportService.getUniqueQrDetails(id, params);
+            const response = await reportService.getUniqueQrDetails(id, buildParams());
             if (response) {
                 setData(response);
+                // Reset selection on every refetch — IDs in the previous list may
+                // no longer be visible after a filter change.
+                setSelectedIds(new Set());
             }
         } catch (err) {
             console.error(err);
@@ -47,17 +60,13 @@ const UniqueQrDetailReport = () => {
     };
 
     const handleResetFilters = () => {
-        setFilters({ startDate: '', endDate: '' });
+        setFilters({ startDate: '', endDate: '', payoutStatus: 'all' });
         setTimeout(() => fetchDetails(), 0);
     };
 
     const exportToCSV = async () => {
         try {
-            const params = {};
-            if (filters.startDate) params.start_date = filters.startDate;
-            if (filters.endDate) params.end_date = filters.endDate;
-
-            const response = await reportService.exportUniqueQrDetails(id, params);
+            const response = await reportService.exportUniqueQrDetails(id, buildParams());
             if (response && response.file_url) {
                 window.open(response.file_url, '_blank');
                 toast.success("Export successful!");
@@ -66,6 +75,63 @@ const UniqueQrDetailReport = () => {
             }
         } catch (err) {
             toast.error("Export failed.");
+        }
+    };
+
+    // CR-006: bulk mark selected orders as payout paid. Only marks rows that are
+    // currently 'pending' (server-side WHERE also enforces this implicitly via
+    // the WHERE clauses, but we filter client-side too for honest UX).
+    const handleMarkPayoutPaid = async () => {
+        const pendingIds = data
+            .filter(row => selectedIds.has(row.id) && (row.payout_status || 'pending') === 'pending')
+            .map(row => row.id);
+        if (pendingIds.length === 0) {
+            toast.info('No pending orders selected.');
+            return;
+        }
+        if (!window.confirm(`Mark ${pendingIds.length} order(s) as payout paid? This cannot be undone in the UI.`)) {
+            return;
+        }
+        setMarking(true);
+        try {
+            const result = await reportService.markUniqueQrOrdersPaid(id, pendingIds);
+            const count = result?.updated_count ?? 0;
+            if (count > 0) {
+                toast.success(`Marked ${count} order(s) as paid.`);
+                fetchDetails();
+            } else {
+                toast.warn(result?.message || 'No orders updated.');
+            }
+        } catch (err) {
+            console.error(err);
+            toast.error('Failed to mark payouts.');
+        } finally {
+            setMarking(false);
+        }
+    };
+
+    const toggleRowSelection = (orderId) => {
+        setSelectedIds(prev => {
+            const next = new Set(prev);
+            if (next.has(orderId)) next.delete(orderId);
+            else next.add(orderId);
+            return next;
+        });
+    };
+
+    const selectablePendingIds = useMemo(
+        () => data.filter(r => (r.payout_status || 'pending') === 'pending').map(r => r.id),
+        [data]
+    );
+    const allPendingSelected =
+        selectablePendingIds.length > 0 &&
+        selectablePendingIds.every(rid => selectedIds.has(rid));
+
+    const toggleSelectAllPending = () => {
+        if (allPendingSelected) {
+            setSelectedIds(new Set());
+        } else {
+            setSelectedIds(new Set(selectablePendingIds));
         }
     };
 
@@ -99,6 +165,32 @@ const UniqueQrDetailReport = () => {
         { Header: 'Subtotal', accessor: 'subtotal_amount', Cell: ({ value }) => `RM ${value}` },
         { Header: 'Total', accessor: 'grand_total', Cell: ({ value }) => <span className="font-bold">RM {value}</span> },
         {
+            Header: 'Payout',
+            accessor: 'payout_amount',
+            Cell: ({ value, row }) => (
+                <span className="text-gray-700" title={`Rate: ${Number(row.original.payout_rate || 0).toFixed(2)}%`}>
+                    RM {Number(value || 0).toFixed(2)}
+                </span>
+            )
+        },
+        {
+            Header: 'Payout Status',
+            accessor: 'payout_status',
+            Cell: ({ value }) => {
+                const status = value || 'pending';
+                const isPaid = status === 'paid';
+                return (
+                    <span
+                        className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                            isPaid ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                        }`}
+                    >
+                        {isPaid ? 'Paid' : 'Pending'}
+                    </span>
+                );
+            }
+        },
+        {
             Header: 'Items',
             id: 'items',
             Cell: ({ row }) => (
@@ -110,7 +202,35 @@ const UniqueQrDetailReport = () => {
                 </button>
             )
         },
-    ], []);
+        // CR-006: row selection checkbox (moved to last column per user). Header
+        // toggles all PENDING rows on the current dataset; paid rows are not
+        // selectable since the action is one-way.
+        {
+            Header: () => (
+                <input
+                    type="checkbox"
+                    checked={allPendingSelected}
+                    onChange={toggleSelectAllPending}
+                    disabled={selectablePendingIds.length === 0}
+                    aria-label="Select all pending payouts"
+                />
+            ),
+            id: 'select',
+            disableSortBy: true,
+            Cell: ({ row }) => {
+                const isPaid = (row.original.payout_status || 'pending') === 'paid';
+                return (
+                    <input
+                        type="checkbox"
+                        checked={selectedIds.has(row.original.id)}
+                        onChange={() => toggleRowSelection(row.original.id)}
+                        disabled={isPaid}
+                        title={isPaid ? 'Already paid' : 'Select to mark payout paid'}
+                    />
+                );
+            },
+        },
+    ], [selectedIds, allPendingSelected, selectablePendingIds, navigate]);
 
     const {
         getTableProps,
@@ -157,7 +277,7 @@ const UniqueQrDetailReport = () => {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
                 {/* Filters */}
                 <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                    <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
                             <input
@@ -175,6 +295,18 @@ const UniqueQrDetailReport = () => {
                                 value={filters.endDate}
                                 onChange={(e) => setFilters(prev => ({ ...prev, endDate: e.target.value }))}
                             />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Payout Status</label>
+                            <select
+                                className="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                                value={filters.payoutStatus}
+                                onChange={(e) => setFilters(prev => ({ ...prev, payoutStatus: e.target.value }))}
+                            >
+                                <option value="all">All</option>
+                                <option value="pending">Pending</option>
+                                <option value="paid">Paid</option>
+                            </select>
                         </div>
                         <div className="flex space-x-2">
                             <button
@@ -205,6 +337,35 @@ const UniqueQrDetailReport = () => {
                         </div >
                     </div >
                 </div >
+
+                {/* CR-006: bulk-action bar — visible only when at least one PENDING row is selected. */}
+                {selectedIds.size > 0 && (
+                    <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6 flex items-center justify-between">
+                        <div className="text-sm text-blue-900">
+                            {selectedIds.size} order(s) selected
+                        </div>
+                        <div className="flex gap-2">
+                            <button
+                                onClick={() => setSelectedIds(new Set())}
+                                className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 text-sm"
+                            >
+                                Clear selection
+                            </button>
+                            <button
+                                onClick={handleMarkPayoutPaid}
+                                disabled={marking}
+                                className="flex items-center px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50 text-sm"
+                            >
+                                {marking ? (
+                                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                ) : (
+                                    <CheckCircle2 className="w-4 h-4 mr-2" />
+                                )}
+                                Mark Payout as Done
+                            </button>
+                        </div>
+                    </div>
+                )}
 
                 {/* Table */}
                 < div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden" >

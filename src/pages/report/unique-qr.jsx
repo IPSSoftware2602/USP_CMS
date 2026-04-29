@@ -91,6 +91,16 @@ const UniqueQrReport = () => {
             Cell: ({ value }) => <span className="text-gray-700">RM {value}</span>
         },
         {
+            Header: 'Payout Rate',
+            accessor: 'payout_rate',
+            Cell: ({ value }) => <span className="text-gray-700">{Number(value || 0).toFixed(2)}%</span>
+        },
+        {
+            Header: 'Total Payout',
+            accessor: 'total_payout',
+            Cell: ({ value }) => <span className="text-gray-700">RM {Number(value || 0).toFixed(2)}</span>
+        },
+        {
             Header: 'Actions',
             id: 'actions',
             Cell: ({ row }) => (

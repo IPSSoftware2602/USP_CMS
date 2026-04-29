@@ -21,8 +21,9 @@ const UniqueQrEdit = () => {
     const [outlets, setOutlets] = useState([]);
     const [allMenuItems, setAllMenuItems] = useState([]);
     const [menuCategories, setMenuCategories] = useState([]);
+    // CR-004: menu picker is no longer outlet-scoped — always show all active items.
+    // Kept variable name for minimal diff; it now mirrors allMenuItems.
     const [outletMenuItems, setOutletMenuItems] = useState([]);
-    const [outletMenuDetail, setOutletMenuDetail] = useState([]);
     const [selectedMenuItems, setSelectedMenuItems] = useState([]);
     const [collapsedCategories, setCollapsedCategories] = useState(new Set());
     const [logoFile, setLogoFile] = useState(null);
@@ -52,17 +53,17 @@ const UniqueQrEdit = () => {
         address_note: "",
         latitude: "",
         longitude: "",
+        payout_rate: "0.00",
     });
 
     useEffect(() => {
         loadData();
     }, [id]);
 
+    // CR-004: menu list is global, not outlet-scoped. Mirror allMenuItems.
     useEffect(() => {
-        if (formData.outlet_id && allMenuItems.length > 0) {
-            loadOutletMenuItems(formData.outlet_id);
-        }
-    }, [formData.outlet_id, allMenuItems]);
+        setOutletMenuItems(allMenuItems);
+    }, [allMenuItems]);
 
     const loadData = async () => {
         try {
@@ -109,6 +110,7 @@ const UniqueQrEdit = () => {
                     address_note: qr.address_note || "",
                     latitude: qr.latitude || "",
                     longitude: qr.longitude || "",
+                    payout_rate: qr.payout_rate != null ? String(qr.payout_rate) : "0.00",
                 });
                 setUniqueCode(qr.unique_code || "");
 
@@ -153,40 +155,6 @@ const UniqueQrEdit = () => {
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData((prev) => ({ ...prev, [name]: value }));
-    };
-
-    const loadOutletMenuItems = async (outletId) => {
-        try {
-            const response = await UniqueQrService.getMenuItemsByOutlet(outletId);
-            const detail = Array.isArray(response.outlet_menu_detail) ? response.outlet_menu_detail : [];
-
-            setOutletMenuDetail(detail);
-
-            if (detail.length > 0) {
-                // Filter allMenuItems to only those present in detail
-                const activeItemIds = detail.map(d => Number(d.menu_item_id));
-                const filtered = allMenuItems
-                    .filter((m) => m && activeItemIds.includes(Number(m.id)))
-                    .map(m => {
-                        // Also filter variations for this item
-                        const itemDetail = detail.find(d => d && Number(d.menu_item_id) === Number(m.id));
-                        if (itemDetail && Array.isArray(m.variation_group)) {
-                            const activeVarIds = (itemDetail.variations || []).map(v => Number(v.variation_id));
-                            return {
-                                ...m,
-                                variation_group: m.variation_group.filter(vg => vg && vg.variation && activeVarIds.includes(Number(vg.variation.id)))
-                            };
-                        }
-                        return m;
-                    });
-                setOutletMenuItems(filtered);
-            } else {
-                setOutletMenuItems(allMenuItems);
-            }
-        } catch (err) {
-            console.error("Error loading outlet menu items:", err);
-            setOutletMenuItems(allMenuItems);
-        }
     };
 
     const geocodeAddress = async () => {
@@ -466,6 +434,7 @@ const UniqueQrEdit = () => {
             fd.append("menu_items", JSON.stringify(selectedMenuItems));
             fd.append("store_discount_ids", JSON.stringify(selectedStoreDiscountIds));
             fd.append("option_ids", JSON.stringify(selectedOptionIds));
+            fd.append("payout_rate", String(Math.max(0, Math.min(100, parseFloat(formData.payout_rate) || 0))));
 
             if (logoFile) {
                 fd.append("logo", logoFile);
@@ -601,6 +570,25 @@ const UniqueQrEdit = () => {
                                 <option value="active">Active</option>
                                 <option value="inactive">Inactive</option>
                             </select>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Payout Rate (%)
+                            </label>
+                            <input
+                                type="number"
+                                name="payout_rate"
+                                value={formData.payout_rate}
+                                onChange={handleChange}
+                                min="0"
+                                max="100"
+                                step="0.01"
+                                placeholder="0.00"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            />
+                            <p className="text-xs text-gray-500 mt-1">
+                                Percent of each order's subtotal (excluding delivery + tax) paid out per QR.
+                            </p>
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">

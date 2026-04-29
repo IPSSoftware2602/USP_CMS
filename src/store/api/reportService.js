@@ -350,5 +350,23 @@ const reportService = {
       throw error;
     }
   },
+
+  // CR-006: bulk-mark selected orders' payout_status as 'paid'.
+  markUniqueQrOrdersPaid: async (uniqueCode, orderIds) => {
+    try {
+      const url = `${BASE_URL}unique-qr-report/mark-payout-paid/${uniqueCode}`;
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+        body: JSON.stringify({ order_ids: orderIds }),
+      });
+
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      return await response.json();
+    } catch (error) {
+      console.error('Error marking Unique QR payouts as paid:', error);
+      throw error;
+    }
+  },
 };
 export default reportService;
